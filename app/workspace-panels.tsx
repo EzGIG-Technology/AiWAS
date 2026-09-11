@@ -1,4 +1,5 @@
 'use client';
+import { needsReview } from './workflow';
 import { useMemo, useState } from 'react';
 import {
   Activity,
@@ -83,8 +84,12 @@ export function FleetOverview({
   incidents,
   onSelect,
   directory = false,
+  schools,
+  cameras,
 }: {
   incidents: Incident[];
+  schools: string[];
+  cameras: import('./data').Camera[];
   onSelect: (school: string, view: string) => void;
   directory?: boolean;
 }) {
@@ -101,7 +106,7 @@ export function FleetOverview({
       events,
       online: feeds.filter((c) => c.online).length,
       open: events.filter((i) => i.status !== 'Closed').length,
-      pending: events.filter((i) => i.validation === 'Pending').length,
+      pending: events.filter(needsReview).length,
     };
   });
   const selectedRecord = records.find((r) => r.name === selected);
@@ -167,7 +172,7 @@ export function FleetOverview({
               ],
               [
                 'Awaiting review',
-                incidents.filter((i) => i.validation === 'Pending').length,
+                incidents.filter(needsReview).length,
                 'Across connected schools',
                 ClipboardCheck,
               ],

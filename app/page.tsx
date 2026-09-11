@@ -90,12 +90,15 @@ const toast = {
 import { CameraStill, DemoVideo, mediaFor, mediaSources } from './camera-media';
 import { PriorityAlerts, scenarioOptions } from './priority-alerts';
 import { FleetOverview, PresencePanel } from './workspace-panels';
+import { needsReview, inPeriod, transitionError, csvCell } from './workflow';
+import { SchoolOnboarding } from './school-onboarding';
+import { OperationsPanel } from './operations-panel';
 import {
-  schools,
+  schools as initialSchools,
   roles,
   categories,
   initialIncidents,
-  cameras,
+  cameras as initialCameras,
   initialUsers,
   severityClass,
   type Incident,
@@ -109,6 +112,7 @@ const nav = [
   ['Attendance & presence', Users],
   ['Live cameras', Video],
   ['Incidents', Siren],
+  ['Response workspace', ClipboardCheck],
   ['Validation queue', ClipboardCheck],
   ['Analytics', ChartNoAxesCombined],
   ['System health', Activity],
@@ -122,6 +126,7 @@ const headings: Record<string, string> = {
   'Attendance & presence': 'Attendance & presence',
   'Live cameras': 'Live cameras',
   Incidents: 'Incident log',
+  'Response workspace': 'Response workspace',
   'Validation queue': 'Validation queue',
   Analytics: 'Safety analytics',
   'System health': 'System health',
@@ -137,6 +142,7 @@ const subtitles: Record<string, string> = {
     'Reconcile attendance, entry and departure records for your school.',
   'Live cameras': 'Monitor each zone with anonymous, real-time detection.',
   Incidents: 'Every flagged event, from detection to resolution.',
+  'Response workspace': 'Report concerns, coordinate follow-up and track maintenance.',
   'Validation queue': 'Your review helps make every detection more reliable.',
   Analytics: 'Understand patterns and measure detection quality.',
   'System health': 'Camera connectivity and central processing at a glance.',
@@ -226,6 +232,8 @@ function Cam({ cam, onClick }: { cam: Camera; onClick: () => void }) {
 }
 
 export default function Home() {
+  const [schools, setSchools] = useState(initialSchools);
+  const [cameras, setCameras] = useState(initialCameras);
   const [view, setView] = useState('Overview'),
     [school, setSchool] = useState(schools[0]),
     [role, setRole] = useState<Role>('School Admin'),
@@ -250,7 +258,7 @@ export default function Home() {
     [userRole, setUserRole] = useState<Role>('School Admin'),
     [userSchool, setUserSchool] = useState(schools[0]),
     [userActive, setUserActive] = useState(true),
-    [audit, setAudit] = useState<{ text: string; time: string }[]>([]),
+    [audit, setAudit] = useState<{ text: string; time: string; school: string }[]>([]),
     [healthTime, setHealthTime] = useState('10:44:00'),
     [configZone, setConfigZone] = useState('Canteen'),
     [configCategory, setConfigCategory] = useState('Crowd counting'),
@@ -278,6 +286,7 @@ export default function Home() {
       enabled: true,
     }),
     [routes, setRoutes] = useState<Record<string, boolean>>({}),
+    [savedRoutes, setSavedRoutes] = useState<Record<string, boolean>>({}),
     [routeCategory, setRouteCategory] = useState('All categories'),
     [routeSaved, setRouteSaved] = useState(false),
     [playing, setPlaying] = useState(false),
@@ -347,10 +356,11 @@ export default function Home() {
   );
   const selected = schoolIncidents.find((i) => i.id === selectedId);
   const schoolCameras = cameras.filter((c) => c.school === school);
-  const pending = schoolIncidents.filter((i) => i.validation === 'Pending');
+  const pending = schoolIncidents.filter(needsReview);
   const open = schoolIncidents.filter((i) => i.status !== 'Closed');
   const high = open.filter((i) => ['High', 'Critical'].includes(i.severity));
   const acknowledge = (id: string) => {
+    if (!schoolIncidents.some(i => i.id === id && !i.acknowledged && i.status !== 'Closed')) return;
     setIncidents((all) =>
       all.map((i) =>
         i.id === id
@@ -432,13 +442,9 @@ export default function Home() {
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
-  const analysisIncidents = schoolIncidents.filter(
-    (i) =>
-      period === 'Last 30 days' ||
-      period === 'Last 7 days' ||
-      i.date === '2026-09-10',
-  );
-  const analysed = analysisIncidents.filter((i) => i.validation !== 'Pending');
+  const reportDate = schoolIncidents.reduce((latest, i) => i.date > latest ? i.date : latest, '2026-09-10');
+  const analysisIncidents = schoolIncidents.filter(i => inPeriod(i.date, period, reportDate));
+  const analysed = analysisIncidents.filter(i => !needsReview(i));
   const falseCount = analysed.filter(
     (i) => i.validation === 'False alarm',
   ).length;
@@ -451,7 +457,7 @@ export default function Home() {
       hour: '2-digit',
       minute: '2-digit',
     });
-  const log = (text: string) => setAudit((a) => [{ text, time: now() }, ...a]);
+  const log = (text: string) => setAudit((a) => [{ text, time: now(), school }, ...a]);
   const openIncident = (id: string) => {
     setSelectedId(id);
     setNote('');
@@ -476,11 +482,12 @@ export default function Home() {
     toast.success(event);
   };
   const validate = (outcome: string) => {
-    if (!selected || selected.validation !== 'Pending') return;
+    if (!selected || !needsReview(selected)) return;
+    if (note.trim().length < 10) { toast.error('Explain your review decision in at least 10 characters.'); return; }
     updateIncident(
       {
         validation: outcome,
-        status: outcome === 'False alarm' ? 'Closed' : 'Under Review',
+        status: 'Under Review',
       },
       `Marked ${outcome.toLowerCase()}${note.trim() ? ': ' + note.trim() : ''}`,
     );
@@ -561,7 +568,8 @@ export default function Home() {
       toast.error('Choose a valid date range.');
       return;
     }
-    const rows = schoolIncidents.filter(
+    if ((Date.parse(endDate) - Date.parse(startDate)) / 86400000 >= 30) { toast.error('Choose no more than 30 days per export.'); return; }
+    const rows = filtered.filter(
       (i) => i.date >= startDate && i.date <= endDate,
     );
     if (!rows.length) {
@@ -598,7 +606,7 @@ export default function Home() {
       ]),
     ]
       .map((row) =>
-        row.map((v) => '"' + String(v).replaceAll('"', '""') + '"').join(','),
+        row.map(csvCell).join(','),
       )
       .join('\r\n');
     const a = document.createElement('a');
@@ -642,7 +650,7 @@ export default function Home() {
     if (
       users.some(
         (u, i) =>
-          u.email.toLowerCase() === userEmail.toLowerCase() && i !== editUser,
+          u.email.toLowerCase() === userEmail.trim().toLowerCase() && i !== editUser,
       )
     ) {
       toast.error('That email is already in the workspace.');
@@ -718,7 +726,7 @@ export default function Home() {
               <TableCell>
                 {i.time}
                 <small>
-                  {i.date === '2026-09-10' ? 'Today' : '09 Sep'} · MYT
+                  {i.date} · MYT
                 </small>
               </TableCell>
               <TableCell>
@@ -898,14 +906,21 @@ export default function Home() {
             )}
           </div>
           {view === 'Overview' && privileged && (
-            <FleetOverview incidents={incidents} onSelect={selectSchoolView} />
+            <FleetOverview schools={schools} cameras={cameras} incidents={incidents} onSelect={selectSchoolView} />
           )}
           {view === 'Schools' && privileged && (
-            <FleetOverview
+            <><SchoolOnboarding existing={schools} onCreate={(name, admin, email, zone) => {
+              if (users.some(u => u.email.toLowerCase() === email)) { toast.error('Administrator email already exists. Use Users & roles to assign an existing account.'); return false; }
+              setSchools(all => [...all, name]);
+              setUsers(all => [...all, {name: admin, email, role: 'School Admin', school: name, active: false}]);
+              setCameras(all => [...all, {id: 'CAM-01', zone, block: 'Unconfigured', school: name, online: false, fps: 0, latency: 0}]);
+              setSchool(name); toast.success('Demo school created. Camera and account are inactive.'); return true;
+            }} />
+            <FleetOverview schools={schools} cameras={cameras}
               incidents={incidents}
               onSelect={selectSchoolView}
               directory
-            />
+            /></>
           )}
           {!privileged && (
             <div hidden={view !== 'Attendance & presence'}>
@@ -1249,7 +1264,7 @@ export default function Home() {
                   onChange={setCategory}
                   options={[
                     'All categories',
-                    ...categories.slice(1),
+                    ...new Set([...categories, ...schoolIncidents.map(i => i.category)]),
                     'Visible blade concern',
                   ]}
                 />
@@ -1325,9 +1340,9 @@ export default function Home() {
                         </div>
                         <div className="confidence-row">
                           <span>Detection confidence</span>
-                          <strong>{i.confidence}%</strong>
+                          <strong>{i.id.startsWith('STAFF-') ? 'Staff report' : `${i.confidence}%`}</strong>
                         </div>
-                        <Progress value={i.confidence} />
+                        {!i.id.startsWith('STAFF-') && <Progress value={i.confidence} />}
                         <div className="validation-meta">
                           <span>
                             <Clock3 size={14} />
@@ -1356,7 +1371,7 @@ export default function Home() {
                 <TabsContent value="Reviewed">
                   <section className="panel">
                     {incidentTable(
-                      schoolIncidents.filter((i) => i.validation !== 'Pending'),
+                      schoolIncidents.filter((i) => !needsReview(i)),
                     )}
                   </section>
                 </TabsContent>
@@ -1370,6 +1385,7 @@ export default function Home() {
               </div>
             </>
           )}
+          <div hidden={view !== 'Response workspace'}><OperationsPanel school={school} incidents={schoolIncidents} users={users} cameras={schoolCameras} onOpen={openIncident} onReport={item => { setIncidents(all => [item, ...all]); openIncident(item.id); }} /></div>
           {view === 'Analytics' && (
             <>
               <div className="toolbar">
@@ -1380,7 +1396,7 @@ export default function Home() {
                   options={['Today', 'Last 7 days', 'Last 30 days']}
                 />
                 <span className="toolbar-meta">
-                  Through 10 Sep 2026 · Sample data
+                  Through {reportDate} · Sample data
                 </span>
                 <button
                   className="btn push-right"
@@ -1443,8 +1459,7 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="bar-chart">
-                    {categories
-                      .slice(1)
+                    {[...new Set(analysisIncidents.map(i => i.category))]
                       .filter((c) =>
                         analysisIncidents.some((i) => i.category === c),
                       )
@@ -1461,7 +1476,7 @@ export default function Home() {
                                   <div
                                     key={v}
                                     style={{
-                                      width: `${(items.filter((i) => i.validation === v).length / 4) * 100}%`,
+                                      width: `${(items.filter((i) => v === 'Pending' ? needsReview(i) : i.validation === v).length / Math.max(1, items.length)) * 100}%`,
                                       background: [
                                         '#329b7b',
                                         '#e5a19d',
@@ -1540,8 +1555,7 @@ export default function Home() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {categories
-                      .slice(1)
+                    {[...new Set(analysisIncidents.map(i => i.category))]
                       .filter((c) =>
                         analysisIncidents.some((i) => i.category === c),
                       )
@@ -1693,9 +1707,9 @@ export default function Home() {
                   <h2>Access activity</h2>
                   <span className="count">This demo session</span>
                 </div>
-                {audit.length ? (
+                {audit.some(a => a.school === school) ? (
                   <div className="audit-list">
-                    {audit.map((a, i) => (
+                    {audit.filter(a => a.school === school).map((a, i) => (
                       <div key={i}>
                         <History size={16} />
                         <p>{a.text}</p>
@@ -2003,7 +2017,7 @@ export default function Home() {
                   }}
                   options={[
                     'All categories',
-                    ...categories.slice(1),
+                    ...new Set([...categories, ...schoolIncidents.map(i => i.category)]),
                     'Visible blade concern',
                   ]}
                 />
@@ -2013,6 +2027,7 @@ export default function Home() {
                 <button
                   className="btn primary push-right"
                   onClick={() => {
+                    setSavedRoutes({ ...routes });
                     setRouteSaved(true);
                     toast.success(
                       'Routing saved for this demo session. No notifications sent.',
@@ -2022,6 +2037,7 @@ export default function Home() {
                   <Check size={16} />
                   {routeSaved ? 'Saved' : 'Save routing'}
                 </button>
+                <button className="btn" onClick={() => { setRoutes({ ...savedRoutes }); setRouteSaved(true); }}>Discard edits</button>
               </div>
               <section className="panel">
                 <div className="panel-title">
@@ -2338,7 +2354,7 @@ export default function Home() {
                   </span>
                   <button
                     className="btn"
-                    disabled={selected.acknowledged}
+                    disabled={selected.acknowledged || selected.status === 'Closed'}
                     onClick={() => acknowledge(selected.id)}
                   >
                     <Check size={15} />
@@ -2349,7 +2365,7 @@ export default function Home() {
                   <div>
                     <span>Detection confidence</span>
                     <strong>
-                      {selected.confidence}% <small>Sample score</small>
+                      {selected.id.startsWith('STAFF-') ? 'Staff report' : `${selected.confidence}%`} <small>{selected.id.startsWith('STAFF-') ? 'No AI score' : 'Sample score'}</small>
                     </strong>
                   </div>
                   <div>
@@ -2391,20 +2407,20 @@ export default function Home() {
                         <Pick
                           label="Incident status"
                           value={selected.status}
-                          onChange={(s) =>
-                            updateIncident(
-                              { status: s },
-                              `Status changed to ${s.toLowerCase()}`,
-                            )
-                          }
+                          onChange={(s) => {
+                            const error = transitionError(selected, s, note);
+                            if (error) { toast.error(error); return; }
+                            updateIncident({ status: s }, `Status changed to ${s.toLowerCase()}${note.trim() ? ': ' + note.trim() : ''}`);
+                            setNote('');
+                          }}
                           options={['Open', 'Under Review', 'Closed']}
                         />
                       </label>
-                      {selected.validation === 'Pending' ? (
+                      {needsReview(selected) ? (
                         <>
                           <label className="field">
                             Review note{' '}
-                            <span className="optional">Optional</span>
+                            <span className="optional">Required for a review decision</span>
                             <textarea
                               placeholder="Add context for your team…"
                               rows={3}
@@ -2449,10 +2465,13 @@ export default function Home() {
                           </div>
                         </div>
                       )}
+                      {!needsReview(selected) && <label className="field">Resolution / follow-up note<textarea rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="Describe the response, outcome or reason to reopen…" /></label>}
+                      <button className="btn full-width" disabled={!note.trim()} onClick={() => { updateIncident({}, `Staff note: ${note.trim()}`); setNote(''); }}>Add note to audit trail</button>
+                      <p className="help-text">To close or reopen, enter a reason above before changing the status. Unresolved evidence must remain under review.</p>
                       <div className="info-note compact">
                         <ShieldCheck size={17} />
                         <p>
-                          Your validation is recorded as model feedback. No
+                          Your validation is recorded in this demo’s audit trail. No
                           automatic disciplinary action is taken.
                         </p>
                       </div>
@@ -2554,7 +2573,7 @@ export default function Home() {
               <input
                 required
                 type="date"
-                max="2026-09-10"
+                max={reportDate}
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
               />
@@ -2564,7 +2583,7 @@ export default function Home() {
               <input
                 required
                 type="date"
-                max="2026-09-10"
+                max={reportDate}
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />

@@ -55,3 +55,9 @@ The default `npm run build` is the original Sites/Cloudflare Workers build;
 its server bundle is not a Vercel deployment artifact. Vercel uses the separate
 static entry in `vercel-entry/main.tsx`, which renders the same application.
 No backend or authentication service is provided by this static build.
+
+## School response workflows
+
+The Response workspace adds manual concern reports, incident follow-ups, maintenance tasks and a campus zone register. Superadmins can add demo schools from the School directory. All new records remain in memory for the current page session; authentication, shared storage, live CCTV and notifications are not implemented.
+
+See [system audit and user journeys](docs/system-audit-and-user-journeys.md) for detailed flows, fixes, release blockers and verification limits. Run `node --test tests/workflow.test.mjs` to check the incident lifecycle and reporting helpers.
