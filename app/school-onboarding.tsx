@@ -1,4 +1,5 @@
 'use client';
+import { schoolSetupError } from './workflow';
 import { useState } from 'react';
 import { Plus, Check } from 'lucide-react';
 import {
@@ -39,6 +40,11 @@ export function SchoolOnboarding({
     }
     if (step < 2) {
       setStep(step + 1);
+      return;
+    }
+    const issue = schoolSetupError(name, admin, email, zone, existing);
+    if (issue) {
+      setError(issue);
       return;
     }
     if (

@@ -1,4 +1,5 @@
 'use client';
+import { workItemError } from './workflow';
 import { useState } from 'react';
 import {
   Plus,
@@ -92,7 +93,19 @@ export function OperationsPanel({
       );
       return;
     }
+    if (dialog !== 'Update' && title.trim().length < 3) {
+      setError('Enter a summary of at least three characters.');
+      return;
+    }
     if (dialog === 'Update') {
+      if (
+        !['Open', 'In progress', 'Blocked', 'Completed'].includes(
+          text('status'),
+        )
+      ) {
+        setError('Choose a valid status.');
+        return;
+      }
       if (!selected || selected.school !== school) return;
       setItems((all) =>
         all.map((i) =>
@@ -147,6 +160,11 @@ export function OperationsPanel({
     } else {
       if (!staff.some((u) => u.name === owner) || !text('due')) {
         setError('Choose an active owner and a due date.');
+        return;
+      }
+      const issue = workItemError(title, detail, text('due'));
+      if (issue) {
+        setError(issue);
         return;
       }
       const link = text('link');

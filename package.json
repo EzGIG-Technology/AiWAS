@@ -11,7 +11,9 @@
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
     "format": "oxfmt",
-    "build:vercel": "vite build --config vite.vercel.config.ts"
+    "build:vercel": "vite build --config vite.vercel.config.ts",
+    "test": "node --test tests/workflow.test.mjs",
+    "test:render": "vite build --config vite.vercel.config.ts --ssr app/page.tsx --outDir dist/audit-ssr && node tests/render-smoke.mjs"
   },
   "dependencies": {
     "react": "19.2.6",

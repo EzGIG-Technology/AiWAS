@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -17,9 +17,7 @@ import {
   Radio,
   School,
   Search,
-  Settings2,
   Download,
-  Filter,
   Check,
   X,
   Plus,
@@ -27,15 +25,11 @@ import {
   WifiOff,
   Maximize,
   Play,
-  Pause,
-  ArrowLeft,
   CheckCheck,
   Info,
   History,
-  FileText,
   CheckCircle2,
   RefreshCw,
-  LogIn,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -90,7 +84,13 @@ const toast = {
 import { CameraStill, DemoVideo, mediaFor, mediaSources } from './camera-media';
 import { PriorityAlerts, scenarioOptions } from './priority-alerts';
 import { FleetOverview, PresencePanel } from './workspace-panels';
-import { needsReview, inPeriod, transitionError, csvCell } from './workflow';
+import {
+  needsReview,
+  inPeriod,
+  transitionError,
+  transitionChanges,
+  csvCell,
+} from './workflow';
 import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
 import {
@@ -142,7 +142,8 @@ const subtitles: Record<string, string> = {
     'Reconcile attendance, entry and departure records for your school.',
   'Live cameras': 'Monitor each zone with anonymous, real-time detection.',
   Incidents: 'Every flagged event, from detection to resolution.',
-  'Response workspace': 'Report concerns, coordinate follow-up and track maintenance.',
+  'Response workspace':
+    'Report concerns, coordinate follow-up and track maintenance.',
   'Validation queue': 'Your review helps make every detection more reliable.',
   Analytics: 'Understand patterns and measure detection quality.',
   'System health': 'Camera connectivity and central processing at a glance.',
@@ -258,7 +259,9 @@ export default function Home() {
     [userRole, setUserRole] = useState<Role>('School Admin'),
     [userSchool, setUserSchool] = useState(schools[0]),
     [userActive, setUserActive] = useState(true),
-    [audit, setAudit] = useState<{ text: string; time: string; school: string }[]>([]),
+    [audit, setAudit] = useState<
+      { text: string; time: string; school: string }[]
+    >([]),
     [healthTime, setHealthTime] = useState('10:44:00'),
     [configZone, setConfigZone] = useState('Canteen'),
     [configCategory, setConfigCategory] = useState('Crowd counting'),
@@ -289,8 +292,6 @@ export default function Home() {
     [savedRoutes, setSavedRoutes] = useState<Record<string, boolean>>({}),
     [routeCategory, setRouteCategory] = useState('All categories'),
     [routeSaved, setRouteSaved] = useState(false),
-    [playing, setPlaying] = useState(false),
-    [position, setPosition] = useState(0),
     [period, setPeriod] = useState('Today');
   const privileged = role === 'Internal Ops' || role === 'System Admin';
   const canManageUsers = privileged || role === 'School Admin';
@@ -317,7 +318,7 @@ export default function Home() {
   const navigate = (n: string) => {
     if (!allowedNav.some(([x]) => x === n)) return;
     setView(n);
-    window.history.replaceState(
+    window.history.pushState(
       null,
       '',
       '#' + n.toLowerCase().replaceAll(' ', '-'),
@@ -329,18 +330,30 @@ export default function Home() {
     setZone('All zones');
   };
   useEffect(() => {
-    const name = nav.find(
-      ([n]) =>
-        '#' + n.toLowerCase().replaceAll(' ', '-') === window.location.hash,
-    )?.[0];
-    if (name && !['Notification routing', 'Users & roles'].includes(name))
-      setView(name);
+    const readHash = () => {
+      const name = nav.find(
+        ([n]) =>
+          '#' + n.toLowerCase().replaceAll(' ', '-') === window.location.hash,
+      )?.[0];
+      setView(name || 'Overview');
+      setSelectedId(null);
+    };
+    const timer = window.setTimeout(readHash, 0);
+    window.addEventListener('popstate', readHash);
+    window.addEventListener('hashchange', readHash);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('popstate', readHash);
+      window.removeEventListener('hashchange', readHash);
+    };
   }, []);
-  useEffect(() => {
-    if (!allowedNav.some(([n]) => n === view)) setView('Overview');
+  const [previousRole, setPreviousRole] = useState(role);
+  if (previousRole !== role) {
+    setPreviousRole(role);
     setSelectedId(null);
     if (!privileged) setSchool(schools[0]);
-  }, [role]);
+  }
+  if (!allowedNav.some(([n]) => n === view)) setView('Overview');
   const schoolIncidents = incidents.filter(
     (i) =>
       i.school === school &&
@@ -360,7 +373,12 @@ export default function Home() {
   const open = schoolIncidents.filter((i) => i.status !== 'Closed');
   const high = open.filter((i) => ['High', 'Critical'].includes(i.severity));
   const acknowledge = (id: string) => {
-    if (!schoolIncidents.some(i => i.id === id && !i.acknowledged && i.status !== 'Closed')) return;
+    if (
+      !schoolIncidents.some(
+        (i) => i.id === id && !i.acknowledged && i.status !== 'Closed',
+      )
+    )
+      return;
     setIncidents((all) =>
       all.map((i) =>
         i.id === id
@@ -383,7 +401,7 @@ export default function Home() {
   };
   const addScenario = (scenario: string) => {
     const idx = scenarioOptions.indexOf(scenario);
-    const newId = `DEMO-${Date.now().toString().slice(-6)}`;
+    const newId = `DEMO-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
     const z = [
       'Block A corridor',
       'Canteen',
@@ -442,9 +460,14 @@ export default function Home() {
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
-  const reportDate = schoolIncidents.reduce((latest, i) => i.date > latest ? i.date : latest, '2026-09-10');
-  const analysisIncidents = schoolIncidents.filter(i => inPeriod(i.date, period, reportDate));
-  const analysed = analysisIncidents.filter(i => !needsReview(i));
+  const reportDate = schoolIncidents.reduce(
+    (latest, i) => (i.date > latest ? i.date : latest),
+    '2026-09-10',
+  );
+  const analysisIncidents = schoolIncidents.filter((i) =>
+    inPeriod(i.date, period, reportDate),
+  );
+  const analysed = analysisIncidents.filter((i) => !needsReview(i));
   const falseCount = analysed.filter(
     (i) => i.validation === 'False alarm',
   ).length;
@@ -457,7 +480,8 @@ export default function Home() {
       hour: '2-digit',
       minute: '2-digit',
     });
-  const log = (text: string) => setAudit((a) => [{ text, time: now(), school }, ...a]);
+  const log = (text: string) =>
+    setAudit((a) => [{ text, time: now(), school }, ...a]);
   const openIncident = (id: string) => {
     setSelectedId(id);
     setNote('');
@@ -483,7 +507,10 @@ export default function Home() {
   };
   const validate = (outcome: string) => {
     if (!selected || !needsReview(selected)) return;
-    if (note.trim().length < 10) { toast.error('Explain your review decision in at least 10 characters.'); return; }
+    if (note.trim().length < 10) {
+      toast.error('Explain your review decision in at least 10 characters.');
+      return;
+    }
     updateIncident(
       {
         validation: outcome,
@@ -493,8 +520,13 @@ export default function Home() {
     );
     setNote('');
   };
-  const configKey = `${school}|${configZone}|${configCategory}`;
-  useEffect(() => {
+  const effectiveZone = schoolCameras.some((c) => c.zone === configZone)
+    ? configZone
+    : schoolCameras[0]?.zone || '';
+  const configKey = `${school}|${effectiveZone}|${configCategory}`;
+  const [draftKey, setDraftKey] = useState(configKey);
+  if (draftKey !== configKey) {
+    setDraftKey(configKey);
     setDraft(
       config[configKey] || {
         confidence: 80,
@@ -506,24 +538,24 @@ export default function Home() {
         enabled: true,
       },
     );
-  }, [configKey]);
+  }
   useEffect(() => {
-    if (!playing) return;
-    const t = setInterval(
-      () =>
-        setPosition((p) => {
-          if (p >= 30) {
-            setPlaying(false);
-            return 30;
-          }
-          return p + 1;
-        }),
-      1000,
-    );
-    return () => clearInterval(t);
-  }, [playing]);
-  useEffect(() => {
-    const ctx = (document as any).modelContext;
+    const ctx = (
+      document as Document & {
+        modelContext?: {
+          registerTool: (
+            tool: {
+              name: string;
+              description: string;
+              inputSchema: object;
+              annotations: object;
+              execute: (input: unknown) => unknown;
+            },
+            options: { signal: AbortSignal },
+          ) => unknown;
+        };
+      }
+    ).modelContext;
     if (!ctx?.registerTool) return;
     const life = new AbortController();
     try {
@@ -562,13 +594,16 @@ export default function Home() {
       ).catch(() => {});
     } catch {}
     return () => life.abort();
-  }, [school, incidents, role]);
+  }, [school, incidents, role, open.length, pending]);
   function exportReport() {
     if (!startDate || !endDate || startDate > endDate) {
       toast.error('Choose a valid date range.');
       return;
     }
-    if ((Date.parse(endDate) - Date.parse(startDate)) / 86400000 >= 30) { toast.error('Choose no more than 30 days per export.'); return; }
+    if ((Date.parse(endDate) - Date.parse(startDate)) / 86400000 >= 30) {
+      toast.error('Choose no more than 30 days per export.');
+      return;
+    }
     const rows = filtered.filter(
       (i) => i.date >= startDate && i.date <= endDate,
     );
@@ -605,9 +640,7 @@ export default function Home() {
         i.assigned,
       ]),
     ]
-      .map((row) =>
-        row.map(csvCell).join(','),
-      )
+      .map((row) => row.map(csvCell).join(','))
       .join('\r\n');
     const a = document.createElement('a');
     const url = URL.createObjectURL(
@@ -635,7 +668,7 @@ export default function Home() {
     setUserActive(u?.active ?? true);
     setUserOpen(true);
   }
-  function saveUser(e: React.FormEvent) {
+  function saveUser(e: React.SyntheticEvent) {
     e.preventDefault();
     if (
       !privileged &&
@@ -650,7 +683,8 @@ export default function Home() {
     if (
       users.some(
         (u, i) =>
-          u.email.toLowerCase() === userEmail.trim().toLowerCase() && i !== editUser,
+          u.email.toLowerCase() === userEmail.trim().toLowerCase() &&
+          i !== editUser,
       )
     ) {
       toast.error('That email is already in the workspace.');
@@ -725,9 +759,7 @@ export default function Home() {
               </TableCell>
               <TableCell>
                 {i.time}
-                <small>
-                  {i.date} · MYT
-                </small>
+                <small>{i.date} · MYT</small>
               </TableCell>
               <TableCell>
                 <Badge value={i.severity} />
@@ -850,7 +882,7 @@ export default function Home() {
                 onChange={(v) => {
                   setRole(v === 'Superadmin' ? 'System Admin' : 'School Admin');
                   setView('Overview');
-                  window.history.replaceState(null, '', '#overview');
+                  window.history.pushState(null, '', '#overview');
                 }}
                 options={['School workspace', 'Superadmin']}
               />
@@ -906,21 +938,62 @@ export default function Home() {
             )}
           </div>
           {view === 'Overview' && privileged && (
-            <FleetOverview schools={schools} cameras={cameras} incidents={incidents} onSelect={selectSchoolView} />
-          )}
-          {view === 'Schools' && privileged && (
-            <><SchoolOnboarding existing={schools} onCreate={(name, admin, email, zone) => {
-              if (users.some(u => u.email.toLowerCase() === email)) { toast.error('Administrator email already exists. Use Users & roles to assign an existing account.'); return false; }
-              setSchools(all => [...all, name]);
-              setUsers(all => [...all, {name: admin, email, role: 'School Admin', school: name, active: false}]);
-              setCameras(all => [...all, {id: 'CAM-01', zone, block: 'Unconfigured', school: name, online: false, fps: 0, latency: 0}]);
-              setSchool(name); toast.success('Demo school created. Camera and account are inactive.'); return true;
-            }} />
-            <FleetOverview schools={schools} cameras={cameras}
+            <FleetOverview
+              schools={schools}
+              cameras={cameras}
               incidents={incidents}
               onSelect={selectSchoolView}
-              directory
-            /></>
+            />
+          )}
+          {view === 'Schools' && privileged && (
+            <>
+              <SchoolOnboarding
+                existing={schools}
+                onCreate={(name, admin, email, zone) => {
+                  if (users.some((u) => u.email.toLowerCase() === email)) {
+                    toast.error(
+                      'Administrator email already exists. Use Users & roles to assign an existing account.',
+                    );
+                    return false;
+                  }
+                  setSchools((all) => [...all, name]);
+                  setUsers((all) => [
+                    ...all,
+                    {
+                      name: admin,
+                      email,
+                      role: 'School Admin',
+                      school: name,
+                      active: false,
+                    },
+                  ]);
+                  setCameras((all) => [
+                    ...all,
+                    {
+                      id: 'CAM-01',
+                      zone,
+                      block: 'Unconfigured',
+                      school: name,
+                      online: false,
+                      fps: 0,
+                      latency: 0,
+                    },
+                  ]);
+                  setSchool(name);
+                  toast.success(
+                    'Demo school created. Camera and account are inactive.',
+                  );
+                  return true;
+                }}
+              />
+              <FleetOverview
+                schools={schools}
+                cameras={cameras}
+                incidents={incidents}
+                onSelect={selectSchoolView}
+                directory
+              />
+            </>
           )}
           {!privileged && (
             <div hidden={view !== 'Attendance & presence'}>
@@ -1264,7 +1337,10 @@ export default function Home() {
                   onChange={setCategory}
                   options={[
                     'All categories',
-                    ...new Set([...categories, ...schoolIncidents.map(i => i.category)]),
+                    ...new Set([
+                      ...categories,
+                      ...schoolIncidents.map((i) => i.category),
+                    ]),
                     'Visible blade concern',
                   ]}
                 />
@@ -1340,9 +1416,15 @@ export default function Home() {
                         </div>
                         <div className="confidence-row">
                           <span>Detection confidence</span>
-                          <strong>{i.id.startsWith('STAFF-') ? 'Staff report' : `${i.confidence}%`}</strong>
+                          <strong>
+                            {i.id.startsWith('STAFF-')
+                              ? 'Staff report'
+                              : `${i.confidence}%`}
+                          </strong>
                         </div>
-                        {!i.id.startsWith('STAFF-') && <Progress value={i.confidence} />}
+                        {!i.id.startsWith('STAFF-') && (
+                          <Progress value={i.confidence} />
+                        )}
                         <div className="validation-meta">
                           <span>
                             <Clock3 size={14} />
@@ -1385,7 +1467,19 @@ export default function Home() {
               </div>
             </>
           )}
-          <div hidden={view !== 'Response workspace'}><OperationsPanel school={school} incidents={schoolIncidents} users={users} cameras={schoolCameras} onOpen={openIncident} onReport={item => { setIncidents(all => [item, ...all]); openIncident(item.id); }} /></div>
+          <div hidden={view !== 'Response workspace'}>
+            <OperationsPanel
+              school={school}
+              incidents={schoolIncidents}
+              users={users}
+              cameras={schoolCameras}
+              onOpen={openIncident}
+              onReport={(item) => {
+                setIncidents((all) => [item, ...all]);
+                openIncident(item.id);
+              }}
+            />
+          </div>
           {view === 'Analytics' && (
             <>
               <div className="toolbar">
@@ -1459,7 +1553,7 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="bar-chart">
-                    {[...new Set(analysisIncidents.map(i => i.category))]
+                    {[...new Set(analysisIncidents.map((i) => i.category))]
                       .filter((c) =>
                         analysisIncidents.some((i) => i.category === c),
                       )
@@ -1476,7 +1570,7 @@ export default function Home() {
                                   <div
                                     key={v}
                                     style={{
-                                      width: `${(items.filter((i) => v === 'Pending' ? needsReview(i) : i.validation === v).length / Math.max(1, items.length)) * 100}%`,
+                                      width: `${(items.filter((i) => (v === 'Pending' ? needsReview(i) : i.validation === v)).length / Math.max(1, items.length)) * 100}%`,
                                       background: [
                                         '#329b7b',
                                         '#e5a19d',
@@ -1555,7 +1649,7 @@ export default function Home() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {[...new Set(analysisIncidents.map(i => i.category))]
+                    {[...new Set(analysisIncidents.map((i) => i.category))]
                       .filter((c) =>
                         analysisIncidents.some((i) => i.category === c),
                       )
@@ -1707,15 +1801,17 @@ export default function Home() {
                   <h2>Access activity</h2>
                   <span className="count">This demo session</span>
                 </div>
-                {audit.some(a => a.school === school) ? (
+                {audit.some((a) => a.school === school) ? (
                   <div className="audit-list">
-                    {audit.filter(a => a.school === school).map((a, i) => (
-                      <div key={i}>
-                        <History size={16} />
-                        <p>{a.text}</p>
-                        <span>{a.time} MYT</span>
-                      </div>
-                    ))}
+                    {audit
+                      .filter((a) => a.school === school)
+                      .map((a, i) => (
+                        <div key={i}>
+                          <History size={16} />
+                          <p>{a.text}</p>
+                          <span>{a.time} MYT</span>
+                        </div>
+                      ))}
                   </div>
                 ) : (
                   <Empty
@@ -1735,7 +1831,7 @@ export default function Home() {
                 </div>
                 <Pick
                   label="Configuration zone"
-                  value={configZone}
+                  value={effectiveZone}
                   onChange={setConfigZone}
                   options={schoolCameras.map((c) => c.zone)}
                 />
@@ -2017,7 +2113,10 @@ export default function Home() {
                   }}
                   options={[
                     'All categories',
-                    ...new Set([...categories, ...schoolIncidents.map(i => i.category)]),
+                    ...new Set([
+                      ...categories,
+                      ...schoolIncidents.map((i) => i.category),
+                    ]),
                     'Visible blade concern',
                   ]}
                 />
@@ -2037,7 +2136,15 @@ export default function Home() {
                   <Check size={16} />
                   {routeSaved ? 'Saved' : 'Save routing'}
                 </button>
-                <button className="btn" onClick={() => { setRoutes({ ...savedRoutes }); setRouteSaved(true); }}>Discard edits</button>
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setRoutes({ ...savedRoutes });
+                    setRouteSaved(true);
+                  }}
+                >
+                  Discard edits
+                </button>
               </div>
               <section className="panel">
                 <div className="panel-title">
@@ -2354,7 +2461,9 @@ export default function Home() {
                   </span>
                   <button
                     className="btn"
-                    disabled={selected.acknowledged || selected.status === 'Closed'}
+                    disabled={
+                      selected.acknowledged || selected.status === 'Closed'
+                    }
                     onClick={() => acknowledge(selected.id)}
                   >
                     <Check size={15} />
@@ -2365,7 +2474,14 @@ export default function Home() {
                   <div>
                     <span>Detection confidence</span>
                     <strong>
-                      {selected.id.startsWith('STAFF-') ? 'Staff report' : `${selected.confidence}%`} <small>{selected.id.startsWith('STAFF-') ? 'No AI score' : 'Sample score'}</small>
+                      {selected.id.startsWith('STAFF-')
+                        ? 'Staff report'
+                        : `${selected.confidence}%`}{' '}
+                      <small>
+                        {selected.id.startsWith('STAFF-')
+                          ? 'No AI score'
+                          : 'Sample score'}
+                      </small>
                     </strong>
                   </div>
                   <div>
@@ -2402,25 +2518,33 @@ export default function Home() {
                   </TabsList>
                   <TabsContent value="review">
                     <div className="review-form">
-                      <label className="field">
+                      <div className="field">
                         Incident status
                         <Pick
                           label="Incident status"
                           value={selected.status}
                           onChange={(s) => {
                             const error = transitionError(selected, s, note);
-                            if (error) { toast.error(error); return; }
-                            updateIncident({ status: s }, `Status changed to ${s.toLowerCase()}${note.trim() ? ': ' + note.trim() : ''}`);
+                            if (error) {
+                              toast.error(error);
+                              return;
+                            }
+                            updateIncident(
+                              transitionChanges(selected, s, note),
+                              `Status changed to ${s.toLowerCase()}${note.trim() ? ': ' + note.trim() : ''}`,
+                            );
                             setNote('');
                           }}
                           options={['Open', 'Under Review', 'Closed']}
                         />
-                      </label>
+                      </div>
                       {needsReview(selected) ? (
                         <>
                           <label className="field">
                             Review note{' '}
-                            <span className="optional">Required for a review decision</span>
+                            <span className="optional">
+                              Required for a review decision
+                            </span>
                             <textarea
                               placeholder="Add context for your team…"
                               rows={3}
@@ -2465,14 +2589,37 @@ export default function Home() {
                           </div>
                         </div>
                       )}
-                      {!needsReview(selected) && <label className="field">Resolution / follow-up note<textarea rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="Describe the response, outcome or reason to reopen…" /></label>}
-                      <button className="btn full-width" disabled={!note.trim()} onClick={() => { updateIncident({}, `Staff note: ${note.trim()}`); setNote(''); }}>Add note to audit trail</button>
-                      <p className="help-text">To close or reopen, enter a reason above before changing the status. Unresolved evidence must remain under review.</p>
+                      {!needsReview(selected) && (
+                        <label className="field">
+                          Resolution / follow-up note
+                          <textarea
+                            rows={3}
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            placeholder="Describe the response, outcome or reason to reopen…"
+                          />
+                        </label>
+                      )}
+                      <button
+                        className="btn full-width"
+                        disabled={!note.trim()}
+                        onClick={() => {
+                          updateIncident({}, `Staff note: ${note.trim()}`);
+                          setNote('');
+                        }}
+                      >
+                        Add note to audit trail
+                      </button>
+                      <p className="help-text">
+                        To close or reopen, enter a reason above before changing
+                        the status. Unresolved evidence must remain under
+                        review.
+                      </p>
                       <div className="info-note compact">
                         <ShieldCheck size={17} />
                         <p>
-                          Your validation is recorded in this demo’s audit trail. No
-                          automatic disciplinary action is taken.
+                          Your validation is recorded in this demo’s audit
+                          trail. No automatic disciplinary action is taken.
                         </p>
                       </div>
                     </div>
@@ -2502,8 +2649,6 @@ export default function Home() {
         onOpenChange={(o) => {
           if (!o) {
             setCamera(null);
-            setPlaying(false);
-            setPosition(0);
           }
         }}
       >
@@ -2542,7 +2687,6 @@ export default function Home() {
                   className="btn"
                   onClick={() => {
                     setCamera(null);
-                    setPlaying(false);
                     navigate('Incidents');
                     setZone(camera.zone);
                   }}
@@ -2633,7 +2777,7 @@ export default function Home() {
                 onChange={(e) => setUserEmail(e.target.value)}
               />
             </label>
-            <label className="field">
+            <div className="field">
               Role
               <Pick
                 label="User role"
@@ -2645,10 +2789,10 @@ export default function Home() {
                     : ['School Admin', 'Discipline Teacher']
                 }
               />
-            </label>
+            </div>
             {privileged &&
               !['Internal Ops', 'System Admin'].includes(userRole) && (
-                <label className="field">
+                <div className="field">
                   Assigned school
                   <Pick
                     label="Assigned school"
@@ -2656,7 +2800,7 @@ export default function Home() {
                     onChange={setUserSchool}
                     options={schools}
                   />
-                </label>
+                </div>
               )}
             <div className="setting-line">
               <span>Account active</span>

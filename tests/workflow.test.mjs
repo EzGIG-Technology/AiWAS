@@ -65,3 +65,89 @@ test('spreadsheet exports neutralize formulas and preserve quotes and commas', (
   assert.equal(csvCell('hello, "team"'), '"hello, ""team"""');
   assert.equal(csvCell(' @SUM(1,2)').startsWith('"\''), true);
 });
+
+test('unknown evidence outcomes fail closed instead of counting as reviewed', () => {
+  assert.equal(needsReview({ validation: 'Unrecognized outcome' }), true);
+  assert.match(
+    transitionError(
+      { status: 'Open', validation: '' },
+      'Closed',
+      'Resolution has been recorded',
+    ),
+    /Resolve/,
+  );
+});
+test('malformed and future dates do not enter reporting periods', () => {
+  assert.equal(inPeriod('not-a-date', 'Last 30 days', '2026-09-10'), false);
+  assert.equal(inPeriod('2027-01-01', 'Today', '2026-09-10'), false);
+});
+const { schoolSetupError, workItemError } = await import('../app/workflow.ts');
+test('school setup rejects whitespace-only fields and normalized duplicates', () => {
+  assert.notEqual(
+    schoolSetupError('  ', 'Admin', 'admin@example.com', 'Gate', []),
+    '',
+  );
+  assert.notEqual(
+    schoolSetupError(' School A ', 'Admin', 'admin@example.com', 'Gate', [
+      'school a',
+    ]),
+    '',
+  );
+  assert.notEqual(
+    schoolSetupError('School B', '   ', 'admin@example.com', 'Gate', []),
+    '',
+  );
+  assert.notEqual(
+    schoolSetupError('School B', 'Admin', 'admin@example.com', '   ', []),
+    '',
+  );
+});
+test('school setup validates email and accepts a complete new workspace', () => {
+  assert.notEqual(
+    schoolSetupError('School B', 'Admin', 'invalid@', 'Gate', []),
+    '',
+  );
+  assert.equal(
+    schoolSetupError('School B', 'Admin', 'admin@example.com', 'Gate', []),
+    '',
+  );
+});
+test('work items reject empty summaries, insufficient details and impossible dates', () => {
+  assert.notEqual(workItemError('   ', 'A detailed action', '2026-09-12'), '');
+  assert.notEqual(workItemError('Inspect camera', 'short', '2026-09-12'), '');
+  assert.notEqual(
+    workItemError('Inspect camera', 'A detailed action', '2026-02-30'),
+    '',
+  );
+  assert.equal(
+    workItemError('Inspect camera', 'A detailed action', '2026-09-12'),
+    '',
+  );
+});
+
+const { transitionChanges } = await import('../app/workflow.ts');
+test('reopening a resolved case returns it to the evidence and acknowledgement queues', () => {
+  const closed = {
+    status: 'Closed',
+    validation: 'False alarm',
+    acknowledged: true,
+  };
+  const reopened = {
+    ...closed,
+    ...transitionChanges(closed, 'Open', 'New witness evidence has arrived'),
+  };
+  assert.equal(needsReview(reopened), true);
+  assert.equal(reopened.acknowledged, false);
+  assert.equal(reopened.status, 'Open');
+});
+test('transition helper refuses closure without a final evidence decision', () => {
+  assert.throws(
+    () =>
+      transitionChanges(
+        { status: 'Open', validation: 'Pending' },
+        'Closed',
+        'A detailed resolution',
+      ),
+    /Resolve/,
+  );
+});

@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import {
   Activity,
   ArrowDownToLine,
-  ArrowRight,
   ArrowUpRight,
   Building2,
   Check,
@@ -12,11 +11,9 @@ import {
   ChevronRight,
   ClipboardCheck,
   Clock3,
-  DoorOpen,
   GraduationCap,
   Info,
   LockKeyhole,
-  MapPin,
   Search,
   ShieldCheck,
   Users,
@@ -52,7 +49,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { schools, cameras, type Incident } from './data';
+import { schools as sampleSchools, type Incident } from './data';
 
 function Choice({
   value,
@@ -621,7 +618,9 @@ const statusTone = (s: string) =>
         ? 'amber'
         : 'neutral';
 export function PresencePanel({ school }: { school: string }) {
-  const [pupils, setPupils] = useState(presenceSeed),
+  const [pupils, setPupils] = useState(() =>
+      sampleSchools.includes(school) ? presenceSeed : [],
+    ),
     [query, setQuery] = useState(''),
     [filter, setFilter] = useState('All records'),
     [classFilter, setClassFilter] = useState('All classes'),
@@ -660,7 +659,7 @@ export function PresencePanel({ school }: { school: string }) {
     setReason('');
     setError('');
   };
-  const save = (e: React.FormEvent) => {
+  const save = (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!pupil || !reason.trim()) {
       setError('Add the evidence or confirmation behind this update.');
@@ -986,7 +985,7 @@ export function PresencePanel({ school }: { school: string }) {
                   {pupil.status}
                 </span>
               </div>
-              <label className="field">
+              <div className="field">
                 Confirmed status
                 <Choice
                   label="Confirmed presence status"
@@ -999,8 +998,8 @@ export function PresencePanel({ school }: { school: string }) {
                     'Needs verification',
                   ]}
                 />
-              </label>
-              <label className="field">
+              </div>
+              <div className="field">
                 Verification source
                 <Choice
                   label="Verification source"
@@ -1014,7 +1013,7 @@ export function PresencePanel({ school }: { school: string }) {
                     'Unable to verify',
                   ]}
                 />
-              </label>
+              </div>
               <label className="field">
                 Reason or evidence
                 <textarea

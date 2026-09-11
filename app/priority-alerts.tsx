@@ -1,12 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
 import {
-  Siren,
   Play,
   Check,
   ChevronRight,
   Clock3,
-  Radio,
   ShieldCheck,
   ScanLine,
 } from 'lucide-react';
@@ -25,12 +23,6 @@ export const scenarioOptions = [
   'Crowd threshold exceeded',
   'Restricted-area entry',
   'Possible visible blade',
-];
-const scenarioCategories = [
-  'Fighting',
-  'Crowd counting',
-  'Restricted area intrusion',
-  'Visible blade concern',
 ];
 export function PriorityAlerts({
   incidents,
@@ -63,7 +55,7 @@ export function PriorityAlerts({
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [analysis]);
+  }, [analysis, onCreate]);
   const active = incidents
     .filter((i) => i.status !== 'Closed')
     .sort(
@@ -230,11 +222,11 @@ export function PriorityAlerts({
         </div>
       )}
       {!analysis && last && (
-        <div className="analysis-complete" role="status">
+        <output className="analysis-complete">
           <Check size={15} />
           {last}: analysis complete · New unverified alert added. Human review
           required.
-        </div>
+        </output>
       )}
     </section>
   );
