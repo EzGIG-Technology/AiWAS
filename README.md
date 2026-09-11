@@ -43,3 +43,15 @@ The existing private demo is managed separately through Sites:
 https://aiwas-safety-workspace.blossomjason61.chatgpt.site
 
 Pushing to this GitHub repository does not automatically update that deployment.
+
+## Vercel deployment
+
+Connect this repository with the project root set to the repository root.
+`vercel.json` selects Vite, runs `npm run build:vercel`, and publishes
+`dist/vercel`. That folder includes the application HTML, JavaScript, styles,
+self-hosted fonts and mock media. Navigation uses URL fragments.
+
+The default `npm run build` is the original Sites/Cloudflare Workers build;
+its server bundle is not a Vercel deployment artifact. Vercel uses the separate
+static entry in `vercel-entry/main.tsx`, which renders the same application.
+No backend or authentication service is provided by this static build.
