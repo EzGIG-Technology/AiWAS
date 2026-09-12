@@ -74,6 +74,12 @@ The [full UI guide](docs/full-ui-concept-guide.md) maps all 33 study areas to in
 
 Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, rendering and static-build checks.
 
+## 2026 platform audit and impact roadmap
+
+The [platform audit and impact roadmap](docs/research/2026-platform-audit-and-impact-roadmap.md) re-runs every automated check, completes the browser interaction QA that earlier passes recorded as blocked, and ranks improvements against the external evidence base and the Malaysian policy position as at September 2026. The accompanying [feature impact ranking](docs/research/feature-impact-ranking.csv) scores 19 recommendations plus 6 explicit exclusions by school impact, effort and whether cameras are required.
+
+Headline findings: verification is clean (TypeScript, 27/27 tests, static build, 21 screens in a browser with no console errors, no overflow at 375 px), but the running UI still presents bullying as an AI detection with a confidence score, two contradictory detection taxonomies ship at once, and the highest-impact improvements — confidential reporting, structured threat-assessment casework, MOE system integration and Bahasa Melayu — need no cameras at all.
+
 ## Detection studio and pilot governance
 
 The Detection studio adds 24 video-candidate, sensor-integration and staff-report concepts, configurable demonstration rules, ten-second scenarios and a synthetic evaluation ledger. Pilot governance adds nine approval, participation, commissioning, training and evidence-policy workflows. See the [surveillance capability audit](docs/research/surveillance-capability-audit.md), [document traceability](docs/research/jpn-ui-traceability.csv) and [capability register](docs/research/detection-capability-register.csv). Presentation references are intentionally kept outside the platform UI.
