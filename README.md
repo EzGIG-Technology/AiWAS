@@ -73,3 +73,7 @@ Priority recommendations include confidential safeguarding, emergency escalation
 The [full UI guide](docs/full-ui-concept-guide.md) maps all 33 study areas to interactive demonstration workflows across safeguarding, emergency response, hostel operations, movement and visitors, facilities and health, activities and continuity, and platform readiness. Nine synthetic scene pairs illustrate the experience. These remain fictional frontend workflows, not connected live services.
 
 Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, rendering and static-build checks.
+
+## Detection studio and pilot governance
+
+The Detection studio adds 24 video-candidate, sensor-integration and staff-report concepts, configurable demonstration rules, ten-second scenarios and a synthetic evaluation ledger. Pilot governance adds nine approval, participation, commissioning, training and evidence-policy workflows. See the [surveillance capability audit](docs/research/surveillance-capability-audit.md), [document traceability](docs/research/jpn-ui-traceability.csv) and [capability register](docs/research/detection-capability-register.csv). Presentation references are intentionally kept outside the platform UI.

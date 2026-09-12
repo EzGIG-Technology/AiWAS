@@ -344,6 +344,40 @@ function FeaturePanel({
         </p>
       </section>
     );
+  if (module.id === 'pilot-governance')
+    return (
+      <section className="concept-special">
+        <h3>Pilot review checkpoint</h3>
+        <p>
+          Record the reviewer’s finding and update the supporting fields in
+          Record details. This records a demonstration review, not external
+          approval.
+        </p>
+        <label>
+          Review finding
+          <textarea
+            aria-label="Pilot review finding"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Summarise the remaining issue or reviewed evidence…"
+          />
+        </label>
+        <button
+          className="btn"
+          disabled={message.trim().length < 10}
+          onClick={() => {
+            onChange(
+              { checkpoint: message.trim() },
+              `Pilot checkpoint: ${message.trim()}`,
+            );
+            setMessage('');
+          }}
+        >
+          Record review checkpoint
+        </button>
+        <p>Latest checkpoint: {record.values.checkpoint || 'Not recorded'}</p>
+      </section>
+    );
   if (module.id === 'platform-readiness')
     return (
       <section className="concept-special">

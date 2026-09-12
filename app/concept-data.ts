@@ -41,6 +41,81 @@ const field = (
 });
 export const conceptModules: ConceptModule[] = [
   {
+    id: 'pilot-governance',
+    title: 'Pilot governance',
+    subtitle:
+      'Agree the scope, protect participation and document the three-school pilot.',
+    icon: 'shield',
+    scene: 'hall',
+    mediaNote:
+      'Synthetic public assembly-area context. No real school approval or consent is represented.',
+    action: 'Create pilot record',
+    topics: [
+      'JPN / PPD / school approvals',
+      'Participation & parental consent',
+      'CCTV compatibility & commissioning',
+      'Public-area privacy assessment',
+      'Funding & scope reconciliation',
+      'Staff training & SOP rehearsal',
+      'Pilot milestones & evaluation',
+      'Evidence disposal & retention review',
+      'Authority routing agreement',
+    ],
+    stages: [
+      'Draft',
+      'Review',
+      'Actions underway',
+      'Verification',
+      'Completed',
+    ],
+    checks: [
+      'Responsible reviewer and source references recorded',
+      'Unresolved scope conflicts addressed',
+      'Participation and public-area privacy reviewed',
+      'Outcome and supporting evidence reference recorded',
+    ],
+    fields: [
+      field('reference', 'Approval / evidence reference (fictional)'),
+      field('decision', 'Review decision', [
+        'Pending clarification',
+        'Changes required',
+        'Agreed for demonstration',
+      ]),
+      field('nextAction', 'Next action / unresolved issue'),
+    ],
+    samples: [
+      {
+        title: 'Three-school pilot scope review',
+        topic: 'JPN / PPD / school approvals',
+        location: 'School administration',
+        priority: 'Medium',
+        details:
+          'Fictional coordination record: verify JPN and PPD references, principal and PIBG acknowledgement, school selection and the final pilot dates. No approval is asserted.',
+        values: {
+          reference: 'DEMO-JPN-001',
+          decision: 'Pending clarification',
+          nextAction: 'Agree pilot dates and obtain signed scope',
+        },
+      },
+      {
+        title: 'Voluntary participation and consent review',
+        topic: 'Participation & parental consent',
+        location: 'School administration',
+        priority: 'High',
+        details:
+          'Confirm the applicable written-consent process and a workable withdrawal / non-participation arrangement. Do not collect real child records in this demo.',
+        values: {
+          reference: 'DEMO-CONSENT-001',
+          decision: 'Pending clarification',
+          nextAction: 'Confirm written-consent requirements',
+          participant: 'Fictional cohort A',
+          consent: 'Pending',
+          withdrawal: 'Exclude from pilot activities pending decision',
+        },
+      },
+    ],
+  },
+  {
     id: 'safeguarding',
     title: 'Safeguarding',
     subtitle: 'A trusted route from a concern to protection and follow-up.',
@@ -673,6 +748,19 @@ export function conceptAdvanceError(
     )
       return 'Reconcile every sample resident before completing roll call.';
   }
+  if (
+    module.id === 'pilot-governance' &&
+    record.stage === module.stages.length - 2
+  ) {
+    if (record.values.decision !== 'Agreed for demonstration')
+      return 'Resolve the review decision before completing this pilot record.';
+    if (
+      fieldsForTopic(module, record.topic).some(
+        (f) => f.required && !record.values[f.key]?.trim(),
+      )
+    )
+      return 'Complete the supporting pilot fields in Record details before completion.';
+  }
   return '';
 }
 
@@ -681,6 +769,96 @@ export function fieldsForTopic(
   topic: string,
 ): ConceptField[] {
   const extra: ConceptField[] = [];
+  if (module.id === 'pilot-governance') {
+    if (topic.includes('approvals'))
+      extra.push(
+        field('jpn', 'JPN reference'),
+        field('ppd', 'PPD reference'),
+        field('schoolAck', 'Principal / PIBG acknowledgement'),
+        field('cohort', 'Three-school selection status', [
+          'Proposed',
+          'Under review',
+          'Selection recorded',
+        ]),
+      );
+    if (topic.includes('consent'))
+      extra.push(
+        field('participant', 'Fictional participant / cohort reference'),
+        field('consent', 'Participation status', [
+          'Pending',
+          'Consent recorded',
+          'Declined',
+          'Withdrawn',
+        ]),
+        field('withdrawal', 'Non-participation / withdrawal arrangement'),
+      );
+    if (topic.includes('CCTV'))
+      extra.push(
+        field('supply', 'Camera provision', [
+          'Existing CCTV',
+          'Third-party upgrade review',
+          'Micropay upgrade review',
+        ]),
+        field(
+          'compatibility',
+          'Resolution / protocol / lighting test reference',
+        ),
+        field('coverage', 'Coverage and connectivity gaps'),
+      );
+    if (topic.includes('privacy'))
+      extra.push(
+        field('placement', 'Public-area placement review'),
+        field('exclusions', 'Private areas excluded'),
+        field('retentionScope', 'Video / metadata retention reconciliation'),
+      );
+    if (topic.includes('Funding'))
+      extra.push(
+        field('payer', 'Funding assurance reference'),
+        field('schoolCost', 'School / parent charge', [
+          'None in agreed pilot scope',
+          'Unresolved scope — do not proceed',
+        ]),
+        field('budget', 'Budget discrepancy resolution'),
+      );
+    if (topic.includes('training'))
+      extra.push(
+        field('attendees', 'Staff / team references'),
+        field('rehearsal', 'Scenario and acknowledgement test'),
+        field('sop', 'Approved SOP reference'),
+      );
+    if (topic.includes('milestones'))
+      extra.push(
+        field('phase', 'Pilot phase', [
+          'Month 1 — preparation',
+          'Month 2 — monitoring',
+          'Month 3 — evaluation',
+        ]),
+        field('dates', 'Agreed start / finish dates'),
+        field('evaluation', 'Evaluation cohort and metric definitions'),
+      );
+    if (topic.includes('disposal'))
+      extra.push(
+        field('evidenceDecision', 'Evidence status', [
+          'Unverified candidate',
+          'Confirmed incident',
+          'False alarm / routine material',
+        ]),
+        field('disposal', 'Disposal / retention decision reference'),
+        field('legalHold', 'Authorised hold or release review'),
+      );
+    if (topic.includes('routing'))
+      extra.push(
+        field('recipients', 'School / JPN / KPM / authority recipients'),
+        field('routeSop', 'Authorised escalation protocol reference'),
+        field('channel', 'Notification channel', [
+          'WhatsApp demo',
+          'Dashboard demo',
+          'Emergency contact rehearsal',
+        ]),
+        field('fallback', 'Acknowledgement timeout and fallback action'),
+      );
+  }
+
   if (/Cyberbullying/.test(topic))
     extra.push(
       field('reference', 'Evidence reference (do not upload abusive material)'),

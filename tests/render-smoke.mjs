@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import assert from 'node:assert/strict';
-import Home, {ConceptWorkspace,ReportingPreview} from '../dist/audit-ssr/render-entry.js';
+import Home, {ConceptWorkspace,ReportingPreview,DetectionStudio} from '../dist/audit-ssr/render-entry.js';
 import {conceptModules} from '../app/concept-data.ts';
 import {initialUsers,schools} from '../app/data.ts';
 const html = renderToString(React.createElement(Home));
@@ -30,4 +30,10 @@ const restricted=renderToString(React.createElement(ConceptWorkspace,{view:'Plat
 assert.equal(restricted,'','Platform preview must be hidden from school workspace');
 const portal=renderToString(React.createElement(ReportingPreview,{school:schools[0],onReport:()=> 'DEMO'}));
 assert.ok(portal.includes('What would you like help with?'));
-console.log('PASS: all seven concept workspaces, platform scope guard and pupil/family portal render.');
+console.log('PASS: all concept workspaces, platform scope guard and pupil/family portal render.');
+
+const studio=renderToString(React.createElement(DetectionStudio,{school:schools[0],onAlert:()=>{},onOpen:()=>{}}));
+for(const label of ['Capability lab','PoC evaluation','Platform coverage','Save demonstration rule','Restricted-area entry'])assert.ok(studio.includes(label));
+console.log('PASS: Detection studio renders capability, configuration and research coverage controls.');
+
+for(const forbidden of ['JPN proposal','JPN document','JPN NS AIWAS.pdf','PDF page','80% baseline'])assert.ok(!studio.includes(forbidden));

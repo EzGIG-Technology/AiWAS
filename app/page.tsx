@@ -94,6 +94,7 @@ import {
 } from './workflow';
 import { conceptModules } from './concept-data';
 import { ConceptWorkspace } from './concept-workspace';
+import { DetectionStudio } from './detection-studio';
 import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
 import {
@@ -114,6 +115,8 @@ const nav = [
   ['Schools', School],
   ['Attendance & presence', Users],
   ['Live cameras', Video],
+  ['Detection studio', SlidersHorizontal],
+  ['Pilot governance', ClipboardCheck],
   ['Incidents', Siren],
   ['Response workspace', ClipboardCheck],
   ['Safeguarding', ShieldCheck],
@@ -136,6 +139,7 @@ const headings: Record<string, string> = {
   Schools: 'School directory',
   'Attendance & presence': 'Attendance & presence',
   'Live cameras': 'Live cameras',
+  'Detection studio': 'Detection studio',
   Incidents: 'Incident log',
   'Response workspace': 'Response workspace',
   'Validation queue': 'Validation queue',
@@ -152,6 +156,8 @@ const subtitles: Record<string, string> = {
     'Manage coverage, configuration and access across connected schools.',
   'Attendance & presence':
     'Reconcile attendance, entry and departure records for your school.',
+  'Detection studio':
+    'Explore evidence, configure review rules and evaluate the pilot.',
   'Live cameras': 'Monitor each zone with anonymous, real-time detection.',
   Incidents: 'Every flagged event, from detection to resolution.',
   'Response workspace':
@@ -459,8 +465,12 @@ export default function Home() {
     setIncidents((all) => [item, ...all]);
     toast.info(`${item.severity} priority: ${item.category}`);
   };
+  const reportDate = schoolIncidents.reduce(
+    (latest, i) => (i.date > latest ? i.date : latest),
+    '2026-09-10',
+  );
   const confirmed = schoolIncidents.filter(
-    (i) => i.validation === 'Confirmed' && i.date === '2026-09-10',
+    (i) => i.validation === 'Confirmed' && i.date === reportDate,
   );
   const filtered = schoolIncidents.filter(
     (i) =>
@@ -471,10 +481,6 @@ export default function Home() {
       `${i.id} ${i.category} ${i.zone} ${i.assigned}`
         .toLowerCase()
         .includes(search.toLowerCase()),
-  );
-  const reportDate = schoolIncidents.reduce(
-    (latest, i) => (i.date > latest ? i.date : latest),
-    '2026-09-10',
   );
   const analysisIncidents = schoolIncidents.filter((i) =>
     inPeriod(i.date, period, reportDate),
@@ -919,7 +925,17 @@ export default function Home() {
         <main className="content">
           <div className="page-title">
             <div>
-              <div className="eyebrow">THURSDAY, 10 SEPTEMBER 2026</div>
+              <div className="eyebrow">
+                {new Date(reportDate + 'T12:00:00+08:00')
+                  .toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    timeZone: 'Asia/Kuala_Lumpur',
+                  })
+                  .toUpperCase()}
+              </div>
               <h1>
                 {view === 'Overview' && privileged
                   ? 'Platform overview'
@@ -1460,7 +1476,9 @@ export default function Home() {
                           <span>Detection confidence</span>
                           <strong>
                             {i.id.match(/^(STAFF-|SIM-)/)
-                              ? 'Staff report'
+                              ? i.id.startsWith('SIM-')
+                                ? 'Simulated event'
+                                : 'Staff report'
                               : `${i.confidence}%`}
                           </strong>
                         </div>
@@ -1509,6 +1527,13 @@ export default function Home() {
               </div>
             </>
           )}
+          <div hidden={view !== 'Detection studio'}>
+            <DetectionStudio
+              school={school}
+              onAlert={(item) => setIncidents((all) => [item, ...all])}
+              onOpen={openIncident}
+            />
+          </div>
           <ConceptWorkspace
             view={view}
             school={school}
@@ -2525,7 +2550,9 @@ export default function Home() {
                     <span>Detection confidence</span>
                     <strong>
                       {selected.id.match(/^(STAFF-|SIM-)/)
-                        ? 'Staff report'
+                        ? selected.id.startsWith('SIM-')
+                          ? 'Simulated event'
+                          : 'Staff report'
                         : `${selected.confidence}%`}{' '}
                       <small>
                         {selected.id.match(/^(STAFF-|SIM-)/)
