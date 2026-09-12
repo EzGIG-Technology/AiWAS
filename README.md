@@ -61,3 +61,9 @@ No backend or authentication service is provided by this static build.
 The Response workspace adds manual concern reports, incident follow-ups, maintenance tasks and a campus zone register. Superadmins can add demo schools from the School directory. All new records remain in memory for the current page session; authentication, shared storage, live CCTV and notifications are not implemented.
 
 See [system audit and user journeys](docs/system-audit-and-user-journeys.md) for detailed flows, fixes, release blockers and verification limits. Run `node --test tests/workflow.test.mjs` to check the incident lifecycle and reporting helpers.
+
+## Malaysian school safety research
+
+The [Malaysian school safety study](docs/research/malaysian-school-safety-study.md) reviews reported issues from 2022 through 11 September 2026, drawing on 36 public sources. It distinguishes national statistics, reported cases and product recommendations. The accompanying [33-area feature-gap register](docs/research/malaysia-feature-gap-register.csv) maps current demo coverage to recommended safety and operational workflows.
+
+Priority recommendations include confidential safeguarding, emergency escalation, hostel supervision, verified pupil handovers, facilities inspections and weather/disaster readiness. These are research recommendations, not claims that those live services are implemented.

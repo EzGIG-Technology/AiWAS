@@ -1,0 +1,34 @@
+Need,Current position (demo only),Recommended addition,Camera contribution and limit,Priority
+Visible fighting or assault,Partial,"Verified ingestion, acknowledgement escalation, response outcome and model evaluation",May flag visible movement; cannot establish context or guilt,P0
+"Repeated bullying, intimidation and extortion",Partial,"Link repeated human reports, protective actions and victim follow-up",Most relational history is outside a single clip,P0
+"Verbal, discriminatory or social exclusion bullying",Gap,"Child-friendly reporting, trusted contact and case review",No reliable visual-only classification,P0
+Cyberbullying and threats,Gap,"Reporting of links/screenshots where appropriate, restricted review and referral",CCTV cannot see private online activity,P1
+"Sexual harassment, grooming or abuse",Gap,"Separate safeguarding case, restricted access, conflict-of-interest escalation",No automated sexual-abuse judgment; protect sensitive spaces,P0
+Adult misconduct or abuse of authority,Gap,Route outside the accused person’s reporting line; record referral and protection,Camera evidence can be incomplete or absent,P0
+Visible weapon or credible threat,Planned / synthetic demo,Immediate manual emergency trigger plus evaluated detection as supplementary input,A negative camera result never establishes absence of a weapon,P0 response; later detector
+Emotional distress or self-harm concern,Partial generic report,Restricted wellbeing referral and human welfare check,No emotion scoring or suicide prediction,P0
+Medical collapse or injury,Planned / generic report,"First-aider dispatch, emergency information access and handover timeline",Fall cues may assist; no diagnosis,P0 response
+Smoking/vaping/substance concern,Partial,"Support referral, repeat concern review and carefully evaluated sensor options",Small objects/occlusion limit camera performance; no filming in toilets,P1
+Missing pupil / unexplained absence,Partial presence demo,"Reconcile class, gate, hostel, authorised leave and transport records",Anonymous counts do not identify who is missing,P0
+Visitor or contractor access,Partial intrusion concept,"Host approval, purpose, time limit, sign-out and escort status",Detection cannot infer authorisation or occupation from appearance,P1
+Boarding-school supervision,Gap,"Duty roster, rounds, roll call, leave-return reconciliation and shift handover",Covers approved common areas only,P0 for hostel pilots
+Retaliation after a complaint,Gap,"Safety-plan review, follow-up schedule and independent escalation","May be subtle, relational or off-camera",P0
+Emergency family contact/reunification,Gap,"Contact attempts, authorised collection and unresolved family-contact queue",Camera footage cannot confirm guardian authority,P0
+Fire and smoke,Planned,"Certified alarm linkage, evacuation workflow and drill records",Video supplements alarms; cannot replace them,P0 readiness
+Electrical hazards,Gap,"Inspection register, defect escalation and competent-person clearance",A normal-looking image does not establish safety,P0
+"Structural defects, drains and unsafe equipment",Partial maintenance tasks,"General asset register, unsafe-zone restriction and verified reopening",Useful documentation; no structural certification,P0
+Flood and severe-weather disruption,Gap,"Closure status, relocation, damage records and reopening checks",Streams can fail during the emergency,P0 in exposed sites
+Heat and outdoor activities,Gap,"Weather notice, timetable-linked review, water availability and authorised decisions",Standard RGB cameras cannot diagnose heat illness,P1
+Food safety / canteen hygiene,Gap,"Inspection schedule, meal/provider traceability and illness reports",Cannot detect pathogens or food temperature reliably from ordinary video,P1
+Infectious-disease clusters,Gap,Restricted symptom/absence aggregation and health-authority workflow,No camera diagnosis,P1
+"Toilets, water and cleaning",Partial general tasks,"Cleaning rounds, water interruption, repair SLA and privacy-safe reporting",No cameras in intimate spaces,P1
+Gate congestion and pedestrian conflict,Partial,"Scheduled traffic plans, gate duty and actionable near-miss review",Zone analytics can assist under validated conditions,P1
+School transport and collection,Gap,"Boarding/alighting records, authorised handover and operator checks",Need vehicle/operator data beyond campus cameras,P1
+"Excursions, sports and water activities",Gap,"Risk assessment, consent, support needs, provider checks and headcounts",Campus cameras have little coverage,P1
+Accessibility / PPKI support,Gap,Accessible reporting and individual evacuation/collection assistance,Do not infer disability or support needs from video,P0 design requirement
+"Camera obstruction, stale video and network failure",Partial / planned,"Frame-freshness checks, tamper signals, health alerts and owner escalation",A connected device can still show unusable video,P0
+Power outage and communications failure,Gap,"Backup power status, offline contact lists and tested fallback procedures",Central processing becomes unavailable without connectivity,P0
+Attendance administration,Partial,Approved attendance import/reconciliation and unresolved exceptions,Facial recognition is not required for this workflow,P1
+Reporting burden and case accountability,Partial,"Capture once, reuse records, approval trail and supported exports",Operational workflow rather than visual detection,P0
+"Theft, vandalism and lost property",Partial,"Asset-linked cases, authorised evidence retrieval and resolution",Lower priority than immediate harm; avoid excessive alerts,P2
+Uniform/person-type classification,PRD future item,Defer; assess necessity and actual school benefit,"Appearance is not a dependable basis for role, sex or authorisation",P2 / reconsider
