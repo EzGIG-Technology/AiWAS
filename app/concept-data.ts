@@ -419,85 +419,6 @@ export const conceptModules: ConceptModule[] = [
     ],
   },
   {
-    id: 'facilities-health',
-    title: 'Facilities & health',
-    subtitle:
-      'Prevent avoidable harm with inspections, traceability and verified repairs.',
-    icon: 'wrench',
-    scene: 'inspection',
-    mediaNote:
-      'Synthetic inspection scene. A photo supports a record; it does not certify an asset as safe.',
-    action: 'Create inspection or health record',
-    topics: [
-      'Electrical / fire-equipment inspection',
-      'Structural or sports-equipment defect',
-      'Toilets / water / cleaning',
-      'Canteen food safety',
-      'Illness cluster review',
-      'Asset theft / lost property',
-      'Vaping support referral',
-    ],
-    stages: [
-      'Reported',
-      'Assessed',
-      'Action underway',
-      'Verification',
-      'Closed',
-    ],
-    checks: [
-      'Affected asset / group identified',
-      'Immediate restriction or support action recorded',
-      'Responsible person completed action',
-      'Authorised verification documented',
-    ],
-    fields: [
-      field('asset', 'Asset / meal batch / group'),
-      field('specialist', 'Responsible specialist'),
-      field('restriction', 'Interim action', [
-        'No restriction required',
-        'Area temporarily restricted',
-        'Equipment isolated by authorised staff',
-        'Health review requested',
-      ]),
-      field('evidence', 'Verification required', [
-        'Staff checklist',
-        'Competent-person clearance',
-        'Health-authority follow-up',
-        'Contractor completion and staff check',
-      ]),
-    ],
-    samples: [
-      {
-        title: 'Sports goalpost anchoring inspection',
-        topic: 'Structural or sports-equipment defect',
-        location: 'Sports field',
-        priority: 'High',
-        details:
-          'Fictional preventative inspection. Keep the equipment out of use until an appropriate person verifies the issue. A video cannot certify structural safety.',
-        values: {
-          asset: 'SPORT-014 · goalpost',
-          specialist: 'Facilities lead',
-          restriction: 'Area temporarily restricted',
-          evidence: 'Competent-person clearance',
-        },
-      },
-      {
-        title: 'Canteen meal-batch follow-up',
-        topic: 'Canteen food safety',
-        location: 'Canteen',
-        priority: 'High',
-        details:
-          'Fictional cluster of reported symptoms linked for human review. Record meal details and contact the responsible health team through approved procedures. No diagnosis is inferred.',
-        values: {
-          asset: 'Sample lunch batch B-014',
-          specialist: 'School health liaison',
-          restriction: 'Health review requested',
-          evidence: 'Health-authority follow-up',
-        },
-      },
-    ],
-  },
-  {
     id: 'activities-continuity',
     title: 'Activities & continuity',
     subtitle:
@@ -1071,12 +992,12 @@ export const studyCoverage: {
     ['Fire and smoke', 'Emergency centre', 'Evacuation / fire alarm'],
     [
       'Electrical hazards',
-      'Facilities & health',
+      'Removed from current scope',
       'Electrical / fire-equipment inspection',
     ],
     [
       'Structural defects, drains and unsafe equipment',
-      'Facilities & health',
+      'Removed from current scope',
       'Structural or sports-equipment defect',
     ],
     [
@@ -1091,17 +1012,17 @@ export const studyCoverage: {
     ],
     [
       'Food safety / canteen hygiene',
-      'Facilities & health',
+      'Removed from current scope',
       'Canteen food safety',
     ],
     [
       'Infectious-disease clusters',
-      'Facilities & health',
+      'Removed from current scope',
       'Illness cluster review',
     ],
     [
       'Toilets, water and cleaning',
-      'Facilities & health',
+      'Removed from current scope',
       'Toilets / water / cleaning',
     ],
     [
@@ -1146,7 +1067,7 @@ export const studyCoverage: {
     ],
     [
       'Theft, vandalism and lost property',
-      'Facilities & health',
+      'Removed from current scope',
       'Asset theft / lost property',
     ],
     [

@@ -77,3 +77,7 @@ Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, 
 ## Detection studio and pilot governance
 
 The Detection studio adds 24 video-candidate, sensor-integration and staff-report concepts, configurable demonstration rules, ten-second scenarios and a synthetic evaluation ledger. Pilot governance adds nine approval, participation, commissioning, training and evidence-policy workflows. See the [surveillance capability audit](docs/research/surveillance-capability-audit.md), [document traceability](docs/research/jpn-ui-traceability.csv) and [capability register](docs/research/detection-capability-register.csv). Presentation references are intentionally kept outside the platform UI.
+
+## Campus insights
+
+Campus insights adds a six-zone school heatmap, occupancy/movement/dwell modes, sampled-day replay, trends, gate statistics and staff-owned planning actions. Facilities & health has been removed from the current UI. The earlier 33-area study remains historical; six facility-workspace entries are now explicitly outside the selected product scope. See [everyday camera value research](docs/research/campus-camera-value-study.md).

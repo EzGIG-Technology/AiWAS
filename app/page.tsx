@@ -4,6 +4,7 @@ import {
   ShieldCheck,
   Settings2,
   LayoutDashboard,
+  MapPin,
   Video,
   Siren,
   ClipboardCheck,
@@ -95,6 +96,7 @@ import {
 import { conceptModules } from './concept-data';
 import { ConceptWorkspace } from './concept-workspace';
 import { DetectionStudio } from './detection-studio';
+import { CampusInsights } from './campus-insights';
 import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
 import {
@@ -112,6 +114,7 @@ import {
 } from './data';
 const nav = [
   ['Overview', LayoutDashboard],
+  ['Campus insights', MapPin],
   ['Schools', School],
   ['Attendance & presence', Users],
   ['Live cameras', Video],
@@ -123,7 +126,6 @@ const nav = [
   ['Emergency centre', Siren],
   ['Hostel operations', School],
   ['Movement & visitors', Users],
-  ['Facilities & health', Activity],
   ['Activities & continuity', SlidersHorizontal],
   ['Platform readiness', Settings2],
   ['Validation queue', ClipboardCheck],
@@ -136,6 +138,7 @@ const nav = [
 const headings: Record<string, string> = {
   ...Object.fromEntries(conceptModules.map((m) => [m.title, m.title])),
   Overview: 'School command centre',
+  'Campus insights': 'Campus insights',
   Schools: 'School directory',
   'Attendance & presence': 'Attendance & presence',
   'Live cameras': 'Live cameras',
@@ -152,6 +155,8 @@ const headings: Record<string, string> = {
 const subtitles: Record<string, string> = {
   ...Object.fromEntries(conceptModules.map((m) => [m.title, m.subtitle])),
   Overview: 'Today’s priorities, people and campus coverage.',
+  'Campus insights':
+    'People, movement and everyday value from your camera network.',
   Schools:
     'Manage coverage, configuration and access across connected schools.',
   'Attendance & presence':
@@ -972,6 +977,22 @@ export default function Home() {
             )}
           </div>
           {view === 'Overview' && (
+            <button
+              className="campus-overview-link"
+              onClick={() => navigate('Campus insights')}
+            >
+              <MapPin size={24} />
+              <span>
+                <strong>Where is the school busiest?</strong>
+                <small>
+                  Explore the campus heatmap, movement trends and daily planning
+                  insights.
+                </small>
+              </span>
+              <ArrowUpRight size={20} />
+            </button>
+          )}
+          {view === 'Overview' && (
             <section className="concept-launchpad">
               <div>
                 <strong>Safety & operations</strong>
@@ -1527,6 +1548,14 @@ export default function Home() {
               </div>
             </>
           )}
+          <div hidden={view !== 'Campus insights'}>
+            <CampusInsights
+              school={school}
+              cameras={schoolCameras}
+              onAlert={(item) => setIncidents((all) => [item, ...all])}
+              onOpen={openIncident}
+            />
+          </div>
           <div hidden={view !== 'Detection studio'}>
             <DetectionStudio
               school={school}
