@@ -7,6 +7,16 @@ export const mediaSources: Record<
   string,
   { label: string; boxes: number[][]; tag: string }
 > = {
+  hostel: {
+    label: 'Hostel common-area duty check',
+    boxes: [],
+    tag: 'Common-area supervision',
+  },
+  inspection: {
+    label: 'Sports equipment safety inspection',
+    boxes: [],
+    tag: 'Preventive inspection',
+  },
   courtyard: {
     label: 'Courtyard anonymous tracking',
     boxes: [
@@ -103,7 +113,7 @@ export function CameraStill({
   return (
     <div className="camera-still">
       <img
-        src={`/media/${scene}.jpg`}
+        src={`/media/${scene}.${['hostel', 'inspection'].includes(scene) ? 'png' : 'jpg'}`}
         alt={`Synthetic scene: ${data.label}. Adults in a staged demonstration.`}
         loading="lazy"
         onError={() => setFailed(scene)}
@@ -148,7 +158,7 @@ export function DemoVideo({
       <video
         key={scene}
         src={`/media/${scene}.mp4`}
-        poster={`/media/${scene}.jpg`}
+        poster={`/media/${scene}.${['hostel', 'inspection'].includes(scene) ? 'png' : 'jpg'}`}
         controls={!autoPlay}
         autoPlay={autoPlay}
         muted

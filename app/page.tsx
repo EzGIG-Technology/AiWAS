@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import {
   ShieldCheck,
+  Settings2,
   LayoutDashboard,
   Video,
   Siren,
@@ -91,6 +92,8 @@ import {
   transitionChanges,
   csvCell,
 } from './workflow';
+import { conceptModules } from './concept-data';
+import { ConceptWorkspace } from './concept-workspace';
 import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
 import {
@@ -113,6 +116,13 @@ const nav = [
   ['Live cameras', Video],
   ['Incidents', Siren],
   ['Response workspace', ClipboardCheck],
+  ['Safeguarding', ShieldCheck],
+  ['Emergency centre', Siren],
+  ['Hostel operations', School],
+  ['Movement & visitors', Users],
+  ['Facilities & health', Activity],
+  ['Activities & continuity', SlidersHorizontal],
+  ['Platform readiness', Settings2],
   ['Validation queue', ClipboardCheck],
   ['Analytics', ChartNoAxesCombined],
   ['System health', Activity],
@@ -121,6 +131,7 @@ const nav = [
   ['Users & roles', Users],
 ] as const;
 const headings: Record<string, string> = {
+  ...Object.fromEntries(conceptModules.map((m) => [m.title, m.title])),
   Overview: 'School command centre',
   Schools: 'School directory',
   'Attendance & presence': 'Attendance & presence',
@@ -135,6 +146,7 @@ const headings: Record<string, string> = {
   'Users & roles': 'Users & roles',
 };
 const subtitles: Record<string, string> = {
+  ...Object.fromEntries(conceptModules.map((m) => [m.title, m.subtitle])),
   Overview: 'Today’s priorities, people and campus coverage.',
   Schools:
     'Manage coverage, configuration and access across connected schools.',
@@ -296,7 +308,7 @@ export default function Home() {
   const privileged = role === 'Internal Ops' || role === 'System Admin';
   const canManageUsers = privileged || role === 'School Admin';
   const allowedNav = nav.filter(([n]) => {
-    if (n === 'Schools') return privileged;
+    if (n === 'Schools' || n === 'Platform readiness') return privileged;
     if (n === 'Attendance & presence') return !privileged;
     if (n === 'Detection rules') return privileged;
     if (n === 'Notification routing') return role === 'System Admin';
@@ -824,6 +836,12 @@ export default function Home() {
           <SidebarMenu>
             {allowedNav.map(([label, Icon]) => (
               <SidebarMenuItem key={label}>
+                {label === 'Safeguarding' && (
+                  <p className="nav-label">SAFETY & OPERATIONS</p>
+                )}
+                {label === 'Validation queue' && (
+                  <p className="nav-label">REVIEW & INSIGHTS</p>
+                )}
                 {label === 'Detection rules' && (
                   <p className="nav-label">ADMINISTRATION</p>
                 )}
@@ -937,6 +955,30 @@ export default function Home() {
               </div>
             )}
           </div>
+          {view === 'Overview' && (
+            <section className="concept-launchpad">
+              <div>
+                <strong>Safety & operations</strong>
+                <span>
+                  Open a working area or explore its scenario preview.
+                </span>
+              </div>
+              <div>
+                {conceptModules
+                  .filter((m) => !m.scope || privileged)
+                  .map((m) => (
+                    <button
+                      className="btn"
+                      key={m.id}
+                      onClick={() => navigate(m.title)}
+                    >
+                      {m.title}
+                      <ArrowUpRight size={13} />
+                    </button>
+                  ))}
+              </div>
+            </section>
+          )}
           {view === 'Overview' && privileged && (
             <FleetOverview
               schools={schools}
@@ -1417,12 +1459,12 @@ export default function Home() {
                         <div className="confidence-row">
                           <span>Detection confidence</span>
                           <strong>
-                            {i.id.startsWith('STAFF-')
+                            {i.id.match(/^(STAFF-|SIM-)/)
                               ? 'Staff report'
                               : `${i.confidence}%`}
                           </strong>
                         </div>
-                        {!i.id.startsWith('STAFF-') && (
+                        {!i.id.match(/^(STAFF-|SIM-)/) && (
                           <Progress value={i.confidence} />
                         )}
                         <div className="validation-meta">
@@ -1467,6 +1509,14 @@ export default function Home() {
               </div>
             </>
           )}
+          <ConceptWorkspace
+            view={view}
+            school={school}
+            schools={schools}
+            users={users}
+            privileged={privileged}
+            onAlert={(item) => setIncidents((all) => [item, ...all])}
+          />
           <div hidden={view !== 'Response workspace'}>
             <OperationsPanel
               school={school}
@@ -2474,11 +2524,11 @@ export default function Home() {
                   <div>
                     <span>Detection confidence</span>
                     <strong>
-                      {selected.id.startsWith('STAFF-')
+                      {selected.id.match(/^(STAFF-|SIM-)/)
                         ? 'Staff report'
                         : `${selected.confidence}%`}{' '}
                       <small>
-                        {selected.id.startsWith('STAFF-')
+                        {selected.id.match(/^(STAFF-|SIM-)/)
                           ? 'No AI score'
                           : 'Sample score'}
                       </small>

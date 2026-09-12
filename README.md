@@ -67,3 +67,9 @@ See [system audit and user journeys](docs/system-audit-and-user-journeys.md) for
 The [Malaysian school safety study](docs/research/malaysian-school-safety-study.md) reviews reported issues from 2022 through 11 September 2026, drawing on 36 public sources. It distinguishes national statistics, reported cases and product recommendations. The accompanying [33-area feature-gap register](docs/research/malaysia-feature-gap-register.csv) maps current demo coverage to recommended safety and operational workflows.
 
 Priority recommendations include confidential safeguarding, emergency escalation, hostel supervision, verified pupil handovers, facilities inspections and weather/disaster readiness. These are research recommendations, not claims that those live services are implemented.
+
+## Full school UI concept
+
+The [full UI guide](docs/full-ui-concept-guide.md) maps all 33 study areas to interactive demonstration workflows across safeguarding, emergency response, hostel operations, movement and visitors, facilities and health, activities and continuity, and platform readiness. Nine synthetic scene pairs illustrate the experience. These remain fictional frontend workflows, not connected live services.
+
+Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, rendering and static-build checks.
