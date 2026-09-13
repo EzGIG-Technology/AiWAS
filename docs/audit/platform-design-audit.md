@@ -1,6 +1,6 @@
 # AiWAS product design and feature audit
 
-The application has been reorganised from 22 top-level navigation entries into nine purpose-led sections. Duplicate rule configuration and presentation-style coverage tabs have been removed. The detection matrix now drives one operational configuration journey, while a separate evaluation workspace records pilot results. Campus insights includes a detailed interactive 2D campus plan with anonymous clusters, coverage and incident links. A crimson-led visual system applies across the platform and teacher experience.
+The application has been reorganised from 28 top-level entries in the latest remote version (22 in the earlier local checkout) into nine purpose-led sections. Duplicate rule configuration and presentation-style coverage tabs have been removed. The detection matrix now drives one operational configuration journey, while a separate evaluation workspace records pilot results. Campus insights includes a detailed interactive 2D campus plan with anonymous clusters, coverage and incident links. A crimson-led visual system applies across the platform and teacher experience.
 
 This is a functional front-end demonstration. It does not contain a live detection engine, camera ingestion, authenticated access, push delivery or persistent backend. No claimed model accuracy is treated as validated. Browser visual and click-through verification remains pending because the Mac was locked; the user said it would be unlocked in the morning.
 
@@ -38,6 +38,11 @@ The documents are reference material, not operational instructions. Where they c
 | Pilot governance | Administration → Privacy & approvals | Retained as an approval register, not a top-level presentation page. Create records, assign responsibility and complete approval evidence. |
 | Platform readiness | Administration → Commissioning | Superadmin: commissioning and integration work records with owners, checks and completion conditions. |
 | New detection matrix | Detection centre → Detection rules | One catalogue of 20 event types and two context tags, with per-school/per-zone rules and a linked incident journey. |
+| Operations room | Cameras → Operations room | Preserved from the latest GitHub work: configurable video wall, camera selection, event filtering, snapshot review and acknowledgement. |
+| Edge appliances | Administration → Edge monitoring | Preserved: select an appliance and inspect its sample service/resource health. |
+| Site map | Campus insights → Campus map & movement | Retired the separate 3D view; old `#site-map` links open the new interactive 2D atlas. |
+| Architecture | Administration → Commissioning | Removed the explanatory architecture page from navigation; its old link resolves to commissioning for superadmin. |
+| Detection tuning | Detection centre → Detection rules | Consolidated the separate tuning page into the matrix configuration journey; old links redirect. |
 | New device configuration | Administration → Device configuration | Superadmin: edit frame rate, image size, reconnect delay, logging and incident retention/buffers; validate, save, discard and export the configuration preview. |
 
 Removed within pages: **Platform coverage**, **Workflow coverage**, **What the numbers mean** as standalone tabs; the old detection configuration **Designed for what comes next** block; the overview module launchpad. Useful evidence boundaries remain near the relevant decision rather than in a separate coverage presentation. Facilities & health remains removed. Safety-related fall/collapse detection is represented as an incident, not a new health module.
@@ -70,12 +75,17 @@ The new top-down plan includes classroom subdivisions, a corridor, library, cant
 
 Cluster values reconcile exactly to each synthetic zone count. People dots are illustrative coordinates and do not represent identified pupils or trajectories. The map supports density, people, camera and incident layers; zoom/reset; horizontal/vertical exploration; keyboard-operable zone and cluster controls; camera-sample inspection; and opening linked active incidents. Replay steps through six separate illustrative observation windows, not continuous real tracking.
 
-The platform uses crimson primary actions, a charcoal navigation rail, white working surfaces, warm grey backgrounds, consistent card spacing, compact secondary navigation and functional accent colours. Red priority labels remain distinct from neutral labels and are accompanied by text. The teacher app shares the crimson theme. Reduced-motion preferences are respected.
+The incoming light/dark/system theme control and base-aware media-path fixes were preserved. New working surfaces use the same theme tokens. The platform uses crimson primary actions, a charcoal navigation rail, white working surfaces, warm grey backgrounds, consistent card spacing, compact secondary navigation and functional accent colours. Red priority labels remain distinct from neutral labels and are accompanied by text. The teacher app shares the crimson theme. Reduced-motion preferences are respected.
 
 ## Verification and practical limits
 
-Completed: 41 automated workflow/data tests, 41 school/superadmin route render checks, component rendering, TypeScript checks, app lint and the Vercel build. Tests cover all 22 matrix rows, public-zone constraints, Critical priority guards, invalid thresholds, cluster reconciliation/coordinates, navigation grouping, device configuration, existing closure/reopening, school scope and review rules.
+Completed: 69 automated workflow/data tests, 44 school/superadmin route render checks, component rendering, TypeScript checks, app lint and the Vercel build. Tests cover all 22 matrix rows, public-zone constraints, Critical priority guards, invalid thresholds, cluster reconciliation/coordinates, navigation grouping, device configuration, existing closure/reopening, school scope and review rules.
 
 Not completed: browser visual inspection and real pointer/keyboard/touch journeys because the Mac was locked. Server rendering is not a substitute for that review. The final morning check should cover map layers and zoom, all zone/cluster clicks, saving two rules for different zones, cancelling and completing the timer, tagging an incident, verification/closure/reopening, teacher navigation, device export and narrow-screen layouts.
 
 All state remains in the page session. Actual authentication, delivery, storage policy enforcement, camera calibration, live counts and detection evaluation require backend integration. The plan is illustrative because no surveyed school floor plan or calibrated camera geometry was supplied. Existing media is staged context, including an inert blade prop; it does not validate any detector and does not depict every listed event.
+
+
+## Integration with the latest GitHub version
+
+Newer commits were present on GitHub when publishing began. They were merged without overwriting the remote branch. The active school UI retains the operations console, edge monitoring, base-relative media fix, lifted presence records, theme selector and updated school-wide user scope. Multi-industry data and historical research remain in source, but the removed industry chooser, identity/architecture presentation and 3D map are not restored to school navigation. The new document-driven configuration and 2D map remain the active workflows.

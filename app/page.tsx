@@ -83,7 +83,7 @@ const toast = {
   info: (title: string) => toastManager.add({ title, type: 'info' }),
 };
 import { CameraStill, DemoVideo, mediaFor, mediaSources } from './camera-media';
-import { PriorityAlerts, scenarioOptions } from './priority-alerts';
+import { PriorityAlerts } from './priority-alerts';
 import { FleetOverview, PresencePanel } from './workspace-panels';
 import {
   needsReview,
@@ -98,6 +98,11 @@ import { DetectionStudio } from './detection-studio';
 import { workspaceSections, viewLabels, sectionFor } from './navigation';
 import { DetectionMatrix } from './detection-matrix';
 import { DeviceSettings } from './device-settings';
+import { DeviceFleet } from './device-fleet';
+import { SecurityOperationsRoom } from './security-operations-room';
+import { ThemeToggle } from './theme-toggle';
+import { AiwasLogo } from './brand';
+import { presenceSeed, type Pupil } from './presence-data';
 import { CampusInsights } from './campus-insights';
 import { TeacherApp } from './teacher-app';
 import { teacherUpdate } from './teacher-workflow';
@@ -116,6 +121,12 @@ import {
   type Role,
   type User,
 } from './data';
+const scenarioOptions = [
+  'Possible confrontation',
+  'Crowd threshold exceeded',
+  'Restricted-area entry',
+  'Possible visible blade',
+];
 const nav = [
   ['Overview', LayoutDashboard],
   ['Teacher app', ClipboardCheck],
@@ -123,6 +134,8 @@ const nav = [
   ['Schools', School],
   ['Attendance & presence', Users],
   ['Live cameras', Video],
+  ['Operations room', Video],
+  ['Edge appliances', Settings2],
   ['Detection matrix', SlidersHorizontal],
   ['Device settings', Settings2],
   ['Detection studio', SlidersHorizontal],
@@ -268,6 +281,9 @@ export default function Home({
 }: { initialView?: string; initialRole?: Role } = {}) {
   const [schools, setSchools] = useState(initialSchools);
   const [cameras, setCameras] = useState(initialCameras);
+  const [presenceBySchool, setPresenceBySchool] = useState<
+    Record<string, Pupil[]>
+  >({});
   const [view, setView] = useState(initialView),
     [school, setSchool] = useState(schools[0]),
     [role, setRole] = useState<Role>(initialRole),
@@ -304,7 +320,7 @@ export default function Home({
   const privileged = role === 'Internal Ops' || role === 'System Admin';
   const canManageUsers = privileged || role === 'School Admin';
   const allowedNav = nav.filter(([n]) => {
-    if (n === 'Device settings') return privileged;
+    if (n === 'Device settings' || n === 'Edge appliances') return privileged;
     if (n === 'Schools' || n === 'Platform readiness') return privileged;
     if (n === 'Attendance & presence') return !privileged;
     if (n === 'Notification routing') return role === 'System Admin';
@@ -327,7 +343,12 @@ export default function Home({
     navigate(target);
   };
   const navigate = (target: string) => {
-    const n = target === 'Detection rules' ? 'Detection matrix' : target;
+    const n =
+      target === 'Detection rules' || target === 'Detection tuning'
+        ? 'Detection matrix'
+        : target === 'Site map'
+          ? 'Campus insights'
+          : target;
     if (!allowedNav.some(([x]) => x === n)) return;
     setView(n);
     window.history.pushState(
@@ -343,10 +364,13 @@ export default function Home({
   };
   useEffect(() => {
     const readHash = () => {
-      const hash =
-        window.location.hash === '#detection-rules'
-          ? '#detection-matrix'
-          : window.location.hash;
+      const aliases: Record<string, string> = {
+        '#detection-rules': '#detection-matrix',
+        '#detection-tuning': '#detection-matrix',
+        '#site-map': '#campus-insights',
+        '#architecture': '#platform-readiness',
+      };
+      const hash = aliases[window.location.hash] || window.location.hash;
       const name = nav.find(
         ([n]) => '#' + n.toLowerCase().replaceAll(' ', '-') === hash,
       )?.[0];
@@ -692,7 +716,7 @@ export default function Home({
       role: userRole,
       school:
         userRole === 'Internal Ops' || userRole === 'System Admin'
-          ? 'All PoC schools'
+          ? 'All sites'
           : userSchool,
       active: userActive,
     };
@@ -847,10 +871,7 @@ export default function Home({
           <Sidebar className="nav-rail">
             <SidebarHeader>
               <button className="brand" onClick={() => navigate('Overview')}>
-                <ShieldCheck />
-                <span>
-                  AiWAS<span className="brand-dot">.</span>
-                </span>
+                <AiwasLogo size={28} />
               </button>
               <p className="brand-sub">SCHOOL SAFETY INTELLIGENCE</p>
               <div className="workspace">
@@ -922,6 +943,7 @@ export default function Home({
                 <strong>{section?.label || view}</strong>
               </div>
               <div className="top-actions">
+                <ThemeToggle />
                 <span className="demo-pill">Demo workspace</span>
                 <div className="top-role">
                   <Pick
@@ -1012,6 +1034,21 @@ export default function Home({
                     </button>
                   ))}
                 </nav>
+              )}
+              {view === 'Operations room' && (
+                <SecurityOperationsRoom
+                  key={school}
+                  industryId="education"
+                  site={school}
+                  cameras={schoolCameras}
+                  incidents={schoolIncidents}
+                  operator="Nadia Ahmad"
+                  onOpenIncident={openIncident}
+                  onAcknowledge={acknowledge}
+                />
+              )}
+              {privileged && view === 'Edge appliances' && (
+                <DeviceFleet industryId="education" sites={schools} />
               )}
               <div hidden={view !== 'Detection matrix'}>
                 <DetectionMatrix
@@ -1117,7 +1154,14 @@ export default function Home({
               )}
               {!privileged && (
                 <div hidden={view !== 'Attendance & presence'}>
-                  <PresencePanel key={school} school={school} />
+                  <PresencePanel
+                    key={school}
+                    school={school}
+                    pupils={presenceBySchool[school] || presenceSeed}
+                    onChange={(next) =>
+                      setPresenceBySchool((all) => ({ ...all, [school]: next }))
+                    }
+                  />
                 </div>
               )}
               {view === 'Overview' && !privileged && (
@@ -1207,6 +1251,13 @@ export default function Home({
                     </button>
                   </div>
                   <PriorityAlerts
+                    scenarios={scenarioOptions.map((name, index) => ({
+                      name,
+                      scene: ['corridor', 'canteen', 'perimeter', 'training'][
+                        index
+                      ],
+                      critical: index === 3,
+                    }))}
                     key={school + role}
                     incidents={schoolIncidents}
                     onOpen={openIncident}
@@ -2409,7 +2460,7 @@ export default function Home({
                                   (u) =>
                                     u.active &&
                                     (u.school === school ||
-                                      u.school === 'All PoC schools'),
+                                      u.school === 'All sites'),
                                 )
                                 .map((u) => u.name),
                             ]),

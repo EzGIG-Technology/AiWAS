@@ -288,6 +288,28 @@ export const detectionCatalog: DetectionCapability[] = [
     axis,
   ),
   d(
+    'people',
+    'People detection & tracking (anonymous)',
+    'Video candidate',
+    'Low',
+    'courtyard',
+    'Anonymous tracks are detected and followed within a single camera view.',
+    'A track is not a person\u2019s identity and does not persist between cameras. No appearance or face signature is stored, so the same pupil seen twice is two unrelated tracks.',
+    'Use as the input to counting and zone rules, never as a record about an individual.',
+    axis,
+  ),
+  d(
+    'occupancy',
+    'Entry / exit counting & occupancy',
+    'Video candidate',
+    'Low',
+    'gate',
+    'Directional crossings at a doorway produce entry, exit and net occupancy estimates.',
+    'Entry minus exit drifts when a door is unobserved or a crossing is missed. It is an estimate for operations, never a pupil register or an evacuation headcount.',
+    'Use for staffing, stagger planning and congestion management only.',
+    axis,
+  ),
+  d(
     'wellbeing',
     'Welfare / mental-health concern',
     'Staff report',
@@ -317,8 +339,12 @@ export type StudioRule = {
   reviewer: string;
   publicOnly: boolean;
 };
-export function ruleError(r: StudioRule) {
-  if (!publicZones.includes(r.zone) || !r.publicOnly)
+export function ruleError(
+  r: StudioRule,
+  zones: string[] = publicZones,
+  schedules: string[] = ['School hours', 'After hours', 'Always'],
+) {
+  if (!zones.includes(r.zone) || !r.publicOnly)
     return 'Only approved public areas are available for this demonstration.';
   if (!['Low', 'Medium', 'High', 'Critical'].includes(r.priority))
     return 'Select a valid priority.';
@@ -327,8 +353,7 @@ export function ruleError(r: StudioRule) {
   if (!Number.isFinite(r.hold) || r.hold < 0 || r.hold > 600)
     return 'Persistence must be between 0 and 600 seconds.';
   if (!r.reviewer.trim()) return 'Name a responsible review team.';
-  if (!['School hours', 'After hours', 'Always'].includes(r.schedule))
-    return 'Select a valid schedule.';
+  if (!schedules.includes(r.schedule)) return 'Select a valid schedule.';
   return '';
 }
 export type Trial = {

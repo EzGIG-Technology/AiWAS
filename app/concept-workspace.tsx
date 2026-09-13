@@ -41,6 +41,7 @@ import {
   type ConceptRecord,
 } from './concept-data';
 import { csvCell } from './workflow';
+import { ALL_SITES } from './industry-seed';
 import type { Incident, User } from './data';
 const stamp = () =>
   new Date().toLocaleTimeString('en-GB', {
@@ -650,7 +651,7 @@ export function ConceptWorkspace({
       users
         .filter(
           (u) =>
-            u.active && (u.school === school || u.school === 'All PoC schools'),
+            u.active && (u.school === school || u.school === ALL_SITES),
         )
         .map((u) => u.name),
     );
@@ -725,7 +726,6 @@ export function ConceptWorkspace({
             {definition.scope ? 'PLATFORM CONTROL' : 'SCHOOL OPERATIONS'} <i />{' '}
             FICTIONAL WORKSPACE
           </span>
-          <h2>{definition.subtitle}</h2>
           <div className="concept-command-actions">
             <button
               className="btn primary"
@@ -1106,7 +1106,7 @@ export function ConceptWorkspace({
                           (u) =>
                             u.active &&
                             (u.school === school ||
-                              u.school === 'All PoC schools'),
+                              u.school === ALL_SITES),
                         )
                         .map((u) => u.name),
                     ),
@@ -1232,7 +1232,7 @@ export function ConceptWorkspace({
                               (u) =>
                                 u.active &&
                                 (u.school === school ||
-                                  u.school === 'All PoC schools'),
+                                  u.school === ALL_SITES),
                             )
                             .map((u) => u.name),
                         ]),

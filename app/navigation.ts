@@ -8,7 +8,7 @@ export const workspaceSections = [
   {
     label: 'Cameras',
     area: 'MONITOR',
-    views: ['Live cameras', 'System health'],
+    views: ['Live cameras', 'Operations room', 'System health'],
   },
   {
     label: 'Incidents',
@@ -43,6 +43,7 @@ export const workspaceSections = [
       'Pilot governance',
       'Platform readiness',
       'Device settings',
+      'Edge appliances',
     ],
   },
 ];
@@ -50,6 +51,8 @@ export const viewLabels: Record<string, string> = {
   'Campus insights': 'Campus map & movement',
   Analytics: 'Incident analytics',
   'Live cameras': 'Camera wall',
+  'Operations room': 'Operations room',
+  'Edge appliances': 'Edge monitoring',
   'System health': 'Device health',
   'Validation queue': 'Review inbox',
   Incidents: 'All incidents',

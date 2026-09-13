@@ -188,6 +188,7 @@ for (const role of ['School Admin', 'System Admin'])
           'Notification routing',
           'Platform readiness',
           'Device settings',
+          'Edge appliances',
         ].includes(view)
       )
         continue;
