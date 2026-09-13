@@ -18,24 +18,24 @@ import {
 } from '@/components/ui/select';
 import { DemoVideo } from './camera-media';
 import type { Incident } from './data';
-export const scenarioOptions = [
-  'Possible confrontation',
-  'Crowd threshold exceeded',
-  'Restricted-area entry',
-  'Possible visible blade',
-];
+/** A staged scenario is always one of the selected industry's own
+ *  video candidates, so the demo can never offer a school scene in a
+ *  hospital or a warehouse. */
+export type Scenario = { name: string; scene: string; critical: boolean };
 export function PriorityAlerts({
   incidents,
+  scenarios,
   onOpen,
   onCreate,
   onAcknowledge,
 }: {
   incidents: Incident[];
+  scenarios: Scenario[];
   onOpen: (id: string) => void;
   onCreate: (scenario: string) => void;
   onAcknowledge: (id: string) => void;
 }) {
-  const [scenario, setScenario] = useState(scenarioOptions[0]),
+  const [scenario, setScenario] = useState(scenarios[0].name),
     [analysis, setAnalysis] = useState<{
       started: number;
       scenario: string;
@@ -171,7 +171,7 @@ export function PriorityAlerts({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {scenarioOptions.map((s) => (
+            {scenarios.map(({ name: s }) => (
               <SelectItem key={s} value={s}>
                 {s}
               </SelectItem>
@@ -207,15 +207,14 @@ export function PriorityAlerts({
           <div className="analysis-video">
             <DemoVideo
               scene={
-                ['corridor', 'canteen', 'perimeter', 'training'][
-                  scenarioOptions.indexOf(analysis.scenario)
-                ]
+                scenarios.find((s) => s.name === analysis.scenario)?.scene ??
+                'corridor'
               }
               autoPlay
             />
           </div>
           <p>
-            {analysis.scenario === 'Possible visible blade'
+            {scenarios.find((s) => s.name === analysis.scenario)?.critical
               ? 'Potential critical threat · Provisional warning now. Completed review follows; no external notification is sent.'
               : 'Demo sequence running. A new unverified alert will appear in the matching priority group.'}
           </p>

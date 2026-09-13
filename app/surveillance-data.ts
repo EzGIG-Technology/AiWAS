@@ -317,8 +317,12 @@ export type StudioRule = {
   reviewer: string;
   publicOnly: boolean;
 };
-export function ruleError(r: StudioRule) {
-  if (!publicZones.includes(r.zone) || !r.publicOnly)
+export function ruleError(
+  r: StudioRule,
+  zones: string[] = publicZones,
+  schedules: string[] = ['School hours', 'After hours', 'Always'],
+) {
+  if (!zones.includes(r.zone) || !r.publicOnly)
     return 'Only approved public areas are available for this demonstration.';
   if (!['Low', 'Medium', 'High', 'Critical'].includes(r.priority))
     return 'Select a valid priority.';
@@ -327,8 +331,7 @@ export function ruleError(r: StudioRule) {
   if (!Number.isFinite(r.hold) || r.hold < 0 || r.hold > 600)
     return 'Persistence must be between 0 and 600 seconds.';
   if (!r.reviewer.trim()) return 'Name a responsible review team.';
-  if (!['School hours', 'After hours', 'Always'].includes(r.schedule))
-    return 'Select a valid schedule.';
+  if (!schedules.includes(r.schedule)) return 'Select a valid schedule.';
   return '';
 }
 export type Trial = {

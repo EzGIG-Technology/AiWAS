@@ -12,14 +12,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DemoVideo } from './camera-media';
 import {
-  detectionCatalog,
-  publicZones,
   ruleError,
   trialMetrics,
   jpnCoverage,
   type StudioRule,
   type Trial,
 } from './surveillance-data';
+import { getIndustry, industryZoneError } from './industries';
 import { severityClass, type Incident } from './data';
 import { csvCell } from './workflow';
 function download(rows: unknown[][], name: string) {
@@ -37,26 +36,34 @@ function download(rows: unknown[][], name: string) {
 }
 export function DetectionStudio({
   school,
+  industryId,
   onAlert,
   onOpen,
 }: {
   school: string;
+  industryId: string;
   onAlert: (i: Incident) => void;
   onOpen: (id: string) => void;
 }) {
-  const [selected, setSelected] = useState('intrusion'),
+  const industry = getIndustry(industryId);
+  const detectionCatalog = industry.capabilities;
+  const publicZones = industry.zones;
+  const [selected, setSelected] = useState(detectionCatalog[0].id),
     [query, setQuery] = useState(''),
     [kind, setKind] = useState('All'),
     [rules, setRules] = useState<Record<string, StudioRule>>({});
-  const cap = detectionCatalog.find((c) => c.id === selected)!;
-  const key = school + '|' + selected;
+  // Switching industry replaces the register, so the previous selection may
+  // not exist here. Fall back to this industry's first capability.
+  const cap =
+    detectionCatalog.find((c) => c.id === selected) ?? detectionCatalog[0];
+  const key = industryId + '|' + school + '|' + cap.id;
   const defaults: StudioRule = {
-    zone: 'Courtyard',
+    zone: publicZones[0],
     priority: cap.priority,
     threshold: 80,
     hold: 5,
-    schedule: 'School hours',
-    reviewer: 'School duty team',
+    schedule: industry.lexicon.hours,
+    reviewer: industry.lexicon.reviewTeam,
     publicOnly: true,
   };
   const [draft, setDraft] = useState<StudioRule>(defaults),
@@ -155,7 +162,13 @@ export function DetectionStudio({
     return () => clearInterval(timer);
   }, [run]);
   const save = () => {
-    const error = ruleError(draft);
+    const error =
+      industryZoneError(industryId, draft.zone, draft.publicOnly) ||
+      ruleError(draft, publicZones, [
+        industry.lexicon.hours,
+        'After hours',
+        'Always',
+      ]);
     if (error) {
       setNotice(error);
       return;
@@ -364,7 +377,11 @@ export function DetectionStudio({
                         setDraft({ ...draft, schedule: e.target.value })
                       }
                     >
-                      {['School hours', 'After hours', 'Always'].map((s) => (
+                      {[
+                        industry.lexicon.hours,
+                        'After hours',
+                        'Always',
+                      ].map((s) => (
                         <option key={s}>{s}</option>
                       ))}
                     </select>
@@ -673,7 +690,15 @@ export function DetectionStudio({
               boundaries. Live services require separate commissioning and
               validation.
             </p>
-            <div className="table-wrap">
+            {industryId !== 'education' && (
+              <p className="studio-note">
+                The requirement traceability table below is authored for the
+                education programme. For {industry.name.toLowerCase()}, the
+                capability register and excluded detections are shown on the
+                Industry profile screen.
+              </p>
+            )}
+            <div className="table-wrap" hidden={industryId !== 'education'}>
               <table>
                 <thead>
                   <tr>

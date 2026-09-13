@@ -31,6 +31,7 @@ import {
   History,
   CheckCircle2,
   RefreshCw,
+  Building2,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -83,7 +84,7 @@ const toast = {
   info: (title: string) => toastManager.add({ title, type: 'info' }),
 };
 import { CameraStill, DemoVideo, mediaFor, mediaSources } from './camera-media';
-import { PriorityAlerts, scenarioOptions } from './priority-alerts';
+import { PriorityAlerts } from './priority-alerts';
 import { FleetOverview, PresencePanel } from './workspace-panels';
 import {
   needsReview,
@@ -97,22 +98,27 @@ import { ConceptWorkspace } from './concept-workspace';
 import { DetectionStudio } from './detection-studio';
 import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
+import { IndustryProfile } from './industry-profile';
 import {
-  schools as initialSchools,
   roles,
-  categories,
-  initialIncidents,
-  cameras as initialCameras,
-  initialUsers,
   severityClass,
   type Incident,
   type Camera,
   type Role,
   type User,
 } from './data';
+import { industries, getIndustry, type IndustryId } from './industries';
+import {
+  seedFor,
+  categoriesFor,
+  roleLabel as industryRoleLabel,
+  CONFIDENCE_NONE,
+  ALL_SITES,
+} from './industry-seed';
 const nav = [
   ['Overview', LayoutDashboard],
   ['Schools', School],
+  ['Industry profile', Building2],
   ['Attendance & presence', Users],
   ['Live cameras', Video],
   ['Detection studio', SlidersHorizontal],
@@ -169,7 +175,53 @@ const subtitles: Record<string, string> = {
     'Calibrate thresholds for each school, zone, and category.',
   'Notification routing': 'Connect the right incident to the right people.',
   'Users & roles': 'Manage workspace access and school assignments.',
+  'Industry profile':
+    'Sector scope, monitored areas, capability register and excluded detections.',
 };
+headings['Industry profile'] = 'Industry profile';
+
+/**
+ * Swap the education vocabulary the original copy was written in for the
+ * selected industry's own words. Longest match first so "schools" is not
+ * rewritten as "schoolss".
+ */
+function localise(text: string, l: (typeof industries)[number]['lexicon']) {
+  const swaps: [RegExp, string][] = [
+    [/\bSchools\b/g, cap(l.sitePlural)],
+    [/\bschools\b/g, l.sitePlural],
+    [/\bSchool\b/g, l.siteTitle],
+    [/\bschool\b/g, l.site],
+    [/\bPupils\b/g, cap(l.personPlural)],
+    [/\bpupils\b/g, l.personPlural],
+    [/\bPupil\b/g, cap(l.person)],
+    [/\bpupil\b/g, l.person],
+  ];
+  return swaps.reduce((out, [re, to]) => out.replace(re, to), text);
+}
+function cap(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/**
+ * Single source of truth for how a score is shown on a record. A model
+ * confidence belongs only to a video candidate; a sensor event, a reported
+ * concern and a scripted simulation each say so instead of showing a number.
+ * Both the alert card and the incident sheet read from here so the two can
+ * never drift apart again.
+ */
+function confidenceDisplay(i: { id: string; confidence: number }) {
+  if (i.id.startsWith('SIM-'))
+    return { value: 'Simulated event', note: 'No AI score', bar: false };
+  if (i.id.startsWith('STAFF-'))
+    return { value: 'Staff report', note: 'No AI score', bar: false };
+  if (i.confidence === CONFIDENCE_NONE)
+    return {
+      value: 'Not applicable',
+      note: 'Reported or sensor event',
+      bar: false,
+    };
+  return { value: `${i.confidence}%`, note: 'Sample score', bar: true };
+}
 function Pick({
   value,
   onChange,
@@ -251,12 +303,26 @@ function Cam({ cam, onClick }: { cam: Camera; onClick: () => void }) {
 }
 
 export default function Home() {
-  const [schools, setSchools] = useState(initialSchools);
-  const [cameras, setCameras] = useState(initialCameras);
+  const [industryId, setIndustryId] = useState<IndustryId>('education');
+  const industry = getIndustry(industryId);
+  const lexicon = industry.lexicon;
+  const categories = categoriesFor(industryId);
+  const initial = seedFor(industryId);
+  // The staged 10-second demo offers this industry's own video candidates.
+  const scenarioCapabilities = industry.capabilities
+    .filter((c) => c.kind === 'Video candidate')
+    .slice(0, 4);
+  const scenarios = scenarioCapabilities.map((c) => ({
+    name: c.name,
+    scene: c.scene,
+    critical: c.priority === 'Critical',
+  }));
+  const [schools, setSchools] = useState(initial.sites);
+  const [cameras, setCameras] = useState(initial.cameras);
   const [view, setView] = useState('Overview'),
     [school, setSchool] = useState(schools[0]),
     [role, setRole] = useState<Role>('School Admin'),
-    [incidents, setIncidents] = useState(initialIncidents),
+    [incidents, setIncidents] = useState(initial.incidents),
     [selectedId, setSelectedId] = useState<string | null>(null),
     [camera, setCamera] = useState<Camera | null>(null),
     [search, setSearch] = useState(''),
@@ -269,7 +335,7 @@ export default function Home() {
     [exportOpen, setExportOpen] = useState(false),
     [startDate, setStartDate] = useState('2026-08-12'),
     [endDate, setEndDate] = useState('2026-09-10'),
-    [users, setUsers] = useState(initialUsers),
+    [users, setUsers] = useState(initial.users),
     [userOpen, setUserOpen] = useState(false),
     [editUser, setEditUser] = useState<number | null>(null),
     [userName, setUserName] = useState(''),
@@ -281,8 +347,10 @@ export default function Home() {
       { text: string; time: string; school: string }[]
     >([]),
     [healthTime, setHealthTime] = useState('10:44:00'),
-    [configZone, setConfigZone] = useState('Canteen'),
-    [configCategory, setConfigCategory] = useState('Crowd counting'),
+    [configZone, setConfigZone] = useState(industry.zones[0]),
+    [configCategory, setConfigCategory] = useState(
+      industry.capabilities[0].name,
+    ),
     [config, setConfig] = useState<
       Record<
         string,
@@ -313,22 +381,34 @@ export default function Home() {
     [period, setPeriod] = useState('Today');
   const privileged = role === 'Internal Ops' || role === 'System Admin';
   const canManageUsers = privileged || role === 'School Admin';
+  const moduleTitles = new Set(
+    conceptModules
+      .filter((m) => industry.modules.includes(m.id))
+      .map((m) => m.title),
+  );
   const allowedNav = nav.filter(([n]) => {
+    // Casework workspaces are authored per industry; only show the ones this
+    // industry actually has content for.
+    if (conceptModules.some((m) => m.title === n) && !moduleTitles.has(n))
+      return false;
+    if (n === 'Attendance & presence' && !industry.presence) return false;
     if (n === 'Schools' || n === 'Platform readiness') return privileged;
     if (n === 'Attendance & presence') return !privileged;
+    if (n === 'Industry profile') return true;
     if (n === 'Detection rules') return privileged;
     if (n === 'Notification routing') return role === 'System Admin';
     if (n === 'Users & roles') return canManageUsers;
     return true;
   });
+  // Structural roles are constant; their display name follows the industry.
   const roleLabel = (r: string) =>
     r === 'System Admin'
       ? 'Superadmin'
       : r === 'Internal Ops'
         ? 'Platform operator'
         : r === 'School Admin'
-          ? 'School administrator'
-          : 'Teacher · incident review';
+          ? `${cap(lexicon.site)} administrator`
+          : `${industryRoleLabel(industry, 'Discipline Teacher')} · incident review`;
   const selectSchoolView = (name: string, target: string) => {
     setSchool(name);
     navigate(target);
@@ -365,6 +445,30 @@ export default function Home() {
       window.removeEventListener('hashchange', readHash);
     };
   }, []);
+  // Switching industry loads that industry's own sites, cameras, capability
+  // register and records. Nothing carries across: a rule or record written for
+  // a warehouse aisle has no meaning in a ward corridor.
+  const [previousIndustry, setPreviousIndustry] = useState(industryId);
+  if (previousIndustry !== industryId) {
+    setPreviousIndustry(industryId);
+    setSchools(initial.sites);
+    setCameras(initial.cameras);
+    setIncidents(initial.incidents);
+    setUsers(initial.users);
+    setSchool(initial.sites[0]);
+    setUserSchool(initial.sites[0]);
+    setSelectedId(null);
+    setCamera(null);
+    setSearch('');
+    setSeverity('All severities');
+    setStatus('All statuses');
+    setCategory('All categories');
+    setZone('All zones');
+    setConfigZone(industry.zones[0]);
+    setConfigCategory(industry.capabilities[0].name);
+    setConfig({});
+    setAudit([]);
+  }
   const [previousRole, setPreviousRole] = useState(role);
   if (previousRole !== role) {
     setPreviousRole(role);
@@ -418,37 +522,28 @@ export default function Home() {
     toast.success('Alert acknowledged. Validation is still required.');
   };
   const addScenario = (scenario: string) => {
-    const idx = scenarioOptions.indexOf(scenario);
+    const idx = Math.max(
+      0,
+      scenarios.findIndex((s) => s.name === scenario),
+    );
+    const capability = scenarioCapabilities[idx];
     const newId = `DEMO-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-    const z = [
-      'Block A corridor',
-      'Canteen',
-      'East perimeter',
-      'Block A corridor',
-    ][idx];
+    const z = industry.zones[idx % industry.zones.length];
     const item: Incident = {
       id: newId,
-      category: [
-        'Fighting',
-        'Crowd counting',
-        'Restricted area intrusion',
-        'Visible blade concern',
-      ][idx],
+      category: capability.name,
       school,
       zone: z,
-      block: idx === 2 ? 'Boundary' : 'Block A',
-      camera: ['CAM-03', 'CAM-02', 'CAM-04', 'CAM-03'][idx],
-      severity: ['High', 'Medium', 'High', 'Critical'][idx],
-      confidence: [86, 89, 92, 72][idx],
+      block: z.split(' ')[0],
+      camera: `CAM-${String((idx % industry.zones.length) + 1).padStart(2, '0')}`,
+      severity: capability.priority,
+      confidence: 72 + idx * 6,
       date: '2026-09-10',
       time: now(),
       status: 'Open',
       validation: 'Pending',
-      assigned: 'Nadia Ahmad',
-      description:
-        idx === 3
-          ? 'Synthetic training scene: a possible visible blade requires urgent human assessment. This is an evaluation-only scenario, not a validated production weapon detector.'
-          : 'Synthetic camera scene analysed in a 10-second demo. The result is illustrative and has not been generated by a real detection model.',
+      assigned: users[0]?.name ?? 'Duty reviewer',
+      description: `Synthetic scene analysed in a 10-second demo. ${capability.signal} ${capability.limits} The result is illustrative and was not produced by a real detection model.`,
       history: [
         {
           text: 'Demo frames received and analysed over 10 seconds',
@@ -652,7 +747,7 @@ export default function Home() {
         i.category,
         i.zone,
         i.severity,
-        i.confidence,
+        i.confidence === CONFIDENCE_NONE ? 'Not applicable' : i.confidence,
         i.status,
         i.validation,
         i.assigned,
@@ -694,7 +789,7 @@ export default function Home() {
         userSchool !== school)
     ) {
       toast.error(
-        'School administrators can manage their own school team only.',
+        `${cap(lexicon.site)} administrators can manage their own ${lexicon.site} team only.`,
       );
       return;
     }
@@ -714,7 +809,7 @@ export default function Home() {
       role: userRole,
       school:
         userRole === 'Internal Ops' || userRole === 'System Admin'
-          ? 'All PoC schools'
+          ? ALL_SITES
           : userSchool,
       active: userActive,
     };
@@ -824,15 +919,26 @@ export default function Home() {
               AiWAS<span className="brand-dot">.</span>
             </span>
           </button>
-          <p className="brand-sub">SCHOOL SAFETY INTELLIGENCE</p>
+          <p className="brand-sub">SAFETY INTELLIGENCE</p>
+          <Pick
+            label="Industry"
+            className="industry-picker"
+            value={industry.name}
+            onChange={(v) =>
+              setIndustryId(
+                (industries.find((i) => i.name === v) ?? industries[0]).id,
+              )
+            }
+            options={industries.map((i) => i.name)}
+          />
           <div className="workspace">
-            <span className="workspace-logo">E</span>
+            <span className="workspace-logo">{industry.name.charAt(0)}</span>
             <span>
-              {privileged ? 'Platform administration' : 'School operations'}
+              {privileged
+                ? 'Platform administration'
+                : `${cap(lexicon.site)} operations`}
               <small>
-                {privileged
-                  ? 'All connected schools'
-                  : 'SMK Tunku Ampuan Durah'}
+                {privileged ? `All connected ${lexicon.sitePlural}` : school}
               </small>
             </span>
           </div>
@@ -860,8 +966,10 @@ export default function Home() {
                     {label === 'Overview' && privileged
                       ? 'Platform overview'
                       : label === 'Users & roles' && !privileged
-                        ? 'School team'
-                        : label}
+                        ? `${lexicon.siteTitle} team`
+                        : label === 'Schools'
+                          ? `${cap(lexicon.sitePlural)}`
+                          : label}
                   </span>
                   {label === 'Incidents' && (
                     <b className="nav-count">{open.length}</b>
@@ -878,7 +986,8 @@ export default function Home() {
           <div className="privacy">
             <ShieldCheck />
             <span>
-              Protected workspace<small>School-scoped access</small>
+              Protected workspace
+              <small>{cap(lexicon.site)}-scoped access</small>
             </span>
           </div>
           <div className="profile">
@@ -893,7 +1002,9 @@ export default function Home() {
         <header className="topbar">
           <div className="breadcrumb">
             <SidebarTrigger />
-            <span>{privileged ? 'Superadmin' : 'School workspace'}</span>
+            <span>
+              {privileged ? 'Superadmin' : `${cap(lexicon.site)} workspace`}
+            </span>
             <ChevronRight size={14} />
             <strong>{view}</strong>
           </div>
@@ -902,13 +1013,15 @@ export default function Home() {
             <div className="top-role">
               <Pick
                 label="Demo workspace"
-                value={privileged ? 'Superadmin' : 'School workspace'}
+                value={
+                  privileged ? 'Superadmin' : `${cap(lexicon.site)} workspace`
+                }
                 onChange={(v) => {
                   setRole(v === 'Superadmin' ? 'System Admin' : 'School Admin');
                   setView('Overview');
                   window.history.pushState(null, '', '#overview');
                 }}
-                options={['School workspace', 'Superadmin']}
+                options={[`${cap(lexicon.site)} workspace`, 'Superadmin']}
               />
             </div>
             <button
@@ -940,20 +1053,20 @@ export default function Home() {
                 {view === 'Overview' && privileged
                   ? 'Platform overview'
                   : view === 'Users & roles' && !privileged
-                    ? 'School team'
-                    : headings[view]}
+                    ? `${lexicon.siteTitle} team`
+                    : localise(headings[view] ?? view, lexicon)}
               </h1>
               <p>
                 {view === 'Overview' && privileged
-                  ? 'Coverage, school operations and platform oversight.'
-                  : subtitles[view]}
+                  ? `Coverage, ${lexicon.site} operations and platform oversight.`
+                  : localise(subtitles[view] ?? industry.tagline, lexicon)}
               </p>
             </div>
             {privileged &&
             ['Overview', 'Schools', 'Users & roles'].includes(view) ? (
               <span className="scope-chip">
                 <School size={15} />
-                {schools.length} connected schools
+                {schools.length} connected {lexicon.sitePlural}
               </span>
             ) : (
               <div className="school-select">
@@ -981,7 +1094,11 @@ export default function Home() {
               </div>
               <div>
                 {conceptModules
-                  .filter((m) => !m.scope || privileged)
+                  .filter(
+                    (m) =>
+                      (!m.scope || privileged) &&
+                      industry.modules.includes(m.id),
+                  )
                   .map((m) => (
                     <button
                       className="btn"
@@ -1145,8 +1262,9 @@ export default function Home() {
                 </button>
               </div>
               <PriorityAlerts
-                key={school + role}
+                key={industryId + school + role}
                 incidents={schoolIncidents}
+                scenarios={scenarios}
                 onOpen={openIncident}
                 onCreate={addScenario}
                 onAcknowledge={acknowledge}
@@ -1474,15 +1592,9 @@ export default function Home() {
                         </div>
                         <div className="confidence-row">
                           <span>Detection confidence</span>
-                          <strong>
-                            {i.id.match(/^(STAFF-|SIM-)/)
-                              ? i.id.startsWith('SIM-')
-                                ? 'Simulated event'
-                                : 'Staff report'
-                              : `${i.confidence}%`}
-                          </strong>
+                          <strong>{confidenceDisplay(i).value}</strong>
                         </div>
-                        {!i.id.match(/^(STAFF-|SIM-)/) && (
+                        {confidenceDisplay(i).bar && (
                           <Progress value={i.confidence} />
                         )}
                         <div className="validation-meta">
@@ -1529,11 +1641,16 @@ export default function Home() {
           )}
           <div hidden={view !== 'Detection studio'}>
             <DetectionStudio
+              key={industryId}
               school={school}
+              industryId={industryId}
               onAlert={(item) => setIncidents((all) => [item, ...all])}
               onOpen={openIncident}
             />
           </div>
+          {view === 'Industry profile' && (
+            <IndustryProfile industry={industry} />
+          )}
           <ConceptWorkspace
             view={view}
             school={school}
@@ -2549,16 +2666,8 @@ export default function Home() {
                   <div>
                     <span>Detection confidence</span>
                     <strong>
-                      {selected.id.match(/^(STAFF-|SIM-)/)
-                        ? selected.id.startsWith('SIM-')
-                          ? 'Simulated event'
-                          : 'Staff report'
-                        : `${selected.confidence}%`}{' '}
-                      <small>
-                        {selected.id.match(/^(STAFF-|SIM-)/)
-                          ? 'No AI score'
-                          : 'Sample score'}
-                      </small>
+                      {confidenceDisplay(selected).value}{' '}
+                      <small>{confidenceDisplay(selected).note}</small>
                     </strong>
                   </div>
                   <div>
@@ -2577,7 +2686,7 @@ export default function Home() {
                               (u) =>
                                 u.active &&
                                 (u.school === school ||
-                                  u.school === 'All PoC schools'),
+                                  u.school === ALL_SITES),
                             )
                             .map((u) => u.name),
                         ]),

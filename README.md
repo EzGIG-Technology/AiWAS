@@ -74,6 +74,16 @@ The [full UI guide](docs/full-ui-concept-guide.md) maps all 33 study areas to in
 
 Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, rendering and static-build checks.
 
+## Multi-industry support
+
+AiWAS now ships eight industry profiles: education, healthcare, aged & residential care, retail, construction, manufacturing & warehousing, transport hubs and commercial property. An industry selector in the sidebar switches the whole workspace — sites, cameras, records, accounts, vocabulary, monitored zones, rule defaults and the detection register all change together, and nothing carries across.
+
+Each industry has its own capability register (153 capabilities across the eight) stating the observable signal, what it cannot establish, the intended response and a source, plus a written list of detections the industry refuses (39 in total) with the reason for each. Rule placement is enforced rather than advised: a rule cannot be saved against another industry's zone or against any never-monitored area, so aged care rejects a rule in a resident bedroom and retail rejects one in a fitting room. Only video candidates carry a model confidence — sensor events and staff reports show none.
+
+The new **Industry profile** screen shows sector scope, regulator, principal risks, capability mix, monitored versus never-monitored areas, the searchable register and the exclusions. See the [multi-industry expansion report](docs/research/multi-industry-expansion.md) for how the registers were built, the sectors deferred or declined and why, and full verification results.
+
+Casework workspaces (Safeguarding, Hostel operations and the rest) contain school-authored records and therefore appear only for education. Other industries see the industry-neutral surface plus Pilot governance and Platform readiness; sector casework content is the next build step rather than relabelled school records.
+
 ## 2026 platform audit and impact roadmap
 
 The [platform audit and impact roadmap](docs/research/2026-platform-audit-and-impact-roadmap.md) re-runs every automated check, completes the browser interaction QA that earlier passes recorded as blocked, and ranks improvements against the external evidence base and the Malaysian policy position as at September 2026. The accompanying [feature impact ranking](docs/research/feature-impact-ranking.csv) scores 19 recommendations plus 6 explicit exclusions by school impact, effort and whether cameras are required.

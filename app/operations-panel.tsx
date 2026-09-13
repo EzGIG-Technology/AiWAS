@@ -16,6 +16,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ALL_SITES } from './industry-seed';
 import type { Incident, User, Camera } from './data';
 
 type WorkItem = {
@@ -59,7 +60,7 @@ export function OperationsPanel({
     setError('');
   }
   const staff = users.filter(
-    (u) => u.active && (u.school === school || u.school === 'All PoC schools'),
+    (u) => u.active && (u.school === school || u.school === ALL_SITES),
   );
   const work = items.filter((i) => i.school === school);
   const visible = work.filter(
