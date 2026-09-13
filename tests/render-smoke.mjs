@@ -1,9 +1,9 @@
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import assert from 'node:assert/strict';
-import Home, {ConceptWorkspace,ReportingPreview,DetectionStudio} from '../dist/audit-ssr/render-entry.js';
+import Home, {ConceptWorkspace,ReportingPreview,DetectionStudio,CampusInsights,TeacherApp} from '../dist/audit-ssr/render-entry.js';
 import {conceptModules} from '../app/concept-data.ts';
-import {initialUsers,schools} from '../app/data.ts';
+import {initialUsers,schools,cameras,initialIncidents} from '../app/data.ts';
 const html = renderToString(React.createElement(Home));
 for (const label of [
   'School command centre',
@@ -37,3 +37,13 @@ for(const label of ['Capability lab','PoC evaluation','Platform coverage','Save 
 console.log('PASS: Detection studio renders capability, configuration and research coverage controls.');
 
 for(const forbidden of ['JPN proposal','JPN document','JPN NS AIWAS.pdf','PDF page','80% baseline'])assert.ok(!studio.includes(forbidden));
+
+const campus=renderToString(React.createElement(CampusInsights,{school:schools[0],cameras,onAlert:()=>{},onOpen:()=>{}}));
+for(const label of ['Campus heatmap','Trends &amp; movement','School planning','Assembly hall: coverage unavailable','Canteen: 118 estimated people'])assert.ok(campus.includes(label),label);
+assert.ok(!html.includes('Facilities &amp; health'));
+console.log('PASS: campus heatmap renders known and unavailable zones; removed module is absent.');
+
+const teacherScreen=renderToString(React.createElement(TeacherApp,{school:schools[0],incidents:initialIncidents,users:initialUsers,teacher:'Nur Aisyah',onExit:()=>{},onAction:()=>'',onReport:()=>{}}));
+for(const label of ['Hello,','Report a concern','My follow-ups','Needs attention','Teacher app navigation'])assert.ok(teacherScreen.includes(label));
+assert.ok(!teacherScreen.includes('SK Seremban Jaya'));
+console.log('PASS: teacher home renders scoped school alerts and mobile navigation.');

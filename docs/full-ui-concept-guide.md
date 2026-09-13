@@ -1,5 +1,7 @@
 # AiWAS full UI concept guide
 
+Current scope update (12 September 2026): Facilities & health has since been removed at the product owner’s request. Campus insights now covers camera-derived operational analytics. Historical descriptions below reflect the earlier delivery; see research/campus-camera-value-study.md for the current direction.
+
 Updated 12 September 2026. All 33 areas in the Malaysian school study now have a UI representation. This is an interactive, fictional demonstration; it does not establish that the corresponding live services exist.
 
 ## Demonstrating the experience

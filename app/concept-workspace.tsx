@@ -419,44 +419,7 @@ function FeaturePanel({
         </div>
       </section>
     );
-  return (
-    <section className="concept-special">
-      <h3>Inspection & interim controls</h3>
-      <div className="concept-delivery">
-        <ShieldCheck size={20} />
-        <strong>{record.values.restriction || 'Assessment required'}</strong>
-      </div>
-      <div className="concept-inline-actions">
-        <button
-          className="btn"
-          onClick={() =>
-            onChange(
-              { restriction: 'Area temporarily restricted' },
-              'Temporary restriction recorded; staff must apply the physical control',
-            )
-          }
-        >
-          Record area restriction
-        </button>
-        <button
-          className="btn"
-          onClick={() =>
-            onChange(
-              { inspection: stamp() },
-              'Inspection visit recorded; verification still required',
-            )
-          }
-        >
-          Record inspection visit
-        </button>
-      </div>
-      <p className="help-text">
-        Last inspection: {record.values.inspection || 'Not recorded'} ·
-        Photographs do not replace competent-person or health-authority
-        clearance.
-      </p>
-    </section>
-  );
+  return null;
 }
 function RecordDetailEditor({
   record,

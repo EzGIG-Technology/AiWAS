@@ -217,7 +217,6 @@ export const industries: Industry[] = [
       'emergency-centre',
       'hostel-operations',
       'movement-visitors',
-      'facilities-health',
       'activities-continuity',
       'platform-readiness',
     ],

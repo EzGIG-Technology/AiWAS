@@ -4,6 +4,7 @@ import {
   ShieldCheck,
   Settings2,
   LayoutDashboard,
+  MapPin,
   Video,
   Siren,
   ClipboardCheck,
@@ -97,6 +98,9 @@ import {
 import { conceptModules } from './concept-data';
 import { ConceptWorkspace } from './concept-workspace';
 import { DetectionStudio } from './detection-studio';
+import { CampusInsights } from './campus-insights';
+import { TeacherApp } from './teacher-app';
+import { teacherUpdate } from './teacher-workflow';
 import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
 import { IndustryProfile } from './industry-profile';
@@ -120,6 +124,8 @@ import {
 } from './industry-seed';
 const nav = [
   ['Overview', LayoutDashboard],
+  ['Teacher app', ClipboardCheck],
+  ['Campus insights', MapPin],
   ['Schools', School],
   ['Industry profile', Building2],
   ['Attendance & presence', Users],
@@ -133,7 +139,6 @@ const nav = [
   ['Emergency centre', Siren],
   ['Hostel operations', School],
   ['Movement & visitors', Users],
-  ['Facilities & health', Activity],
   ['Activities & continuity', SlidersHorizontal],
   ['Platform readiness', Settings2],
   ['Validation queue', ClipboardCheck],
@@ -146,6 +151,7 @@ const nav = [
 const headings: Record<string, string> = {
   ...Object.fromEntries(conceptModules.map((m) => [m.title, m.title])),
   Overview: 'School command centre',
+  'Campus insights': 'Campus insights',
   Schools: 'School directory',
   'Attendance & presence': 'Attendance & presence',
   'Live cameras': 'Live cameras',
@@ -162,6 +168,8 @@ const headings: Record<string, string> = {
 const subtitles: Record<string, string> = {
   ...Object.fromEntries(conceptModules.map((m) => [m.title, m.subtitle])),
   Overview: 'Today’s priorities, people and campus coverage.',
+  'Campus insights':
+    'People, movement and everyday value from your camera network.',
   Schools:
     'Manage coverage, configuration and access across connected schools.',
   'Attendance & presence':
@@ -402,6 +410,11 @@ export default function Home() {
     if (conceptModules.some((m) => m.title === n) && !moduleTitles.has(n))
       return false;
     if (n === 'Attendance & presence' && !industry.presence) return false;
+    // The teacher app and campus insights are authored against the school day
+    // and school zones, so they stay education-only until sector versions
+    // exist. Showing them elsewhere would relabel school content.
+    if (n === 'Teacher app' || n === 'Campus insights')
+      return industryId === 'education';
     if (n === 'Schools' || n === 'Platform readiness') return privileged;
     if (n === 'Attendance & presence') return !privileged;
     if (n === 'Industry profile') return true;
@@ -917,6 +930,58 @@ export default function Home() {
     ) : (
       <Empty />
     );
+  if (view === 'Teacher app') {
+    const teacher =
+      users.find(
+        (u) =>
+          u.active && u.school === school && u.role === 'Discipline Teacher',
+      )?.name ||
+      users.find((u) => u.active && u.school === school)?.name ||
+      'School teacher';
+    return (
+      <TeacherApp
+        school={school}
+        incidents={incidents}
+        users={users}
+        teacher={teacher}
+        onExit={() => navigate('Overview')}
+        onReport={(item) => setIncidents((all) => [item, ...all])}
+        onAction={(id, action, note, options) => {
+          const incident = incidents.find((i) => i.id === id);
+          if (!incident) return 'This alert is no longer available.';
+          if (
+            action === 'handover' &&
+            !users.some(
+              (u) =>
+                u.active &&
+                u.school === school &&
+                u.name === options?.recipient,
+            )
+          )
+            return 'Choose an active colleague from this school.';
+          try {
+            const updated = teacherUpdate(
+              incident,
+              school,
+              teacher,
+              action,
+              note,
+              options,
+              new Date().toLocaleString('en-GB', {
+                timeZone: 'Asia/Kuala_Lumpur',
+              }),
+            );
+            setIncidents((all) => all.map((i) => (i.id === id ? updated : i)));
+            return '';
+          } catch (error) {
+            return error instanceof Error
+              ? error.message
+              : 'Unable to save this action.';
+          }
+        }}
+      />
+    );
+  }
   return (
     <SidebarProvider
       style={{ '--sidebar-width': '244px' } as React.CSSProperties}
@@ -1097,6 +1162,22 @@ export default function Home() {
               </div>
             )}
           </div>
+          {view === 'Overview' && (
+            <button
+              className="campus-overview-link"
+              onClick={() => navigate('Campus insights')}
+            >
+              <MapPin size={24} />
+              <span>
+                <strong>Where is the school busiest?</strong>
+                <small>
+                  Explore the campus heatmap, movement trends and daily planning
+                  insights.
+                </small>
+              </span>
+              <ArrowUpRight size={20} />
+            </button>
+          )}
           {view === 'Overview' && (
             <section className="concept-launchpad">
               <div>
@@ -1657,6 +1738,14 @@ export default function Home() {
               </div>
             </>
           )}
+          <div hidden={view !== 'Campus insights'}>
+            <CampusInsights
+              school={school}
+              cameras={schoolCameras}
+              onAlert={(item) => setIncidents((all) => [item, ...all])}
+              onOpen={openIncident}
+            />
+          </div>
           <div hidden={view !== 'Detection studio'}>
             <DetectionStudio
               key={industryId}
@@ -2678,7 +2767,7 @@ export default function Home() {
                 <div className="response-strip">
                   <span>
                     {selected.acknowledged
-                      ? 'Acknowledged by Nadia Ahmad'
+                      ? 'Acknowledgement recorded'
                       : 'Awaiting acknowledgement'}
                   </span>
                   <button

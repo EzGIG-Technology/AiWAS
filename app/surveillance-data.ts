@@ -372,7 +372,7 @@ export const jpnCoverage = [
   [
     'PDF 10, 25',
     'Vandalisme / kecurian',
-    'Detection studio + Facilities & health',
+    'Detection studio + Incidents',
     'Scene-change candidate and staff verification',
   ],
   [

@@ -1,5 +1,7 @@
 # AiWAS school surveillance capability audit
 
+Current scope update (12 September 2026): Facilities & health has since been removed at the product owner’s request. Campus insights now covers camera-derived operational analytics. Historical descriptions below reflect the earlier delivery; see research/campus-camera-value-study.md for the current direction.
+
 ## Executive assessment
 
 AiWAS should treat video analytics as a way to direct adult attention to observable events, then combine that observation with school records, reliable communications and documented human decisions. The strongest near-term expansion is operational: boundary entry, movement flow, congestion, prolonged presence, possible falls, obstructions and camera availability. Sensitive conclusions such as bullying, truancy, theft, cheating or mental-health risk require contextual investigation. They should not become automatic labels attached to children.

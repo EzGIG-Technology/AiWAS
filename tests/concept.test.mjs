@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {conceptModules,makeConceptSeeds,conceptAdvanceError,conceptFormError,fieldsForTopic,studyCoverage} from '../app/concept-data.ts';
-test('every study feature maps to an implemented workspace and workflow',()=>{
+test('study features map to active workflows or explicitly removed scope',()=>{
  assert.equal(studyCoverage.length,33);
  assert.equal(new Set(studyCoverage.map(x=>x.need)).size,33);
- for(const row of studyCoverage){if(row.workspace==='Incidents')continue;const m=conceptModules.find(m=>m.title===row.workspace);assert.ok(m,row.workspace);assert.ok(m.topics.includes(row.workflow),row.workflow);}
+ for(const row of studyCoverage){if(row.workspace==='Incidents'||row.workspace==='Removed from current scope')continue;const m=conceptModules.find(m=>m.title===row.workspace);assert.ok(m,row.workspace);assert.ok(m.topics.includes(row.workflow),row.workflow);}
  const report=readFileSync('docs/research/malaysia-feature-gap-register.csv','utf8');
  for(const row of studyCoverage)assert.ok(report.includes(row.need),`Study need missing: ${row.need}`);
 });

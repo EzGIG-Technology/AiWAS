@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {campusZones,insightWindows,zoneSample,heatValue,heatColor,thresholdError,zoneSummary,comparableChange} from '../app/campus-insights-data.ts';
+import {conceptModules,studyCoverage} from '../app/concept-data.ts';
+test('heatmap separates unavailable coverage from observed zero',()=>{assert.notEqual(heatColor(null,'occupancy'),heatColor(0,'occupancy'));const s=zoneSample('A','canteen',2);assert.equal(heatValue(s,'occupancy'),118);assert.equal(heatValue(s,'crossings'),s.entries+s.exits);assert.equal(heatValue(s,'dwell'),8.4);});
+test('sample windows have coherent counts without inventing a whole-day population',()=>{for(const school of ['SMK Tunku Ampuan Durah','SK Seremban Jaya'])for(const z of campusZones)for(let i=0;i<insightWindows.length;i++){const s=zoneSample(school,z.id,i);assert.ok(s.occupancy>=0&&s.entries>=0&&s.exits>=0);assert.ok(s.occupancy-(s.entries-s.exits)>=0,'Implied opening occupancy cannot be negative');assert.ok(s.queue<=s.occupancy);}});
+test('sample series and comparisons expose their denominators',()=>{const s=zoneSummary('A','canteen',90);assert.equal(s.peak,118);assert.equal(s.peakSlot,2);assert.equal(s.overThresholdSamples,2);assert.equal(s.occupiedSamples,5);assert.equal(comparableChange(10,0),null);assert.equal(comparableChange(12,10),20);});
+test('invalid operational thresholds and unknown zones are rejected',()=>{for(const n of [0,-5,NaN,1001,2.5])assert.ok(thresholdError(n));assert.equal(thresholdError(90),'');assert.throws(()=>zoneSample('A','private room',1));assert.throws(()=>zoneSample('A','gate',6));});
+test('facilities workspace is removed and prior research coverage records the scope change',()=>{assert.ok(!conceptModules.some(m=>m.id==='facilities-health'));assert.equal(studyCoverage.filter(r=>r.workspace==='Removed from current scope').length,6);});
