@@ -25,9 +25,9 @@ export function AiwasLogo({
       >
         <defs>
           <linearGradient id="aiwas-grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#E8912F" />
-            <stop offset="55%" stopColor="#CE6417" />
-            <stop offset="100%" stopColor="#B34A0E" />
+            <stop offset="0%" stopColor="var(--brand-hover)" />
+            <stop offset="55%" stopColor="var(--brand)" />
+            <stop offset="100%" stopColor="var(--brand-active)" />
           </linearGradient>
         </defs>
         {/* Four-point spark from the AiWAS wordmark. */}

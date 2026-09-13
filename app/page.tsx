@@ -110,6 +110,7 @@ import { SiteMap } from './site-map';
 import { SecurityOperationsRoom } from './security-operations-room';
 import { PlatformArchitecture } from './platform-architecture';
 import { AiwasLogo } from './brand';
+import { ThemeToggle } from './theme-toggle';
 import { DetectionMatrix } from './detection-matrix';
 import { DetectionTuning } from './detection-tuning';
 import { DeviceFleet } from './device-fleet';
@@ -1110,6 +1111,7 @@ export default function Home() {
             <strong>{view}</strong>
           </div>
           <div className="top-actions">
+            <ThemeToggle />
             <span className="demo-pill">Demo workspace</span>
             <div className="top-role">
               <Pick
@@ -1316,27 +1318,30 @@ export default function Home() {
                 {[
                   [
                     'Open incidents',
-                    String(open.length).padStart(2, '0'),
+                    String(open.length),
                     `${high.length} high priority`,
                     'red',
                   ],
                   [
                     'Awaiting validation',
-                    String(pending.length).padStart(2, '0'),
+                    String(pending.length),
                     'Ready for staff review',
                     'amber',
                   ],
                   [
                     'Cameras online',
                     `${schoolCameras.filter((c) => c.online).length} / ${schoolCameras.length}`,
-                    schoolCameras.some((c) => !c.online)
-                      ? '1 camera needs attention'
-                      : 'All cameras available',
+                    (() => {
+                      const down = schoolCameras.filter((c) => !c.online).length;
+                      return down === 0
+                        ? 'All cameras available'
+                        : `${down} camera${down > 1 ? 's need' : ' needs'} attention`;
+                    })(),
                     'blue',
                   ],
                   [
                     'Confirmed today',
-                    String(confirmed.length).padStart(2, '0'),
+                    String(confirmed.length),
                     'Reviewed by your team',
                     'green',
                   ],

@@ -74,6 +74,14 @@ The [full UI guide](docs/full-ui-concept-guide.md) maps all 33 study areas to in
 
 Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, rendering and static-build checks.
 
+## Design system
+
+The interface runs on a token layer with a red brand, and ships **light, dark and follow-the-system** themes from a control in the header. See the [design system and CSS audit](docs/design-system.md).
+
+The audit found 1,031 hardcoded colours (777 distinct), 235 selectors defined more than once with 119 genuine top-level conflicts, 20 arbitrary corner radii and no dark-mode support at all. Now: 1,013 colour literals resolve through 36 semantic tokens, 138 dead declarations are gone, radii sit on a five-step scale, and a panel is one border, one radius and one shadow — with a card inside a card dropping its frame so it reads as a single object.
+
+Fixed on the way: light-mode muted text at 2.7:1 contrast (low-contrast samples fell from 20 to 2), console colours leaking into light surfaces, mobile header overflow at 375 px, a detection overlay label clipping outside its box, a duplicated subtitle, a stat card rendering `00` for a count of zero, and a caption hardcoded to "1 camera needs attention".
+
 ## Detection & response matrix, tuning and edge appliances
 
 Built from the supplied 94-page AiWAS programme document. See the [document audit](docs/research/aiwas-document-audit.md).

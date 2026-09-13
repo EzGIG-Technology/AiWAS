@@ -726,7 +726,6 @@ export function ConceptWorkspace({
             {definition.scope ? 'PLATFORM CONTROL' : 'SCHOOL OPERATIONS'} <i />{' '}
             FICTIONAL WORKSPACE
           </span>
-          <h2>{definition.subtitle}</h2>
           <div className="concept-command-actions">
             <button
               className="btn primary"
