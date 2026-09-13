@@ -91,16 +91,11 @@ export function MicropayLogo({ size = 22 }: { size?: number }) {
   );
 }
 
-/** Co-branded lockup used on the command centre and architecture headers. */
+/** Product lockup used on the architecture header. */
 export function BrandLockup({ subtitle }: { subtitle?: string }) {
   return (
     <div className="brand-lockup">
       <AiwasLogo size={30} />
-      <span className="brand-lockup-rule" aria-hidden="true" />
-      <span className="brand-lockup-by">
-        <small>Presented by</small>
-        <MicropayLogo size={20} />
-      </span>
       {subtitle && <p className="brand-lockup-sub">{subtitle}</p>}
     </div>
   );

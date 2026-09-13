@@ -691,12 +691,51 @@ export function DetectionStudio({
               validation.
             </p>
             {industryId !== 'education' && (
-              <p className="studio-note">
-                The requirement traceability table below is authored for the
-                education programme. For {industry.name.toLowerCase()}, the
-                capability register and excluded detections are shown on the
-                Industry profile screen.
-              </p>
+              <>
+                <p className="studio-note">
+                  The requirement traceability table below is authored for the
+                  education programme. For {industry.name.toLowerCase()}, the
+                  scope is set out here instead.
+                </p>
+                <dl className="industry-meta">
+                  <div>
+                    <dt>Sector</dt>
+                    <dd>{industry.sector}</dd>
+                  </div>
+                  <div>
+                    <dt>Regulator and standards</dt>
+                    <dd>{industry.regulator}</dd>
+                  </div>
+                  <div>
+                    <dt>Principal risks</dt>
+                    <dd>
+                      <ul className="industry-risks">
+                        {industry.keyRisks.map((r) => (
+                          <li key={r}>{r}</li>
+                        ))}
+                      </ul>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Never monitored</dt>
+                    <dd>{industry.privateZones.join(' · ')}</dd>
+                  </div>
+                </dl>
+                <h3>Excluded detections</h3>
+                <p className="muted">
+                  Not missing features. Capabilities this industry profile
+                  refuses, with the reason recorded so the decision survives a
+                  change of team.
+                </p>
+                <ul className="industry-excluded">
+                  {industry.excluded.map((e) => (
+                    <li key={e.name}>
+                      <strong>{e.name}</strong>
+                      <span>{e.why}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
             <div className="table-wrap" hidden={industryId !== 'education'}>
               <table>

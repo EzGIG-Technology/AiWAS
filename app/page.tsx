@@ -32,7 +32,6 @@ import {
   History,
   CheckCircle2,
   RefreshCw,
-  Building2,
   Boxes,
   MonitorPlay,
   Workflow,
@@ -107,11 +106,10 @@ import { TeacherApp } from './teacher-app';
 import { teacherUpdate } from './teacher-workflow';
 import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
-import { IndustryProfile } from './industry-profile';
 import { SiteMap } from './site-map';
 import { SecurityOperationsRoom } from './security-operations-room';
 import { PlatformArchitecture } from './platform-architecture';
-import { AiwasLogo, MicropayLogo } from './brand';
+import { AiwasLogo } from './brand';
 import { DetectionMatrix } from './detection-matrix';
 import { DetectionTuning } from './detection-tuning';
 import { DeviceFleet } from './device-fleet';
@@ -138,7 +136,6 @@ const nav = [
   ['Teacher app', ClipboardCheck],
   ['Campus insights', MapPin],
   ['Schools', School],
-  ['Industry profile', Building2],
   ['Attendance & presence', Users],
   ['Live cameras', Video],
   ['Site map', Boxes],
@@ -202,10 +199,7 @@ const subtitles: Record<string, string> = {
     'Calibrate thresholds for each school, zone, and category.',
   'Notification routing': 'Connect the right incident to the right people.',
   'Users & roles': 'Manage workspace access and school assignments.',
-  'Industry profile':
-    'Sector scope, monitored areas, capability register and excluded detections.',
 };
-headings['Industry profile'] = 'Industry profile';
 headings['Site map'] = 'School map · 3D';
 headings['Operations room'] = 'Security operations room';
 subtitles['Operations room'] =
@@ -450,7 +444,6 @@ export default function Home() {
     if (n === 'Detection tuning' || n === 'Edge appliances') return privileged;
     if (n === 'Schools' || n === 'Platform readiness') return privileged;
     if (n === 'Attendance & presence') return !privileged;
-    if (n === 'Industry profile') return true;
     if (n === 'Detection rules') return privileged;
     if (n === 'Notification routing') return role === 'System Admin';
     if (n === 'Users & roles') return canManageUsers;
@@ -1026,10 +1019,6 @@ export default function Home() {
             <AiwasLogo size={24} />
           </button>
           <p className="brand-sub">SAFETY INTELLIGENCE</p>
-          <p className="brand-by">
-            <span>by</span>
-            <MicropayLogo size={15} />
-          </p>
           <Pick
             label="Industry"
             className="industry-picker"
@@ -1080,7 +1069,7 @@ export default function Home() {
                         : label === 'Schools'
                           ? `${cap(lexicon.sitePlural)}`
                           : label === 'Site map'
-                            ? `${lexicon.siteTitle} map`
+                            ? `${lexicon.siteTitle} map · 3D`
                             : label}
                   </span>
                   {label === 'Incidents' && (
@@ -1789,9 +1778,6 @@ export default function Home() {
               onOpen={openIncident}
             />
           </div>
-          {view === 'Industry profile' && (
-            <IndustryProfile industry={industry} />
-          )}
           {view === 'Operations room' && (
             <SecurityOperationsRoom
               key={industryId + school}
