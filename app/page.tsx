@@ -34,6 +34,8 @@ import {
   RefreshCw,
   Building2,
   Boxes,
+  MonitorPlay,
+  Workflow,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -105,6 +107,9 @@ import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
 import { IndustryProfile } from './industry-profile';
 import { SiteMap } from './site-map';
+import { SecurityOperationsRoom } from './security-operations-room';
+import { PlatformArchitecture } from './platform-architecture';
+import { AiwasLogo, MicropayLogo } from './brand';
 import { presenceSeed, type Pupil } from './presence-data';
 import {
   roles,
@@ -124,6 +129,7 @@ import {
 } from './industry-seed';
 const nav = [
   ['Overview', LayoutDashboard],
+  ['Operations room', MonitorPlay],
   ['Teacher app', ClipboardCheck],
   ['Campus insights', MapPin],
   ['Schools', School],
@@ -131,6 +137,7 @@ const nav = [
   ['Attendance & presence', Users],
   ['Live cameras', Video],
   ['Site map', Boxes],
+  ['Architecture', Workflow],
   ['Detection studio', SlidersHorizontal],
   ['Pilot governance', ClipboardCheck],
   ['Incidents', Siren],
@@ -192,6 +199,12 @@ const subtitles: Record<string, string> = {
 };
 headings['Industry profile'] = 'Industry profile';
 headings['Site map'] = 'School map · 3D';
+headings['Operations room'] = 'Security operations room';
+subtitles['Operations room'] =
+  'Live video wall, camera estate and the event queue in one operator console.';
+headings['Architecture'] = 'Platform architecture';
+subtitles['Architecture'] =
+  'How video is captured, analysed on site and turned into a reviewed decision.';
 subtitles['Site map'] =
   'Anonymous occupancy, camera coverage and last recorded observations on a 3D plan.';
 
@@ -990,12 +1003,13 @@ export default function Home() {
       <Sidebar className="nav-rail">
         <SidebarHeader>
           <button className="brand" onClick={() => navigate('Overview')}>
-            <ShieldCheck />
-            <span>
-              AiWAS<span className="brand-dot">.</span>
-            </span>
+            <AiwasLogo size={24} />
           </button>
           <p className="brand-sub">SAFETY INTELLIGENCE</p>
+          <p className="brand-by">
+            <span>by</span>
+            <MicropayLogo size={15} />
+          </p>
           <Pick
             label="Industry"
             className="industry-picker"
@@ -1757,6 +1771,21 @@ export default function Home() {
           </div>
           {view === 'Industry profile' && (
             <IndustryProfile industry={industry} />
+          )}
+          {view === 'Operations room' && (
+            <SecurityOperationsRoom
+              key={industryId + school}
+              industryId={industryId}
+              site={school}
+              cameras={cameras}
+              incidents={incidents}
+              operator={roleLabel(role)}
+              onOpenIncident={openIncident}
+              onAcknowledge={acknowledge}
+            />
+          )}
+          {view === 'Architecture' && (
+            <PlatformArchitecture industryId={industryId} />
           )}
           {view === 'Site map' && (
             <SiteMap

@@ -4404,3 +4404,137 @@ h1 {
     bottom: -18px;
   }
 }
+
+/* ---- Brand marks ----------------------------------------------------- */
+.brand-logo{display:inline-flex;align-items:center;gap:7px;line-height:1}
+.brand-logo .brand-word{font-weight:800;letter-spacing:-.02em;font-size:calc(var(--brand-size)*.86)}
+.aiwas-logo .brand-word{background:linear-gradient(100deg,#FF7BA6,#F0356B 55%,#D81F5A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.aiwas-logo .brand-word-i{font-style:italic}
+.micropay-logo .brand-word{font-weight:700;letter-spacing:.01em;font-size:calc(var(--brand-size)*.74);color:#dbe6f2}
+.micropay-logo .brand-word-pay{color:#57a5f5}
+.brand-by{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:10px;color:#7f92a8;letter-spacing:.06em;text-transform:uppercase}
+.brand-lockup{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand-lockup-rule{width:1px;height:28px;background:rgba(255,255,255,.25)}
+.brand-lockup-by{display:flex;flex-direction:column;gap:3px}
+.brand-lockup-by small{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#93a6bb}
+.brand-lockup-sub{flex-basis:100%;margin:6px 0 0;font-size:13px;color:#cfe0ef}
+
+/* ---- Security Operations Room ---------------------------------------- */
+.sor{background:#0b1620;border:1px solid #1d2c3a;border-radius:14px;overflow:hidden;color:#d7e3ee;display:grid}
+.sor .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.sor .dot.green{background:#37c98a}.sor .dot.red{background:#e2564a}
+.sor .dot.amber{background:#e0a336}.sor .dot.orange{background:#e08236}.sor .dot.grey{background:#7c8fa3}
+.sor .mono{font-variant-numeric:tabular-nums}
+.sor-topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 14px;background:#0e1c28;border-bottom:1px solid #1d2c3a;flex-wrap:wrap}
+.sor-topbar-left,.sor-topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sor-app{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:#8fa6bb}
+.sor-title{font-size:12px;font-weight:700;letter-spacing:.16em;color:#a9c0d6}
+.sor-mini{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:5px 9px;border-radius:6px;border:1px solid #27394a;background:#132434;color:#c3d5e6}
+.sor-mini:hover:not(:disabled){background:#1a3146;border-color:#33506b}
+.sor-mini:disabled{opacity:.45}
+.sor-grid-pick{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#8fa6bb}
+.sor-chip{font-size:10.5px;font-weight:700;padding:4px 8px;border-radius:5px;border:1px solid #27394a;background:#132434;color:#a9c0d6}
+.sor-chip.current{background:#1c5fa8;border-color:#2a7ad0;color:#fff}
+.sor-body{display:grid;grid-template-columns:238px minmax(0,1fr) 290px;gap:1px;background:#1d2c3a}
+.sor-panel{background:#0b1620;display:flex;flex-direction:column;min-width:0}
+.sor-panel-head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#12212e;border-bottom:1px solid #1d2c3a}
+.sor-panel-head.alert{background:#3a1512;border-bottom-color:#5a221c}
+.sor-panel-head h3{font-size:11px;font-weight:800;letter-spacing:.13em;color:#a9c0d6;margin:0}
+.sor-count{font-size:11px;font-weight:700;color:#8fa6bb}
+.sor-stats{list-style:none;margin:0;padding:9px 12px;display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;font-size:11px;color:#93a9bd;border-bottom:1px solid #16242f}
+.sor-stats li{display:flex;align-items:center;gap:6px}
+.sor-stats strong{color:#e4eef7}
+.sor-search{display:flex;align-items:center;gap:7px;margin:9px 12px;padding:6px 9px;border:1px solid #27394a;border-radius:7px;background:#101f2b;color:#7f95aa}
+.sor-search input{flex:1;min-width:0;background:none;border:0;color:#d7e3ee;font-size:12px;outline:none}
+.sor-search input::placeholder{color:#63798d}
+.sor-check{display:flex;align-items:center;gap:7px;margin:0 12px 8px;font-size:11.5px;color:#93a9bd}
+.sor-camera-list,.sor-event-list{list-style:none;margin:0;padding:0 8px 8px;overflow-y:auto;flex:1;min-height:120px;max-height:330px;display:grid;gap:5px;align-content:start}
+.sor-camera-list li{display:flex;align-items:flex-start;gap:8px;padding:8px 9px;border:1px solid #1d2c3a;border-radius:8px;background:#101f2b}
+.sor-camera-list li.offline{border-color:#4a2320;background:#1c1513}
+.sor-camera-list li>.dot{margin-top:5px}
+.sor-camera-list div{min-width:0;flex:1;display:grid;gap:1px}
+.sor-camera-list strong{font-size:12px;color:#e4eef7}
+.sor-camera-list small{font-size:10px;color:#7f95aa}
+.sor-camera-actions{display:flex;gap:4px}
+.sor-camera-actions button{width:22px;height:22px;display:grid;place-items:center;border:1px solid #27394a;border-radius:5px;background:#152838;color:#a9c0d6}
+.sor-camera-actions button:disabled{opacity:.3}
+.sor-empty{padding:14px;text-align:center;font-size:11.5px;color:#7f95aa;border:1px dashed #27394a;border-radius:8px}
+.sor-panel-foot{display:flex;gap:6px;padding:9px 12px;border-top:1px solid #16242f;flex-wrap:wrap}
+.sor-wall-bar{display:flex;align-items:center;gap:12px;padding:8px 12px;font-size:11.5px;color:#93a9bd;border-bottom:1px solid #16242f;flex-wrap:wrap}
+.sor-wall-bar strong{color:#e4eef7}
+.sor-grid{display:grid;gap:8px;padding:10px;flex:1;align-content:start}
+.sor-grid.g2x2{grid-template-columns:repeat(2,1fr)}
+.sor-grid.g3x3{grid-template-columns:repeat(3,1fr)}
+.sor-grid.g4x4{grid-template-columns:repeat(4,1fr)}
+.sor-tile{border:1px solid #22384a;border-radius:9px;overflow:hidden;background:#0e1c28;display:flex;flex-direction:column;min-width:0}
+.sor-tile.empty{display:grid;place-items:center;min-height:110px;border-style:dashed;color:#5c7186;font-size:11px}
+.sor-tile-head{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#12212e;border-bottom:1px solid #1d2c3a;font-size:11px}
+.sor-tile-head strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dce8f3}
+.sor-tile-head div{display:flex;gap:3px}
+.sor-tile-head button{width:19px;height:19px;display:grid;place-items:center;border:0;background:none;color:#8fa6bb;border-radius:4px}
+.sor-tile-head button:hover{background:#1c334a;color:#fff}
+.sor-tile-media{position:relative;aspect-ratio:16/9;overflow:hidden}
+.sor-tile-media img{width:100%;height:100%;object-fit:cover;display:block}
+.sor-live{position:absolute;left:7px;bottom:7px;display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:3px 7px;border-radius:4px;background:rgba(9,20,30,.82);color:#fff}
+.sor-live i{width:6px;height:6px;border-radius:50%;background:#e2564a;animation:sor-pulse 1.6s infinite}
+@keyframes sor-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.sor-tile-lost{aspect-ratio:16/9;display:grid;place-content:center;justify-items:center;gap:5px;padding:12px;text-align:center;
+  background:repeating-linear-gradient(45deg,#161d24,#161d24 8px,#1b242c 8px,#1b242c 16px);color:#c98b83}
+.sor-tile-lost strong{font-size:12px;color:#e88e83}
+.sor-tile-lost span{font-size:10px;line-height:1.45;color:#96a5b3;max-width:210px}
+.sor-filters{display:flex;gap:5px;padding:0 12px 9px;flex-wrap:wrap}
+.sor-event-list li>button{width:100%;text-align:left;display:grid;gap:2px;padding:8px 9px;border:1px solid #1d2c3a;border-radius:8px;background:#101f2b;color:#d7e3ee;position:relative}
+.sor-event-list li>button.current{border-color:#2a7ad0;background:#132c45}
+.sor-event-list strong{font-size:12px;color:#e4eef7;padding-right:44px}
+.sor-event-list small{font-size:10px;color:#7f95aa}
+.sor-sev{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;width:fit-content;padding:2px 6px;border-radius:4px;background:#33414f;color:#cfe0ef}
+.sor-sev.critical,.sor-sev.red{background:#5a221c;color:#f0a79e}
+.sor-sev.amber{background:#4b3714;color:#e8c37f}
+.sor-sev.blue{background:#1b3a5c;color:#9cc8f2}
+.sor-time{position:absolute;top:8px;right:9px;font-size:10px;color:#7f95aa;font-variant-numeric:tabular-nums}
+.sor-snapshot{margin:0 12px 10px;border:1px solid #27394a;border-radius:9px;overflow:hidden;background:#101f2b}
+.sor-snapshot-head{font-size:10px;font-weight:800;letter-spacing:.1em;padding:6px 9px;background:#16283a;color:#a9c0d6}
+.sor-snapshot img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover}
+.sor-snapshot-meta{margin:7px 9px 2px;font-size:11px;color:#dce8f3}
+.sor-snapshot-note{margin:0 9px 8px;font-size:9.5px;color:#7f95aa}
+.sor-snapshot-actions{display:flex;gap:6px;padding:0 9px 9px}
+.sor-statusbar{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:8px 14px;background:#0e1c28;border-top:1px solid #1d2c3a;font-size:11px;color:#8fa6bb}
+.sor-statusbar span{display:inline-flex;align-items:center;gap:6px}
+.sor-log{list-style:none;margin:0;padding:8px 14px;border-top:1px solid #1d2c3a;background:#0a131b;font-size:10.5px;color:#8fa6bb;display:grid;gap:3px;font-variant-numeric:tabular-nums}
+@media(max-width:1200px){.sor-body{grid-template-columns:1fr}.sor-camera-list,.sor-event-list{max-height:240px}.sor-grid.g4x4{grid-template-columns:repeat(2,1fr)}.sor-grid.g3x3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.sor-grid.g2x2,.sor-grid.g3x3,.sor-grid.g4x4{grid-template-columns:1fr}.sor-title{display:none}}
+
+/* ---- Platform architecture ------------------------------------------- */
+.architecture{display:grid;gap:16px}
+.arch-hero{background:#0d2233;color:#e3eef8;border-radius:16px;padding:28px 30px}
+.arch-hero p{margin:16px 0 0;max-width:76ch;color:#b9cfe2;line-height:1.65;font-size:14px}
+.arch-flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px;counter-reset:none}
+.arch-flow>li{background:white;border:1px solid #dfe5ef;border-radius:12px;padding:18px}
+.arch-stage-head{display:flex;align-items:center;gap:9px;margin-bottom:8px;color:#123a63}
+.arch-stage-head h3{font-size:14px;margin:0;flex:1}
+.arch-n{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#123a63;color:white;font-size:11px;font-weight:800;flex:none}
+.arch-blurb{font-size:12.5px;color:#5a6a7e;margin:0 0 10px;line-height:1.5}
+.arch-flow ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.arch-flow ul li{font-size:12px;color:#2b3d52;padding-left:14px;position:relative;line-height:1.45}
+.arch-flow ul li::before{content:'';position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;background:#3079cb}
+.arch-privacy{display:flex;gap:14px;align-items:flex-start;padding:20px 22px;background:#e9f5ee;border-color:#c9e4d4}
+.arch-privacy h3{font-size:15px;margin:0 0 6px;color:#1b5c3d}
+.arch-privacy p{margin:0;font-size:13px;color:#38564a;line-height:1.6;max-width:80ch}
+.arch-disabled{padding:22px 24px}
+.arch-disabled h3{display:flex;align-items:center;gap:8px;font-size:15px;margin-bottom:8px;color:#7d2a1e}
+.arch-disabled ul{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:9px}
+.arch-disabled li{display:grid;gap:3px;background:#fdf1f0;border:1px solid #f2d9d6;border-left:3px solid #b8402f;border-radius:8px;padding:13px 15px}
+.arch-disabled strong{font-size:13.5px;color:#7d2a1e;text-decoration:line-through;text-decoration-color:#d9a49c}
+.arch-disabled span{font-size:12.5px;color:#5d4a46;line-height:1.55}
+.arch-pillars{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;padding:20px 22px}
+.arch-pillars>div{display:grid;gap:5px;color:#123a63}
+.arch-pillars strong{font-size:13px;color:#17233b}
+.arch-pillars span{font-size:12px;color:#5a6a7e;line-height:1.5}
+@media(max-width:640px){.arch-hero{padding:22px}}
+/* Keep the synthetic-scene stamp legible in the small operations-room tiles:
+   it must never render half-clipped as "THETIC SCENE". */
+.sor-tile-media .synthetic-stamp{font-size:8px;letter-spacing:.04em;padding:2px 5px;right:5px;bottom:5px;left:auto;max-width:calc(100% - 10px);white-space:nowrap;overflow:hidden}
+.sor-grid.g3x3 .sor-tile-media .synthetic-stamp,
+.sor-grid.g4x4 .sor-tile-media .synthetic-stamp{font-size:0;padding:3px 6px}
+.sor-grid.g3x3 .sor-tile-media .synthetic-stamp::after,
+.sor-grid.g4x4 .sor-tile-media .synthetic-stamp::after{content:'SYNTHETIC';font-size:7.5px;letter-spacing:.04em}

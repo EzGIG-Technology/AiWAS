@@ -74,6 +74,16 @@ The [full UI guide](docs/full-ui-concept-guide.md) maps all 33 study areas to in
 
 Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, rendering and static-build checks.
 
+## Security operations room and architecture
+
+The [command centre notes](docs/command-centre.md) cover the operator console and the platform architecture view, built from the AiWAS / MicroPay presentation set.
+
+**Operations room** — camera estate with online/offline/recording counts and search, a video wall with 2×2, 3×3 and 4×4 layouts, and a live event queue with severity filters, confidence, snapshot preview and acknowledgement. An offline feed renders as an explicit signal-lost tile reading "do not read this area as clear", never a dark rectangle that looks like a quiet room; confidence appears only for video candidates.
+
+**Architecture** — the six-stage pipeline from capture through on-premise analysis, encrypted event transfer, cloud dashboard and operations room to recorded action, plus the capabilities deliberately excluded from it. The presentation artwork showed face recognition and a people count split by sex; both are excluded and are drawn struck-through with the reason, because a diagram that quietly dropped them would let them return.
+
+**Branding** — `app/brand.tsx` carries SVG reconstructions of the AiWAS and MicroPay marks. Swap in the official vector files when available; the component API will not change.
+
 ## Competitive audit
 
 The [competitive audit](docs/research/competitive-audit-school-ai-video.md) reviews the vendors a school or JPN would be shown alongside AiWAS — Verkada, ZeroEyes, Raptor, Navigate360, CENTEGIX, Ambient.ai, Spot AI, STOPit and Securly Pass — with a [28-row feature matrix](docs/research/competitor-feature-matrix.csv).
