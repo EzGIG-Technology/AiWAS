@@ -74,6 +74,14 @@ The [full UI guide](docs/full-ui-concept-guide.md) maps all 33 study areas to in
 
 Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, rendering and static-build checks.
 
+## Competitive audit
+
+The [competitive audit](docs/research/competitive-audit-school-ai-video.md) reviews the vendors a school or JPN would be shown alongside AiWAS — Verkada, ZeroEyes, Raptor, Navigate360, CENTEGIX, Ambient.ai, Spot AI, STOPit and Securly Pass — with a [28-row feature matrix](docs/research/competitor-feature-matrix.csv).
+
+The headline finding is that schools are not buying detectors, they are buying the whole incident lifecycle from one vendor, and the highest-value additions for AiWAS are workflow rather than vision models: a human verification desk before any critical alert leaves the building, emergency accountability and reunification, drill management with after-action reporting, responder handoff from the 3D map, and a digital hall pass as the consented source for student movement.
+
+It also records where AiWAS is already ahead of every vendor reviewed — per-capability stated limitations, written exclusion lists, coverage gaps that never render as zero, confidence shown only for video candidates — and which well-funded competitor capabilities the platform should keep refusing in writing, including facial recognition of pupils, appearance-based cross-camera re-identification and student device monitoring.
+
 ## 3D site map
 
 Every industry has a schematic 3D plan of the selected site with three layers: **anonymous occupancy** (estimated people per area — how many, never who), **camera coverage** (where the dark areas are; an uncovered area reports "No coverage", never zero), and, for education, **last recorded observations** (each pupil placed at the area of their last gate-reader or staff-confirmed sighting, with the age and source of that record).
