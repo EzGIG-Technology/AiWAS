@@ -97,6 +97,8 @@ import { conceptModules } from './concept-data';
 import { ConceptWorkspace } from './concept-workspace';
 import { DetectionStudio } from './detection-studio';
 import { CampusInsights } from './campus-insights';
+import { TeacherApp } from './teacher-app';
+import { teacherUpdate } from './teacher-workflow';
 import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
 import {
@@ -114,6 +116,7 @@ import {
 } from './data';
 const nav = [
   ['Overview', LayoutDashboard],
+  ['Teacher app', ClipboardCheck],
   ['Campus insights', MapPin],
   ['Schools', School],
   ['Attendance & presence', Users],
@@ -816,6 +819,58 @@ export default function Home() {
     ) : (
       <Empty />
     );
+  if (view === 'Teacher app') {
+    const teacher =
+      users.find(
+        (u) =>
+          u.active && u.school === school && u.role === 'Discipline Teacher',
+      )?.name ||
+      users.find((u) => u.active && u.school === school)?.name ||
+      'School teacher';
+    return (
+      <TeacherApp
+        school={school}
+        incidents={incidents}
+        users={users}
+        teacher={teacher}
+        onExit={() => navigate('Overview')}
+        onReport={(item) => setIncidents((all) => [item, ...all])}
+        onAction={(id, action, note, options) => {
+          const incident = incidents.find((i) => i.id === id);
+          if (!incident) return 'This alert is no longer available.';
+          if (
+            action === 'handover' &&
+            !users.some(
+              (u) =>
+                u.active &&
+                u.school === school &&
+                u.name === options?.recipient,
+            )
+          )
+            return 'Choose an active colleague from this school.';
+          try {
+            const updated = teacherUpdate(
+              incident,
+              school,
+              teacher,
+              action,
+              note,
+              options,
+              new Date().toLocaleString('en-GB', {
+                timeZone: 'Asia/Kuala_Lumpur',
+              }),
+            );
+            setIncidents((all) => all.map((i) => (i.id === id ? updated : i)));
+            return '';
+          } catch (error) {
+            return error instanceof Error
+              ? error.message
+              : 'Unable to save this action.';
+          }
+        }}
+      />
+    );
+  }
   return (
     <SidebarProvider
       style={{ '--sidebar-width': '244px' } as React.CSSProperties}
@@ -2560,7 +2615,7 @@ export default function Home() {
                 <div className="response-strip">
                   <span>
                     {selected.acknowledged
-                      ? 'Acknowledged by Nadia Ahmad'
+                      ? 'Acknowledgement recorded'
                       : 'Awaiting acknowledgement'}
                   </span>
                   <button
