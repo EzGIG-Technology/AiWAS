@@ -94,6 +94,18 @@ export function mediaFor(zone: string, category = '') {
     )[zone] || ''
   );
 }
+/**
+ * Media lives beside the built app. Using the Vite base rather than a
+ * root-absolute path lets the same bundle serve from a subpath (a preview
+ * URL, a project page) as well as from a domain root.
+ */
+const mediaBase =
+  (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ??
+  '/';
+const asset = (file: string) => `${mediaBase}media/${file}`;
+const sceneFile = (scene: string) =>
+  `${scene}.${['hostel', 'inspection'].includes(scene) ? 'png' : 'jpg'}`;
+
 export function CameraStill({
   scene,
   overlay = true,
@@ -113,7 +125,7 @@ export function CameraStill({
   return (
     <div className="camera-still">
       <img
-        src={`/media/${scene}.${['hostel', 'inspection'].includes(scene) ? 'png' : 'jpg'}`}
+        src={asset(sceneFile(scene))}
         alt={`Synthetic scene: ${data.label}. Adults in a staged demonstration.`}
         loading="lazy"
         onError={() => setFailed(scene)}
@@ -157,8 +169,8 @@ export function DemoVideo({
     <div className="demo-video">
       <video
         key={scene}
-        src={`/media/${scene}.mp4`}
-        poster={`/media/${scene}.${['hostel', 'inspection'].includes(scene) ? 'png' : 'jpg'}`}
+        src={asset(`${scene}.mp4`)}
+        poster={asset(sceneFile(scene))}
         controls={!autoPlay}
         autoPlay={autoPlay}
         muted
