@@ -32,6 +32,7 @@ import {
   CheckCircle2,
   RefreshCw,
   Building2,
+  Boxes,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -99,6 +100,8 @@ import { DetectionStudio } from './detection-studio';
 import { SchoolOnboarding } from './school-onboarding';
 import { OperationsPanel } from './operations-panel';
 import { IndustryProfile } from './industry-profile';
+import { SiteMap } from './site-map';
+import { presenceSeed, type Pupil } from './presence-data';
 import {
   roles,
   severityClass,
@@ -121,6 +124,7 @@ const nav = [
   ['Industry profile', Building2],
   ['Attendance & presence', Users],
   ['Live cameras', Video],
+  ['Site map', Boxes],
   ['Detection studio', SlidersHorizontal],
   ['Pilot governance', ClipboardCheck],
   ['Incidents', Siren],
@@ -179,6 +183,9 @@ const subtitles: Record<string, string> = {
     'Sector scope, monitored areas, capability register and excluded detections.',
 };
 headings['Industry profile'] = 'Industry profile';
+headings['Site map'] = 'School map · 3D';
+subtitles['Site map'] =
+  'Anonymous occupancy, camera coverage and last recorded observations on a 3D plan.';
 
 /**
  * Swap the education vocabulary the original copy was written in for the
@@ -336,6 +343,9 @@ export default function Home() {
     [startDate, setStartDate] = useState('2026-08-12'),
     [endDate, setEndDate] = useState('2026-09-10'),
     [users, setUsers] = useState(initial.users),
+    [pupils, setPupils] = useState<Pupil[]>(
+      industryId === 'education' ? presenceSeed : [],
+    ),
     [userOpen, setUserOpen] = useState(false),
     [editUser, setEditUser] = useState<number | null>(null),
     [userName, setUserName] = useState(''),
@@ -455,6 +465,7 @@ export default function Home() {
     setCameras(initial.cameras);
     setIncidents(initial.incidents);
     setUsers(initial.users);
+    setPupils(industry.presence ? presenceSeed : []);
     setSchool(initial.sites[0]);
     setUserSchool(initial.sites[0]);
     setSelectedId(null);
@@ -969,7 +980,9 @@ export default function Home() {
                         ? `${lexicon.siteTitle} team`
                         : label === 'Schools'
                           ? `${cap(lexicon.sitePlural)}`
-                          : label}
+                          : label === 'Site map'
+                            ? `${lexicon.siteTitle} map`
+                            : label}
                   </span>
                   {label === 'Incidents' && (
                     <b className="nav-count">{open.length}</b>
@@ -1172,7 +1185,12 @@ export default function Home() {
           )}
           {!privileged && (
             <div hidden={view !== 'Attendance & presence'}>
-              <PresencePanel key={school} school={school} />
+              <PresencePanel
+                key={school}
+                school={school}
+                pupils={pupils}
+                onChange={setPupils}
+              />
             </div>
           )}
           {view === 'Overview' && !privileged && (
@@ -1650,6 +1668,18 @@ export default function Home() {
           </div>
           {view === 'Industry profile' && (
             <IndustryProfile industry={industry} />
+          )}
+          {view === 'Site map' && (
+            <SiteMap
+              key={industryId + school}
+              industryId={industryId}
+              site={school}
+              cameras={cameras}
+              incidents={incidents}
+              people={pupils}
+              canSeeObservations={industry.presence && !privileged}
+              onOpenIncident={openIncident}
+            />
           )}
           <ConceptWorkspace
             view={view}

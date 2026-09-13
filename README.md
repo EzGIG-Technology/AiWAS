@@ -74,6 +74,14 @@ The [full UI guide](docs/full-ui-concept-guide.md) maps all 33 study areas to in
 
 Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, rendering and static-build checks.
 
+## 3D site map
+
+Every industry has a schematic 3D plan of the selected site with three layers: **anonymous occupancy** (estimated people per area — how many, never who), **camera coverage** (where the dark areas are; an uncovered area reports "No coverage", never zero), and, for education, **last recorded observations** (each pupil placed at the area of their last gate-reader or staff-confirmed sighting, with the age and source of that record).
+
+The observation layer is deliberately not live per-pupil tracking. Continuous identification of named children is excluded by the platform's non-biometric design, by MOE's position and by the PDPA's treatment of biometric data. What the map shows instead is what a school actually needs during a missing-pupil search or a roll call: where someone was last recorded, when, and how reliable that record is. See [3D site map](docs/site-map-3d.md).
+
+Rendered with CSS 3D transforms rather than WebGL — drag to orbit, or use the rotate, plan-view, reset and zoom controls.
+
 ## Multi-industry support
 
 AiWAS now ships eight industry profiles: education, healthcare, aged & residential care, retail, construction, manufacturing & warehousing, transport hubs and commercial property. An industry selector in the sidebar switches the whole workspace — sites, cameras, records, accounts, vocabulary, monitored zones, rule defaults and the detection register all change together, and nothing carries across.
