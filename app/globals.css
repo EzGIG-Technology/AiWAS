@@ -4408,7 +4408,7 @@ h1 {
 /* ---- Brand marks ----------------------------------------------------- */
 .brand-logo{display:inline-flex;align-items:center;gap:7px;line-height:1}
 .brand-logo .brand-word{font-weight:800;letter-spacing:-.02em;font-size:calc(var(--brand-size)*.86)}
-.aiwas-logo .brand-word{background:linear-gradient(100deg,#FF7BA6,#F0356B 55%,#D81F5A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.aiwas-logo .brand-word{background:linear-gradient(100deg,#E8912F,#CE6417 55%,#B34A0E);-webkit-background-clip:text;background-clip:text;color:transparent}
 .aiwas-logo .brand-word-i{font-style:italic}
 .micropay-logo .brand-word{font-weight:700;letter-spacing:.01em;font-size:calc(var(--brand-size)*.74);color:#dbe6f2}
 .micropay-logo .brand-word-pay{color:#57a5f5}
@@ -4538,3 +4538,63 @@ h1 {
 .sor-grid.g4x4 .sor-tile-media .synthetic-stamp{font-size:0;padding:3px 6px}
 .sor-grid.g3x3 .sor-tile-media .synthetic-stamp::after,
 .sor-grid.g4x4 .sor-tile-media .synthetic-stamp::after{content:'SYNTHETIC';font-size:7.5px;letter-spacing:.04em}
+
+/* ---- Detection & response matrix -------------------------------------- */
+.matrix{display:grid;gap:16px}
+.matrix-summary .concept-stats{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.matrix-notify{font-size:12.5px;color:#4a5768;line-height:1.6;margin:10px 0 0}
+.matrix-controls .studio-fields{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));align-items:end}
+.matrix-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#3d4c5e}
+.matrix-toggle input{width:auto;margin:0}
+.matrix-rows{display:grid;gap:12px}
+.matrix-row{background:white;border:1px solid #dfe5ef;border-left:3px solid #7c8fa3;border-radius:11px;padding:18px 20px}
+.matrix-row.green{border-left-color:#1b6046}
+.matrix-row.amber{border-left-color:#8a5000}
+.matrix-row.red{border-left-color:#a02015}
+.matrix-row>header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.matrix-row>header>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.matrix-row h3{font-size:16px;margin:0}
+.matrix-gate{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.matrix-gate.green{background:#ddede5;color:#1b6046}
+.matrix-gate.amber{background:#f7ebd9;color:#8a5000}
+.matrix-gate.red{background:#f7e3e1;color:#a02015}
+.matrix-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px 20px;margin:0}
+.matrix-grid dt{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64728b;margin-bottom:3px}
+.matrix-grid dd{margin:0;font-size:13px;color:#25384d;line-height:1.5}
+.matrix-conf{font-variant-numeric:tabular-nums}
+.matrix-caution{display:flex;gap:9px;align-items:flex-start;margin:14px 0 0;padding:12px 14px;background:#fdf1f0;border:1px solid #f2d9d6;border-radius:8px;font-size:12.5px;line-height:1.6;color:#6d3a31}
+.matrix-caution svg{flex:none;margin-top:2px;color:#b8402f}
+
+/* ---- Detection tuning -------------------------------------------------- */
+.tuning{display:grid;gap:16px}
+.tuning .table-wrap table{width:100%}
+.tuning td input,.tuning td select{margin:0;max-width:150px}
+.tuning-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.tuning-grid.two{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.tuning-grid label{display:block;font-size:12.5px;font-weight:600;color:#3d4c5e;margin-bottom:2px}
+.tuning-warn{margin:12px 0 0;padding:11px 13px;background:#f7ebd9;border:1px solid #ecd7ae;border-left:3px solid #8a5000;border-radius:8px;font-size:12.5px;line-height:1.6;color:#6b4708}
+
+/* ---- Edge appliances --------------------------------------------------- */
+.fleet{display:grid;gap:16px}
+.fleet h2,.fleet .fleet-sub{display:flex;align-items:center;gap:9px}
+.fleet .fleet-sub{font-size:14px;margin:20px 0 12px;color:#123a63}
+.fleet tr.current{background:#eef4fb}
+.fleet .mono{font-variant-numeric:tabular-nums;font-size:12px}
+.fleet-meta{list-style:none;margin:0 0 18px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.fleet-meta li{display:grid;gap:3px;background:#f2f6fa;border:1px solid #e0e8f0;border-radius:9px;padding:11px 14px}
+.fleet-meta span{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#64728b}
+.fleet-meta strong{font-size:13px;color:#22344a;line-height:1.4}
+.fleet-rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.fleet-ring{display:grid;justify-items:center;gap:3px;background:#f7fafd;border:1px solid #e0e8f0;border-radius:11px;padding:16px 12px;color:#5a6a7e}
+.fleet-ring strong{font-size:19px;color:#17233b;line-height:1.1;font-variant-numeric:tabular-nums}
+.fleet-ring span{font-size:11.5px;font-weight:600;color:#4a5768}
+.fleet-ring small{font-size:10.5px;color:#7f8b9c;font-variant-numeric:tabular-nums}
+.ring-track{fill:none;stroke:#dde5ee;stroke-width:6}
+.ring-value{fill:none;stroke:#3079cb;stroke-width:6;stroke-linecap:round}
+.ring-value.violet{stroke:#6f5bd0}
+.fleet-services{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.fleet-services li{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f7fafd;border:1px solid #e0e8f0;border-radius:9px;padding:11px 14px;font-size:13px;color:#22344a}
+.badge.red{background:#f7e3e1;color:#8c3225}
+.badge.neutral{background:#eceff3;color:#4a5768}
+@media(max-width:700px){.matrix-row>header{flex-direction:column}.fleet-meta{grid-template-columns:1fr}}
+.tuning-note{margin:12px 0 0;padding:11px 13px;background:#eef4fb;border:1px solid #d3e2f2;border-left:3px solid #3079cb;border-radius:8px;font-size:12.5px;line-height:1.6;color:#274a69}

@@ -74,6 +74,18 @@ The [full UI guide](docs/full-ui-concept-guide.md) maps all 33 study areas to in
 
 Run `npm test`, `npm run test:render`, and `npm run build:vercel` for workflow, rendering and static-build checks.
 
+## Detection & response matrix, tuning and edge appliances
+
+Built from the supplied 94-page AiWAS programme document. See the [document audit](docs/research/aiwas-document-audit.md).
+
+**Detection & response matrix** — all 22 detection categories with what each detects, an example incident, severity, the automatic system action, who is notified and the confidence target. Three columns are added that the source lacks: status (10 existing, 6 requested, 6 suggested), a readiness gate, and a caution where the stated behaviour conflicts with the platform's limits. Only the ten live categories carry the 80% baseline; the rest read "Not measured", enforced by test, as is the rule that anything escalating outside the school sits behind a governance decision.
+
+**Detection tuning** — the device Detection tab with its real defaults: nine activities with confidence, severity and cooldown, plus crowd, altercation, tracker and entrance/exit counting-line parameters. Warns on thresholds below 0.50 and on zero cooldowns, while treating a low fire threshold as the deliberate life-safety trade it is.
+
+**Edge appliances** — devices as first-class entities with location, coordinates, timezone, uptime, CPU, memory, disk, GPU, VRAM, temperature and service status. An appliance that is not reporting says plainly that the site is not being analysed.
+
+The document's facial-recognition suite — Face Events, Known Persons, blacklist and watchlist groups, gender and age estimation, face-based attendance — is **not implemented**, and needs a decision rather than a default. The document contradicts itself here: its own Person Type row cites a "no-biometrics rule" while other screens ship face enrollment and civil-ID search. The audit sets out three options and a recommendation.
+
 ## Security operations room and architecture
 
 The [command centre notes](docs/command-centre.md) cover the operator console and the platform architecture view, built from the AiWAS / MicroPay presentation set.

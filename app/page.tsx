@@ -36,6 +36,8 @@ import {
   Boxes,
   MonitorPlay,
   Workflow,
+  Server,
+  Table2,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -110,6 +112,9 @@ import { SiteMap } from './site-map';
 import { SecurityOperationsRoom } from './security-operations-room';
 import { PlatformArchitecture } from './platform-architecture';
 import { AiwasLogo, MicropayLogo } from './brand';
+import { DetectionMatrix } from './detection-matrix';
+import { DetectionTuning } from './detection-tuning';
+import { DeviceFleet } from './device-fleet';
 import { presenceSeed, type Pupil } from './presence-data';
 import {
   roles,
@@ -137,6 +142,9 @@ const nav = [
   ['Attendance & presence', Users],
   ['Live cameras', Video],
   ['Site map', Boxes],
+  ['Detection matrix', Table2],
+  ['Detection tuning', SlidersHorizontal],
+  ['Edge appliances', Server],
   ['Architecture', Workflow],
   ['Detection studio', SlidersHorizontal],
   ['Pilot governance', ClipboardCheck],
@@ -202,6 +210,15 @@ headings['Site map'] = 'School map · 3D';
 headings['Operations room'] = 'Security operations room';
 subtitles['Operations room'] =
   'Live video wall, camera estate and the event queue in one operator console.';
+headings['Detection matrix'] = 'Detection & response matrix';
+subtitles['Detection matrix'] =
+  'Every detection category with its action, who is notified, and what must be true before it is enabled.';
+headings['Detection tuning'] = 'Detection tuning';
+subtitles['Detection tuning'] =
+  'Confidence, severity, cooldown and persistence parameters for each activity.';
+headings['Edge appliances'] = 'Edge appliances';
+subtitles['Edge appliances'] =
+  'On-site inference hardware, its health and the cameras it analyses.';
 headings['Architecture'] = 'Platform architecture';
 subtitles['Architecture'] =
   'How video is captured, analysed on site and turned into a reviewed decision.';
@@ -428,6 +445,9 @@ export default function Home() {
     // exist. Showing them elsewhere would relabel school content.
     if (n === 'Teacher app' || n === 'Campus insights')
       return industryId === 'education';
+    // The response matrix is authored against the school programme document.
+    if (n === 'Detection matrix') return industryId === 'education';
+    if (n === 'Detection tuning' || n === 'Edge appliances') return privileged;
     if (n === 'Schools' || n === 'Platform readiness') return privileged;
     if (n === 'Attendance & presence') return !privileged;
     if (n === 'Industry profile') return true;
@@ -1786,6 +1806,11 @@ export default function Home() {
           )}
           {view === 'Architecture' && (
             <PlatformArchitecture industryId={industryId} />
+          )}
+          {view === 'Detection matrix' && <DetectionMatrix />}
+          {view === 'Detection tuning' && <DetectionTuning />}
+          {view === 'Edge appliances' && (
+            <DeviceFleet industryId={industryId} sites={schools} />
           )}
           {view === 'Site map' && (
             <SiteMap
