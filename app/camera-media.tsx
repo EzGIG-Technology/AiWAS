@@ -78,6 +78,7 @@ export const mediaSources: Record<
 export function mediaFor(zone: string, category = '') {
   if (
     category === 'Visible blade concern' ||
+    category === 'Weapon-shaped object' ||
     zone === 'Safety training corridor'
   )
     return 'training';

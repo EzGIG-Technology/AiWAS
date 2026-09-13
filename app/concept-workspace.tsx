@@ -783,7 +783,6 @@ export function ConceptWorkspace({
         <TabsList className="section-tabs">
           <TabsTrigger value="register">Work register</TabsTrigger>
           <TabsTrigger value="showcase">Scenario & media</TabsTrigger>
-          <TabsTrigger value="coverage">Workflow coverage</TabsTrigger>
           {definition.scope && (
             <TabsTrigger value="aggregate">Aggregate preview</TabsTrigger>
           )}
@@ -1041,32 +1040,6 @@ export function ConceptWorkspace({
             </section>
           </TabsContent>
         )}
-        <TabsContent value="coverage">
-          <div className="concept-coverage">
-            {definition.topics.map((t, i) => (
-              <section className="panel" key={t}>
-                <span className="concept-feature-number">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <h3>{t}</h3>
-                <p>
-                  Start with the relevant record type, assign a responsible
-                  person, complete the checks and record the outcome.
-                </p>
-                <button
-                  className="btn"
-                  onClick={() => {
-                    setTopic(t);
-                    setCreate(true);
-                    setError('');
-                  }}
-                >
-                  Start this workflow <ArrowUpRight size={14} />
-                </button>
-              </section>
-            ))}
-          </div>
-        </TabsContent>
       </Tabs>
       <div className="concept-session-note">
         <ShieldCheck size={14} /> Fictional data · Changes last for this page
