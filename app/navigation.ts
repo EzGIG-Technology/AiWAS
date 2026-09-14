@@ -31,7 +31,7 @@ export const workspaceSections = [
   {
     label: 'Detection centre',
     area: 'MANAGE',
-    views: ['Detection matrix', 'Detection studio'],
+    views: ['Detection matrix', 'Detection tuning', 'Detection studio'],
   },
   {
     label: 'Administration',
@@ -63,6 +63,7 @@ export const viewLabels: Record<string, string> = {
   'Movement & visitors': 'Visitors & access',
   'Activities & continuity': 'Activities',
   'Detection matrix': 'Detection rules',
+  'Detection tuning': 'Advanced tuning',
   'Detection studio': 'Test & evaluate',
   'Users & roles': 'Team & access',
   Schools: 'Schools',

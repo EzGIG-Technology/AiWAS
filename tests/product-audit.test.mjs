@@ -92,6 +92,7 @@ test('navigation groups every active page once and retires duplicate calibration
   assert.equal(sectionFor('Validation queue').label, 'Incidents');
   assert.equal(sectionFor('System health').label, 'Cameras');
   assert.equal(sectionFor('Analytics').label, 'Campus insights');
+  assert.equal(sectionFor('Detection tuning').label, 'Detection centre');
   assert.equal(sectionFor('Detection rules'), undefined);
   assert.ok(!views.includes('Facilities & health'));
 });

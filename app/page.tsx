@@ -97,6 +97,7 @@ import { ConceptWorkspace } from './concept-workspace';
 import { DetectionStudio } from './detection-studio';
 import { workspaceSections, viewLabels, sectionFor } from './navigation';
 import { DetectionMatrix } from './detection-matrix';
+import { DetectionTuning } from './detection-tuning';
 import { DeviceSettings } from './device-settings';
 import { DeviceFleet } from './device-fleet';
 import { SecurityOperationsRoom } from './security-operations-room';
@@ -137,6 +138,7 @@ const nav = [
   ['Operations room', Video],
   ['Edge appliances', Settings2],
   ['Detection matrix', SlidersHorizontal],
+  ['Detection tuning', SlidersHorizontal],
   ['Device settings', Settings2],
   ['Detection studio', SlidersHorizontal],
   ['Pilot governance', ClipboardCheck],
@@ -344,7 +346,7 @@ export default function Home({
   };
   const navigate = (target: string) => {
     const n =
-      target === 'Detection rules' || target === 'Detection tuning'
+      target === 'Detection rules'
         ? 'Detection matrix'
         : target === 'Site map'
           ? 'Campus insights'
@@ -366,7 +368,6 @@ export default function Home({
     const readHash = () => {
       const aliases: Record<string, string> = {
         '#detection-rules': '#detection-matrix',
-        '#detection-tuning': '#detection-matrix',
         '#site-map': '#campus-insights',
         '#architecture': '#platform-readiness',
       };
@@ -386,6 +387,9 @@ export default function Home({
       window.removeEventListener('hashchange', readHash);
     };
   }, []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [view]);
   const [previousRole, setPreviousRole] = useState(role);
   if (previousRole !== role) {
     setPreviousRole(role);
@@ -1050,6 +1054,13 @@ export default function Home({
               {privileged && view === 'Edge appliances' && (
                 <DeviceFleet industryId="education" sites={schools} />
               )}
+              <div hidden={view !== 'Detection tuning'}>
+                <p className="muted" style={{ marginBottom: 16 }}>
+                  Advanced device calibration preview · session-only settings.
+                  These controls do not change the saved zone rules or configure a live detector.
+                </p>
+                <DetectionTuning key={school} />
+              </div>
               <div hidden={view !== 'Detection matrix'}>
                 <DetectionMatrix
                   school={school}

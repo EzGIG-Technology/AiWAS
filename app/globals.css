@@ -314,21 +314,21 @@ body {
 :root {
   --background:var(--ink-invert);
   --foreground:var(--ink);
-  --card:var(--ink-invert);
+  --card:var(--surface);
   --card-foreground:var(--ink);
-  --popover:var(--ink-invert);
+  --popover:var(--surface);
   --popover-foreground:var(--ink);
   --primary:var(--teal);
   --primary-foreground:var(--ink-invert);
-  --secondary:var(--console-ink);
+  --secondary:var(--surface-2);
   --secondary-foreground:var(--ink);
-  --muted:var(--console-ink);
+  --muted:var(--surface-2);
   --muted-foreground:var(--ink-3);
   --accent:var(--console-ink);
   --accent-foreground:var(--teal);
   --destructive:var(--crit-ink);
   --border:var(--line-soft);
-  --input:var(--console-ink);
+  --input:var(--line-strong);
   --ring:var(--teal);
   --radius:0.6rem;
   --sidebar:var(--ink);
@@ -4478,6 +4478,23 @@ h1 {
 ::placeholder { color: var(--ink-4) }
 
 /* Buttons: one shape, one motion. */
+.btn-primary, .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 41px;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.4;
+}
+.btn-primary > svg, .btn-secondary > svg { flex-shrink: 0 }
+.btn-secondary:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--line-strong) }
 .btn, .btn-primary, .btn-secondary, .sor-mini, .chip-btn {
   transition: background-color .14s ease, border-color .14s ease, color .14s ease;
 }

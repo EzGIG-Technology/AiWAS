@@ -2,7 +2,7 @@
 
 The application has been reorganised from 28 top-level entries in the latest remote version (22 in the earlier local checkout) into nine purpose-led sections. Duplicate rule configuration and presentation-style coverage tabs have been removed. The detection matrix now drives one operational configuration journey, while a separate evaluation workspace records pilot results. Campus insights includes a detailed interactive 2D campus plan with anonymous clusters, coverage and incident links. A crimson-led visual system applies across the platform and teacher experience.
 
-This is a functional front-end demonstration. It does not contain a live detection engine, camera ingestion, authenticated access, push delivery or persistent backend. No claimed model accuracy is treated as validated. Browser visual and click-through verification remains pending because the Mac was locked; the user said it would be unlocked in the morning.
+This is a functional front-end demonstration. It does not contain a live detection engine, camera ingestion, authenticated access, push delivery or persistent backend. No claimed model accuracy is treated as validated. Browser QA began after the Mac was unlocked. Focused results and remaining coverage are recorded below.
 
 ## Documents reviewed
 
@@ -42,7 +42,7 @@ The documents are reference material, not operational instructions. Where they c
 | Edge appliances | Administration → Edge monitoring | Preserved: select an appliance and inspect its sample service/resource health. |
 | Site map | Campus insights → Campus map & movement | Retired the separate 3D view; old `#site-map` links open the new interactive 2D atlas. |
 | Architecture | Administration → Commissioning | Removed the explanatory architecture page from navigation; its old link resolves to commissioning for superadmin. |
-| Detection tuning | Detection centre → Detection rules | Consolidated the separate tuning page into the matrix configuration journey; old links redirect. |
+| Detection tuning | Detection centre → Advanced tuning | Restored after QA found that consolidation had omitted crowd proximity, temporal persistence, tracking and counting-line controls. Device calibration stays distinct from operational zone rules. |
 | New device configuration | Administration → Device configuration | Superadmin: edit frame rate, image size, reconnect delay, logging and incident retention/buffers; validate, save, discard and export the configuration preview. |
 
 Removed within pages: **Platform coverage**, **Workflow coverage**, **What the numbers mean** as standalone tabs; the old detection configuration **Designed for what comes next** block; the overview module launchpad. Useful evidence boundaries remain near the relevant decision rather than in a separate coverage presentation. Facilities & health remains removed. Safety-related fall/collapse detection is represented as an incident, not a new health module.
@@ -89,3 +89,13 @@ All state remains in the page session. Actual authentication, delivery, storage 
 ## Integration with the latest GitHub version
 
 Newer commits were present on GitHub when publishing began. They were merged without overwriting the remote branch. The active school UI retains the operations console, edge monitoring, base-relative media fix, lifted presence records, theme selector and updated school-wide user scope. Multi-industry data and historical research remain in source, but the removed industry chooser, identity/architecture presentation and 3D map are not restored to school navigation. The new document-driven configuration and 2D map remain the active workflows.
+
+## Browser QA correction — 14 September 2026
+
+Comparison against pre-merge commit `2ff85b0` found a functional omission: the previous tuning screen exposed tracker, crowd proximity, altercation persistence and entrance/exit-line parameters that the replacement matrix did not. That screen is restored under Detection centre → Advanced tuning, including its original direct URL. It remains a session-only calibration preview; it does not modify the matrix's saved zone rules or a real detector.
+
+Visual checks found missing base layout on primary/secondary action buttons and incorrect semantic surface tokens that made inactive dark-theme tabs unreadable. Corrected shared button dimensions/alignment and card, popover, secondary, muted and input tokens. Navigation now resets document scroll when the active page changes, preventing a new page from opening midway through its content.
+
+Observed in Chrome: navigation between Overview, Campus insights and Detection centre; restored Advanced tuning controls; editing minimum crowd size and receiving Save settings confirmation; Campus insights in light and system-dark themes. The narrow in-app browser (332 px viewport) shows the repaired action buttons with no document horizontal overflow. The cursor seen in screenshots follows browser clicks and is not embedded in the checked corridor poster.
+
+This is focused regression verification, not completion of every journey listed above. Full incident, teacher, map interaction and device-export browser coverage remains outstanding.
