@@ -143,3 +143,9 @@ The Detection studio adds 24 video-candidate, sensor-integration and staff-repor
 ## Campus insights
 
 Campus insights adds a six-zone school heatmap, occupancy/movement/dwell modes, sampled-day replay, trends, gate statistics and staff-owned planning actions. Facilities & health has been removed from the current UI. The earlier 33-area study remains historical; six facility-workspace entries are now explicitly outside the selected product scope. See [everyday camera value research](docs/research/campus-camera-value-study.md).
+
+## Dedicated Security workspace
+
+Choose **Security workspace** from the existing header's **Demo workspace** selector, or open **Security** beneath Platform overview in Superadmin. It adds eight sections inside the existing dashboard: overview, monitoring, incidents, sites, guard dispatch, investigations, detection rules and reports.
+
+The workspace includes the complete 90-feature security specification, site-specific demo rule saving, a guarded incident lifecycle and CSV reports. Commercial security records are separate from school data, and the existing light/dark themes are retained. See [Security integration and completeness audit](docs/security-workspace-audit.md) for tested journeys, scope and remaining production work. This is an interactive frontend demonstration; it does not implement 90 live AI detectors or connect real cameras.

@@ -211,3 +211,50 @@ for (const role of ['School Admin', 'System Admin'])
 console.log(
   `PASS: ${routeCount} school/superadmin route renders, matrix rules and device configuration.`,
 );
+
+const { SecurityWorkspace } = await import('../dist/audit-ssr/render-entry.js');
+const { securityViews, securityRoute } =
+  await import('../app/security/workflow.ts');
+const expected = [
+  'Site watch',
+  '24 configured camera positions',
+  'Create incident',
+  'Northpoint Logistics',
+  'Response team',
+  'Event search',
+  'F090',
+  'Export current report',
+];
+for (const [index, view] of securityViews.entries()) {
+  const screen = renderToString(
+    React.createElement(SecurityWorkspace, { view, navigate: () => {} }),
+  );
+  assert.ok(
+    screen.includes(expected[index]),
+    `Security ${view} missing content`,
+  );
+  assert.ok(screen.includes('Security sections'));
+  assert.ok(!screen.includes('NaN'));
+  assert.ok(!screen.includes('[object Object]'));
+  const integrated = renderToString(
+    React.createElement(Home, {
+      initialView: securityRoute(view),
+      initialRole: 'System Admin',
+    }),
+  );
+  assert.ok(integrated.includes('Security company demo'));
+  assert.ok(integrated.includes(expected[index]));
+}
+const schoolSecurity = renderToString(
+  React.createElement(Home, {
+    initialView: 'Security overview',
+    initialRole: 'School Admin',
+  }),
+);
+assert.ok(
+  !schoolSecurity.includes('Northpoint Logistics'),
+  'School preview must not render security company data',
+);
+console.log(
+  'PASS: all 8 standalone and integrated security views render; school role cannot render security portfolio.',
+);

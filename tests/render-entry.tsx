@@ -11,3 +11,4 @@ export { TeacherApp } from '../app/teacher-app';
 export { DetectionMatrix } from '../app/detection-matrix';
 export { DeviceSettings } from '../app/device-settings';
 export { CampusMap } from '../app/campus-map';
+export { default as SecurityWorkspace } from '../app/security/workspace';

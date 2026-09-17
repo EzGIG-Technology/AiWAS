@@ -1,5 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
+import SecurityWorkspace from './security/workspace';
+import {
+  securityViews,
+  securityRoute,
+  isSecurityView,
+  securityViewForRoute,
+  canAccessSecurity,
+} from './security/workflow';
+import './security/security.css';
 import {
   ShieldCheck,
   Settings2,
@@ -130,6 +139,7 @@ const scenarioOptions = [
 ];
 const nav = [
   ['Overview', LayoutDashboard],
+  ...securityViews.map((v) => [securityRoute(v), ShieldCheck] as const),
   ['Teacher app', ClipboardCheck],
   ['Campus insights', MapPin],
   ['Schools', School],
@@ -321,7 +331,9 @@ export default function Home({
     [period, setPeriod] = useState('Today');
   const privileged = role === 'Internal Ops' || role === 'System Admin';
   const canManageUsers = privileged || role === 'School Admin';
+  const inSecurity = isSecurityView(view);
   const allowedNav = nav.filter(([n]) => {
+    if (isSecurityView(n)) return canAccessSecurity(role);
     if (n === 'Device settings' || n === 'Edge appliances') return privileged;
     if (n === 'Schools' || n === 'Platform readiness') return privileged;
     if (n === 'Attendance & presence') return !privileged;
@@ -877,12 +889,26 @@ export default function Home({
               <button className="brand" onClick={() => navigate('Overview')}>
                 <AiwasLogo size={28} />
               </button>
-              <p className="brand-sub">SCHOOL SAFETY INTELLIGENCE</p>
+              <p className="brand-sub">
+                {inSecurity
+                  ? 'SECURITY OPERATIONS'
+                  : 'SCHOOL SAFETY INTELLIGENCE'}
+              </p>
               <div className="workspace">
                 <span className="workspace-logo">E</span>
                 <span>
-                  {privileged ? 'Platform administration' : 'School operations'}
-                  <small>{privileged ? 'All connected schools' : school}</small>
+                  {inSecurity
+                    ? 'Security company demo'
+                    : privileged
+                      ? 'Platform administration'
+                      : 'School operations'}
+                  <small>
+                    {inSecurity
+                      ? 'Commercial site portfolio'
+                      : privileged
+                        ? 'All connected schools'
+                        : school}
+                  </small>
                 </span>
               </div>
             </SidebarHeader>
@@ -927,7 +953,12 @@ export default function Home({
               <div className="privacy">
                 <ShieldCheck />
                 <span>
-                  Protected workspace<small>School-scoped access</small>
+                  Demo workspace
+                  <small>
+                    {inSecurity
+                      ? 'Fictional security portfolio'
+                      : 'School-scoped preview'}
+                  </small>
                 </span>
               </div>
               <div className="profile">
@@ -942,7 +973,13 @@ export default function Home({
             <header className="topbar">
               <div className="breadcrumb">
                 <SidebarTrigger />
-                <span>{privileged ? 'Superadmin' : 'School workspace'}</span>
+                <span>
+                  {inSecurity
+                    ? 'Security workspace'
+                    : privileged
+                      ? 'Superadmin'
+                      : 'School workspace'}
+                </span>
                 <ChevronRight size={14} />
                 <strong>{section?.label || view}</strong>
               </div>
@@ -952,78 +989,116 @@ export default function Home({
                 <div className="top-role">
                   <Pick
                     label="Demo workspace"
-                    value={privileged ? 'Superadmin' : 'School workspace'}
+                    value={
+                      inSecurity
+                        ? 'Security workspace'
+                        : privileged
+                          ? 'Superadmin'
+                          : 'School workspace'
+                    }
                     onChange={(v) => {
                       setRole(
-                        v === 'Superadmin' ? 'System Admin' : 'School Admin',
+                        v === 'Security workspace'
+                          ? 'Internal Ops'
+                          : v === 'Superadmin'
+                            ? 'System Admin'
+                            : 'School Admin',
                       );
-                      setView('Overview');
-                      window.history.pushState(null, '', '#overview');
+                      setView(
+                        v === 'Security workspace'
+                          ? securityRoute('Overview')
+                          : 'Overview',
+                      );
+                      setSelectedId(null);
+                      setCamera(null);
+                      window.history.pushState(
+                        null,
+                        '',
+                        v === 'Security workspace'
+                          ? '#security-overview'
+                          : '#overview',
+                      );
                     }}
-                    options={['School workspace', 'Superadmin']}
+                    options={[
+                      'School workspace',
+                      'Superadmin',
+                      'Security workspace',
+                    ]}
                   />
                 </div>
                 <button
                   className="icon-btn notification-bell"
-                  aria-label="Open validation queue"
-                  onClick={() => navigate('Validation queue')}
+                  aria-label={
+                    inSecurity
+                      ? 'Open security incident queue'
+                      : 'Open validation queue'
+                  }
+                  onClick={() =>
+                    navigate(
+                      inSecurity
+                        ? securityRoute('Incidents')
+                        : 'Validation queue',
+                    )
+                  }
                 >
                   <Bell size={18} />
-                  {pending.length > 0 && <i />}
+                  {!inSecurity && pending.length > 0 && <i />}
                 </button>
                 <span className="avatar small">NA</span>
               </div>
             </header>
             <main className="content">
-              <div className="page-title">
-                <div>
-                  <div className="eyebrow">
-                    {new Date(reportDate + 'T12:00:00+08:00')
-                      .toLocaleDateString('en-GB', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        timeZone: 'Asia/Kuala_Lumpur',
-                      })
-                      .toUpperCase()}
+              {!inSecurity && (
+                <div className="page-title">
+                  <div>
+                    <div className="eyebrow">
+                      {new Date(reportDate + 'T12:00:00+08:00')
+                        .toLocaleDateString('en-GB', {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          timeZone: 'Asia/Kuala_Lumpur',
+                        })
+                        .toUpperCase()}
+                    </div>
+                    <h1>
+                      {view === 'Overview' && privileged
+                        ? 'Platform overview'
+                        : view === 'Users & roles' && !privileged
+                          ? 'School team'
+                          : headings[view] || viewLabels[view] || view}
+                    </h1>
+                    <p>
+                      {view === 'Overview' && privileged
+                        ? 'Coverage, school operations and platform oversight.'
+                        : subtitles[view]}
+                    </p>
                   </div>
-                  <h1>
-                    {view === 'Overview' && privileged
-                      ? 'Platform overview'
-                      : view === 'Users & roles' && !privileged
-                        ? 'School team'
-                        : headings[view] || viewLabels[view] || view}
-                  </h1>
-                  <p>
-                    {view === 'Overview' && privileged
-                      ? 'Coverage, school operations and platform oversight.'
-                      : subtitles[view]}
-                  </p>
+                  {privileged &&
+                  ['Overview', 'Schools', 'Users & roles'].includes(view) ? (
+                    <span className="scope-chip">
+                      <School size={15} />
+                      {schools.length} connected schools
+                    </span>
+                  ) : (
+                    <div className="school-select">
+                      <School size={16} />
+                      {privileged ? (
+                        <Pick
+                          label="School"
+                          value={school}
+                          onChange={setSchool}
+                          options={schools}
+                        />
+                      ) : (
+                        <span>{school}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {privileged &&
-                ['Overview', 'Schools', 'Users & roles'].includes(view) ? (
-                  <span className="scope-chip">
-                    <School size={15} />
-                    {schools.length} connected schools
-                  </span>
-                ) : (
-                  <div className="school-select">
-                    <School size={16} />
-                    {privileged ? (
-                      <Pick
-                        label="School"
-                        value={school}
-                        onChange={setSchool}
-                        options={schools}
-                      />
-                    ) : (
-                      <span>{school}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-              {sectionViews.length > 1 && (
+              )}
+              {!inSecurity && sectionViews.length > 1 && (
                 <nav
                   className="workspace-subnav"
                   aria-label={`${section?.label} sections`}
@@ -1038,6 +1113,15 @@ export default function Home({
                     </button>
                   ))}
                 </nav>
+              )}
+              {canAccessSecurity(role) && (
+                <div hidden={!inSecurity}>
+                  <SecurityWorkspace
+                    visible={inSecurity}
+                    view={securityViewForRoute(view)}
+                    navigate={(v) => navigate(securityRoute(v))}
+                  />
+                </div>
               )}
               {view === 'Operations room' && (
                 <SecurityOperationsRoom
@@ -1057,7 +1141,8 @@ export default function Home({
               <div hidden={view !== 'Detection tuning'}>
                 <p className="muted" style={{ marginBottom: 16 }}>
                   Advanced device calibration preview · session-only settings.
-                  These controls do not change the saved zone rules or configure a live detector.
+                  These controls do not change the saved zone rules or configure
+                  a live detector.
                 </p>
                 <DetectionTuning key={school} />
               </div>

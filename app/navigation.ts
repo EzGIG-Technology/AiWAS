@@ -1,5 +1,11 @@
+import { securityViews, securityRoute } from './security/workflow.ts';
 export const workspaceSections = [
   { label: 'Overview', area: 'MONITOR', views: ['Overview'] },
+  {
+    label: 'Security',
+    area: 'MONITOR',
+    views: securityViews.map(securityRoute),
+  },
   {
     label: 'Campus insights',
     area: 'MONITOR',
