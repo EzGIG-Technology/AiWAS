@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import {
-  Map,
   Users,
   ArrowUpRight,
   Play,
@@ -12,12 +11,12 @@ import {
   Check,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { CampusMap } from './campus-map';
 import { CameraStill } from './camera-media';
 import {
   campusZones,
   insightWindows,
   zoneSample,
-  heatValue,
   heatScale,
   heatColor,
   thresholdError,
@@ -41,12 +40,15 @@ export function CampusInsights({
   cameras,
   onAlert,
   onOpen,
+  incidents = [],
 }: {
   school: string;
   cameras: Camera[];
+  incidents?: Incident[];
   onAlert: (i: Incident) => void;
   onOpen: (id: string) => void;
 }) {
+  const [tab, setTab] = useState('heatmap');
   const [slot, setSlot] = useState(2),
     [metric, setMetric] = useState<HeatMetric>('occupancy'),
     [selected, setSelected] = useState('canteen'),
@@ -198,17 +200,6 @@ export function CampusInsights({
   };
   return (
     <div className="campus-insights">
-      <section className="campus-hero">
-        <div>
-          <span className="campus-kicker">EVERY CAMERA, EVERYDAY VALUE</span>
-          <h2>A clearer picture of the school day.</h2>
-          <p>
-            See where people gather, when movement peaks and where staff
-            attention makes a difference.
-          </p>
-        </div>
-        <Map size={48} />
-      </section>
       <div className="campus-toolbar">
         <label>
           Observation window
@@ -237,7 +228,13 @@ export function CampusInsights({
         <span className="badge blue">Synthetic data · MYT</span>
       </div>
       <div className="campus-stats">
-        <div>
+        <button
+          className="campus-stat-button"
+          onClick={() => {
+            if (busy) setSelected(busy.zone.id);
+            setTab('heatmap');
+          }}
+        >
           <Users size={19} />
           <span>Busiest observed zone</span>
           <strong>{busy?.zone.name || 'No coverage'}</strong>
@@ -246,22 +243,39 @@ export function CampusInsights({
               ? busy.sample.occupancy + ' estimated people'
               : 'No valid observations'}
           </small>
-        </div>
-        <div>
+        </button>
+        <button
+          className="campus-stat-button"
+          onClick={() => {
+            if (overloaded[0]) setSelected(overloaded[0].zone.id);
+            setTab('heatmap');
+          }}
+        >
           <ArrowUpRight size={19} />
           <span>Above review threshold</span>
           <strong>{overloaded.length} zones</strong>
           <small>Operational setting, not certified capacity</small>
-        </div>
-        <div>
+        </button>
+        <button
+          className="campus-stat-button"
+          onClick={() => {
+            setTab('trends');
+          }}
+        >
           <Video size={19} />
           <span>Observable zones</span>
           <strong>
             {availableZones.length} / {campusZones.length}
           </strong>
           <small>Offline areas stay unknown</small>
-        </div>
-        <div>
+        </button>
+        <button
+          className="campus-stat-button"
+          onClick={() => {
+            setSelected('canteen');
+            setTab('heatmap');
+          }}
+        >
           <ChartNoAxesCombined size={19} />
           <span>Canteen queue</span>
           <strong>
@@ -270,14 +284,13 @@ export function CampusInsights({
               : 'Unavailable'}
           </strong>
           <small>Estimated canteen queue in this sample</small>
-        </div>
+        </button>
       </div>
-      <Tabs defaultValue="heatmap">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="heatmap">Campus heatmap</TabsTrigger>
           <TabsTrigger value="trends">Trends & movement</TabsTrigger>
           <TabsTrigger value="planning">School planning</TabsTrigger>
-          <TabsTrigger value="definitions">What the numbers mean</TabsTrigger>
         </TabsList>
         <TabsContent value="heatmap">
           <div className="campus-grid">
@@ -300,50 +313,16 @@ export function CampusInsights({
                   <option value="dwell">Average dwell</option>
                 </select>
               </div>
-              <div
-                className="campus-map"
-                aria-label="Illustrative school zone heatmap"
-              >
-                {campusZones.map((z) => {
-                  const s = zoneSample(school, z.id, slot),
-                    ok = isAvailable(z.name),
-                    value = ok ? heatValue(s, metric) : null;
-                  return (
-                    <button
-                      key={z.id}
-                      style={{
-                        gridArea: z.area,
-                        background: heatColor(value, metric),
-                      }}
-                      className={
-                        'campus-zone ' +
-                        (selected === z.id ? 'selected' : '') +
-                        (value !== null && value / heatScale[metric].max > 0.85
-                          ? ' intense'
-                          : '')
-                      }
-                      aria-pressed={selected === z.id}
-                      aria-label={`${z.name}: ${value === null ? 'coverage unavailable' : value + ' ' + heatScale[metric].unit}`}
-                      onClick={() => setSelected(z.id)}
-                    >
-                      <span>{z.name}</span>
-                      <strong>{value === null ? '—' : value}</strong>
-                      <small>
-                        {value === null
-                          ? 'Coverage unavailable'
-                          : metric === 'occupancy'
-                            ? 'estimated people'
-                            : metric === 'crossings'
-                              ? 'crossings / 15 min'
-                              : 'minutes dwell'}
-                      </small>
-                    </button>
-                  );
-                })}
-                <div className="campus-path">
-                  CAMPUS WALKWAY · ILLUSTRATIVE LAYOUT
-                </div>
-              </div>
+              <CampusMap
+                school={school}
+                slot={slot}
+                metric={metric}
+                selected={selected}
+                cameras={cameras}
+                incidents={incidents}
+                onSelect={setSelected}
+                onOpen={onOpen}
+              />
               <div className="campus-legend">
                 <span>Lower activity</span>
                 {[0, 0.15, 0.45, 0.7, 1].map((v) => (
@@ -360,10 +339,10 @@ export function CampusInsights({
                 <span className="campus-unknown">Grey = unavailable</span>
               </div>
               <p className="campus-footnote">
-                This is a schematic of the six demonstration zones, not a
-                surveyed school plan or a pixel-level camera heatmap. Counts
-                from overlapping camera views must not be added into a campus
-                population total.
+                Illustrative full-campus plan with six observed zones. Buildings
+                and anonymous positions are synthetic, not a surveyed plan.
+                Counts from overlapping camera views must not be added into a
+                campus population total.
               </p>
             </section>
             <aside className="panel campus-zone-detail">
@@ -765,52 +744,6 @@ export function CampusInsights({
                 </div>
               ))}
             </div>
-          </section>
-        </TabsContent>
-        <TabsContent value="definitions">
-          <section className="panel campus-map-panel">
-            <h2>Useful statistics, with honest boundaries</h2>
-            <dl className="campus-definitions">
-              {[
-                [
-                  'Occupancy',
-                  'Estimated people in a defined visible area at one instant. Overlapping views need deduplication before aggregation.',
-                ],
-                [
-                  'Movement volume',
-                  'Entries plus exits during a 15-minute window. The same person may cross many times.',
-                ],
-                [
-                  'Dwell',
-                  'Average time for anonymous tracks observed in a zone. It is not automatically queue wait or learning engagement.',
-                ],
-                [
-                  'Queue length',
-                  'Estimated people inside a defined service queue. Waiting time needs a validated queue-specific method.',
-                ],
-                [
-                  'Space usage',
-                  'Here, the number of sampled windows with at least five people; it is not a daily utilisation percentage.',
-                ],
-                [
-                  'Coverage',
-                  'A missing or offline camera produces unknown values, not zero people. Real freshness checks need capture timestamps.',
-                ],
-                [
-                  'Comparison',
-                  'A fictional matched comparison demonstrates the UI. It is not evidence of savings or improved safety.',
-                ],
-                [
-                  'Privacy',
-                  'No named movement histories, face matching, engagement scoring or biometric attendance. Attendance remains a separate verified register.',
-                ],
-              ].map(([term, meaning]) => (
-                <div key={term}>
-                  <dt>{term}</dt>
-                  <dd>{meaning}</dd>
-                </div>
-              ))}
-            </dl>
           </section>
         </TabsContent>
       </Tabs>

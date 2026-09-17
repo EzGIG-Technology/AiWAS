@@ -71,7 +71,10 @@ export function SecurityOperationsRoom({
 
   const [grid, setGrid] = useState('2x2');
   const [wall, setWall] = useState<string[]>(() =>
-    siteCameras.filter((c) => c.online).slice(0, 4).map((c) => c.id),
+    siteCameras
+      .filter((c) => c.online)
+      .slice(0, 4)
+      .map((c) => c.id),
   );
   const [cameraQuery, setCameraQuery] = useState('');
   const [onlineOnly, setOnlineOnly] = useState(false);
@@ -153,10 +156,22 @@ export function SecurityOperationsRoom({
       <header className="sor-topbar">
         <div className="sor-topbar-left">
           <span className="sor-app">AIWAS · SOR v3.0</span>
-          <button type="button" className="sor-mini" onClick={() => note('Reconnected to the demonstration stream service.')}>
+          <button
+            type="button"
+            className="sor-mini"
+            onClick={() =>
+              note(
+                'Connection check simulated. No live stream service is connected.',
+              )
+            }
+          >
             <RefreshCw size={13} /> Connect
           </button>
-          <button type="button" className="sor-mini" onClick={() => note('Camera estate refreshed.')}>
+          <button
+            type="button"
+            className="sor-mini"
+            onClick={() => note('Camera estate refreshed.')}
+          >
             <RefreshCw size={13} /> Refresh
           </button>
           <span className="sor-grid-pick">
@@ -186,6 +201,7 @@ export function SecurityOperationsRoom({
             onClick={() => setAudio((a) => !a)}
           >
             {audio ? <Volume2 size={13} /> : <VolumeX size={13} />} Audio
+            preview
           </button>
         </div>
       </header>
@@ -211,7 +227,7 @@ export function SecurityOperationsRoom({
             </li>
             <li>
               <i className="dot amber" />
-              Recording: <strong>{recording.length}</strong>
+              Sample feeds: <strong>{recording.length}</strong>
             </li>
           </ul>
           <label className="sor-search" htmlFor="sor-camera-search">
@@ -269,14 +285,20 @@ export function SecurityOperationsRoom({
             )}
           </ul>
           <div className="sor-panel-foot">
-            <button type="button" className="sor-mini" onClick={() => note('Camera list refreshed.')}>
+            <button
+              type="button"
+              className="sor-mini"
+              onClick={() => note('Camera list refreshed.')}
+            >
               <RefreshCw size={12} /> Refresh
             </button>
             <button
               type="button"
               className="sor-mini"
               onClick={() =>
-                note('Camera registration requires commissioning; not available in the demonstration.')
+                note(
+                  'Camera registration requires commissioning; not available in the demonstration.',
+                )
               }
             >
               <Plus size={12} /> Add Camera
@@ -295,17 +317,23 @@ export function SecurityOperationsRoom({
               Grid Layout: <strong>{grid}</strong>
             </span>
             <span>
-              Active: <strong>{wall.length} / {slots}</strong> slots
+              Active:{' '}
+              <strong>
+                {wall.length} / {slots}
+              </strong>{' '}
+              slots
             </span>
-            <button type="button" className="sor-mini" onClick={() => setWall([])}>
+            <button
+              type="button"
+              className="sor-mini"
+              onClick={() => setWall([])}
+            >
               Clear All
             </button>
             <button
               type="button"
               className="sor-mini"
-              onClick={() =>
-                setWall(online.slice(0, slots).map((c) => c.id))
-              }
+              onClick={() => setWall(online.slice(0, slots).map((c) => c.id))}
             >
               <Grid2x2 size={12} /> Arrange
             </button>
@@ -328,14 +356,20 @@ export function SecurityOperationsRoom({
                       <button
                         type="button"
                         aria-label={`Expand ${cam.zone}`}
-                        onClick={() => note(`${cam.zone}: expanded view is not available in the demonstration.`)}
+                        onClick={() =>
+                          note(
+                            `${cam.zone}: expanded view is not available in the demonstration.`,
+                          )
+                        }
                       >
                         <Maximize2 size={12} />
                       </button>
                       <button
                         type="button"
                         aria-label={`Close ${cam.zone}`}
-                        onClick={() => setWall((w) => w.filter((x) => x !== cam.id))}
+                        onClick={() =>
+                          setWall((w) => w.filter((x) => x !== cam.id))
+                        }
                       >
                         <X size={12} />
                       </button>
@@ -430,7 +464,9 @@ export function SecurityOperationsRoom({
                     </small>
                     <small className="mono">
                       {kind === 'Video candidate' &&
-                      i.confidence !== CONFIDENCE_NONE
+                      i.confidence !== CONFIDENCE_NONE &&
+                      i.confidence > 0 &&
+                      !/^(SIM-|STAFF-)/.test(i.id)
                         ? `Confidence: ${i.confidence}%`
                         : `${kind} · no model score`}
                     </small>
@@ -466,7 +502,9 @@ export function SecurityOperationsRoom({
                 <button
                   type="button"
                   className="sor-mini"
-                  disabled={snapshot.acknowledged || snapshot.status === 'Closed'}
+                  disabled={
+                    snapshot.acknowledged || snapshot.status === 'Closed'
+                  }
                   onClick={() => {
                     onAcknowledge(snapshot.id);
                     note(`${snapshot.id} acknowledged by ${operator}.`);
@@ -478,7 +516,11 @@ export function SecurityOperationsRoom({
             </div>
           )}
           <div className="sor-panel-foot">
-            <button type="button" className="sor-mini" onClick={() => note('Event queue refreshed.')}>
+            <button
+              type="button"
+              className="sor-mini"
+              onClick={() => note('Event queue refreshed.')}
+            >
               <RefreshCw size={12} /> Refresh
             </button>
             <button
@@ -496,7 +538,9 @@ export function SecurityOperationsRoom({
               type="button"
               className="sor-mini"
               onClick={() =>
-                note('No message was sent. External delivery is not connected in this build.')
+                note(
+                  'No message was sent. External delivery is not connected in this build.',
+                )
               }
             >
               <Bell size={12} /> Text Alert

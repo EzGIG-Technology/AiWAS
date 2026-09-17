@@ -375,7 +375,6 @@ export const mediaSources: Record<string, Scene> = {
     clip: 'office-lobby',
   },
 };
-
 /**
  * Zone-to-scene map, per industry. Zone names repeat between industries
  * ("Main entrance" is both a hospital and a care home), so the industry has to
@@ -507,7 +506,11 @@ export function mediaFor(
   industryId = 'education',
 ) {
   if (industryId === 'education') {
-    if (category === 'Visible blade concern') return 'training';
+    if (
+      category === 'Visible blade concern' ||
+      category === 'Weapon-shaped object'
+    )
+      return 'training';
   }
   const map = zoneScenes[industryId] ?? zoneScenes.education;
   return map[zone] ?? industryFallback[industryId] ?? 'corridor';

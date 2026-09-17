@@ -1,0 +1,82 @@
+import { securityViews, securityRoute } from './security/workflow.ts';
+export const workspaceSections = [
+  { label: 'Overview', area: 'MONITOR', views: ['Overview'] },
+  {
+    label: 'Security',
+    area: 'MONITOR',
+    views: securityViews.map(securityRoute),
+  },
+  {
+    label: 'Campus insights',
+    area: 'MONITOR',
+    views: ['Campus insights', 'Analytics'],
+  },
+  {
+    label: 'Cameras',
+    area: 'MONITOR',
+    views: ['Live cameras', 'Operations room', 'System health'],
+  },
+  {
+    label: 'Incidents',
+    area: 'RESPOND',
+    views: ['Validation queue', 'Incidents', 'Response workspace'],
+  },
+  {
+    label: 'School operations',
+    area: 'RESPOND',
+    views: [
+      'Safeguarding',
+      'Emergency centre',
+      'Hostel operations',
+      'Movement & visitors',
+      'Activities & continuity',
+    ],
+  },
+  { label: 'Attendance', area: 'RESPOND', views: ['Attendance & presence'] },
+  { label: 'Teacher app', area: 'RESPOND', views: ['Teacher app'] },
+  {
+    label: 'Detection centre',
+    area: 'MANAGE',
+    views: ['Detection matrix', 'Detection tuning', 'Detection studio'],
+  },
+  {
+    label: 'Administration',
+    area: 'MANAGE',
+    views: [
+      'Users & roles',
+      'Schools',
+      'Notification routing',
+      'Pilot governance',
+      'Platform readiness',
+      'Device settings',
+      'Edge appliances',
+    ],
+  },
+];
+export const viewLabels: Record<string, string> = {
+  'Campus insights': 'Campus map & movement',
+  Analytics: 'Incident analytics',
+  'Live cameras': 'Camera wall',
+  'Operations room': 'Operations room',
+  'Edge appliances': 'Edge monitoring',
+  'System health': 'Device health',
+  'Validation queue': 'Review inbox',
+  Incidents: 'All incidents',
+  'Response workspace': 'Tasks & reports',
+  Safeguarding: 'Safeguarding',
+  'Emergency centre': 'Emergencies',
+  'Hostel operations': 'Hostel',
+  'Movement & visitors': 'Visitors & access',
+  'Activities & continuity': 'Activities',
+  'Detection matrix': 'Detection rules',
+  'Detection tuning': 'Advanced tuning',
+  'Detection studio': 'Test & evaluate',
+  'Users & roles': 'Team & access',
+  Schools: 'Schools',
+  'Notification routing': 'Escalation routing',
+  'Pilot governance': 'Privacy & approvals',
+  'Platform readiness': 'Commissioning',
+  'Device settings': 'Device configuration',
+};
+export const sectionFor = (view: string) =>
+  workspaceSections.find((s) => s.views.includes(view));
