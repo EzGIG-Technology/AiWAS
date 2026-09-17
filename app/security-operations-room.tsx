@@ -343,7 +343,7 @@ export function SecurityOperationsRoom({
                   </div>
                   {cam.online ? (
                     <div className="sor-tile-media">
-                      <CameraStill scene={mediaFor(cam.zone)} />
+                      <CameraStill scene={mediaFor(cam.zone, '', industryId)} />
                       <span className="sor-live">
                         <i /> LIVE · {cam.fps} FPS
                       </span>
@@ -446,7 +446,9 @@ export function SecurityOperationsRoom({
           {snapshot && (
             <div className="sor-snapshot">
               <div className="sor-snapshot-head">Event Snapshot</div>
-              <CameraStill scene={mediaFor(snapshot.zone, snapshot.category)} />
+              <CameraStill
+                scene={mediaFor(snapshot.zone, snapshot.category, industryId)}
+              />
               <p className="sor-snapshot-meta">
                 {snapshot.category} · {snapshot.zone} · {snapshot.time}
               </p>

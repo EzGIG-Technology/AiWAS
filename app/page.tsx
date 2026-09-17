@@ -88,7 +88,13 @@ const toast = {
   error: (title: string) => toastManager.add({ title, type: 'error' }),
   info: (title: string) => toastManager.add({ title, type: 'info' }),
 };
-import { CameraStill, DemoVideo, mediaFor, mediaSources } from './camera-media';
+import {
+  CameraStill,
+  DemoVideo,
+  mediaFor,
+  mediaSources,
+  scenesFor,
+} from './camera-media';
 import { PriorityAlerts } from './priority-alerts';
 import { FleetOverview, PresencePanel } from './workspace-panels';
 import {
@@ -308,7 +314,15 @@ function Empty({
     </div>
   );
 }
-function Cam({ cam, onClick }: { cam: Camera; onClick: () => void }) {
+function Cam({
+  cam,
+  industryId,
+  onClick,
+}: {
+  cam: Camera;
+  industryId: string;
+  onClick: () => void;
+}) {
   return (
     <button
       className={'camera ' + (!cam.online ? 'offline' : '')}
@@ -323,7 +337,7 @@ function Cam({ cam, onClick }: { cam: Camera; onClick: () => void }) {
         <span>{cam.online ? 'MOCK CCTV' : 'OFFLINE'}</span>
       </div>
       {cam.online ? (
-        <CameraStill scene={mediaFor(cam.zone)} />
+        <CameraStill scene={mediaFor(cam.zone, '', industryId)} />
       ) : (
         <div className="feed-blank">
           <WifiOff size={28} />
@@ -1414,7 +1428,12 @@ export default function Home() {
                   </div>
                   <div className="camera-grid">
                     {schoolCameras.slice(0, 4).map((c) => (
-                      <Cam key={c.id} cam={c} onClick={() => setCamera(c)} />
+                      <Cam
+                        key={c.id}
+                        cam={c}
+                        industryId={industryId}
+                        onClick={() => setCamera(c)}
+                      />
                     ))}
                   </div>
                 </section>
@@ -1520,7 +1539,11 @@ export default function Home() {
                   )
                   .map((c) => (
                     <div className="camera-tile" key={c.id}>
-                      <Cam cam={c} onClick={() => setCamera(c)} />
+                      <Cam
+                        cam={c}
+                        industryId={industryId}
+                        onClick={() => setCamera(c)}
+                      />
                       <div className="camera-location">
                         <span>
                           {school} · {c.block}
@@ -1544,30 +1567,21 @@ export default function Home() {
                   <div>
                     <h2>Detection scenario library</h2>
                     <p>
-                      Seven synthetic scenes · Play a demonstration to see
-                      sample analysis overlays
+                      {scenesFor(industryId).length} synthetic scenes for this{' '}
+                      {lexicon.site} · Play a demonstration to see sample
+                      analysis overlays
                     </p>
                   </div>
                 </div>
                 <div className="scenario-grid">
-                  {Object.entries(mediaSources).map(([key, m]) => (
+                  {scenesFor(industryId).map(({ scene, zone }) => (
                     <button
-                      key={key}
+                      key={scene}
                       onClick={() =>
                         setCamera({
                           id: 'DEMO',
                           school,
-                          zone: (
-                            {
-                              courtyard: 'Courtyard',
-                              hall: 'Assembly hall',
-                              corridor: 'Block A corridor',
-                              canteen: 'Canteen',
-                              perimeter: 'East perimeter',
-                              gate: 'Main gate',
-                              training: 'Safety training corridor',
-                            } as Record<string, string>
-                          )[key],
+                          zone,
                           block: 'Scenario library',
                           online: true,
                           fps: 15,
@@ -1575,9 +1589,9 @@ export default function Home() {
                         })
                       }
                     >
-                      <CameraStill scene={key} />
+                      <CameraStill scene={scene} />
                       <span>
-                        {m.label}
+                        {mediaSources[scene].label}
                         <Play size={14} />
                       </span>
                     </button>
@@ -1712,7 +1726,9 @@ export default function Home() {
                           {i.block} · {i.zone}
                         </p>
                         <div className="validation-image">
-                          <CameraStill scene={mediaFor(i.zone, i.category)} />
+                          <CameraStill
+                            scene={mediaFor(i.zone, i.category, industryId)}
+                          />
                           <small>
                             Illustrative context · Not evidence of this event
                           </small>
@@ -2801,7 +2817,9 @@ export default function Home() {
                     {selected.date} · {selected.time} MYT
                   </span>
                 </div>
-                <DemoVideo scene={mediaFor(selected.zone, selected.category)} />
+                <DemoVideo
+                  scene={mediaFor(selected.zone, selected.category, industryId)}
+                />
                 <p className="help-text media-context">
                   Illustrative {selected.zone.toLowerCase()} scene, not footage
                   of this incident.{' '}
@@ -3014,7 +3032,7 @@ export default function Home() {
           {camera && (
             <>
               {camera.online ? (
-                <DemoVideo scene={mediaFor(camera.zone)} />
+                <DemoVideo scene={mediaFor(camera.zone, '', industryId)} />
               ) : (
                 <div className="camera-stage">
                   <div className="feed-blank">
