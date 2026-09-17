@@ -589,6 +589,21 @@ export function DemoVideo({
         <span>This demo contains no real footage.</span>
       </div>
     );
+  // A browser without the clip's codec should fall back to the scene itself,
+  // not to a dead player with an error bar under it: the still is the same
+  // camera and the same moment, so the view stays usable.
+  if (failed === scene)
+    return (
+      <div className="demo-video">
+        <CameraStill scene={scene} overlay={false} />
+        <div className="video-disclosure">
+          <ShieldCheck size={13} />
+          <span>
+            Still frame · This browser cannot play the demonstration clip
+          </span>
+        </div>
+      </div>
+    );
   return (
     <div className="demo-video">
       <video
@@ -604,11 +619,6 @@ export function DemoVideo({
         onError={() => setFailed(scene)}
         aria-label={`Synthetic demonstration: ${mediaSources[scene]?.label}`}
       />
-      {failed === scene && (
-        <p className="media-error">
-          The demo clip could not load. Try another scene or reload the page.
-        </p>
-      )}
       <div className="video-disclosure">
         <ShieldCheck size={13} />
         <span>

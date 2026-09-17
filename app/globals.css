@@ -4548,3 +4548,57 @@ h1 {
 /* Brand controls share the active light/dark palette. */
 :root{--primary:var(--brand);--primary-foreground:var(--brand-ink);--ring:var(--brand);--accent:var(--brand-tint);--accent-foreground:var(--brand);--background:var(--bg);--sidebar:var(--console-2);--sidebar-accent:var(--console-3);--sidebar-accent-foreground:var(--console-ink);--sidebar-primary:var(--brand)}
 .teacher-primary{background:var(--brand);color:var(--brand-ink)}.teacher-primary:hover{background:var(--brand-hover)}.teacher-logo>svg,.teacher-desktop-note>svg,.teacher-quick-actions svg{color:var(--brand)}.teacher-summary{background:linear-gradient(120deg,var(--brand-active),var(--brand));color:var(--on-solid)}.teacher-bottom-nav button[aria-current]{color:var(--brand)}.teacher-bottom-nav button[aria-current]>span{background:var(--brand-tint)}.teacher-greeting em{color:var(--ink-3)}.teacher-stage{background:var(--bg)}.campus-stat-button:hover{box-shadow:var(--shadow)}.text-btn{color:var(--brand)}.matrix-card .matrix-route{border-color:var(--brand-line)}.atlas-cluster text{fill:#a02c46}.atlas-building-label{fill:#3e5045}.atlas-small,.atlas-road-label{fill:#788078}.atlas-plan-title{fill:#59675c}
+
+/* ---------------------------------------------------------------------------
+   Navigation rail height budget.
+
+   The rail holds nine sections. Its header, list and footer together came to
+   about 1,060px, so on a 960px-tall window the last two — Detection centre
+   and Administration, ten screens between them — fell below the scroll fold
+   of a container with no visible scrollbar. The list simply looked like it
+   ended at "Teacher app".
+
+   Two fixes, because trimming alone only moves the fold: tighten the rail so
+   every section fits on an ordinary laptop, and make the overflow legible
+   whenever it still happens, so a cut list reads as "more below" rather than
+   as the end.
+--------------------------------------------------------------------------- */
+.nav-rail [data-slot='sidebar-inner'] { padding: 16px 12px }
+.nav-rail .brand { font-size: 27px }
+.nav-rail .brand > svg { width: 28px; height: 28px }
+.nav-rail .workspace { margin: 14px 0 8px; padding: 11px 10px }
+.nav-rail .nav-label { margin-top: 4px; padding: 13px 12px 6px }
+.nav-rail [data-slot='sidebar-menu-button'] {
+  min-height: 40px;
+  height: 40px;
+  margin-bottom: 2px;
+}
+.nav-rail .privacy { padding: 10px 3px }
+
+/* The scroll area keeps a visible track, and fades its last line rather than
+   slicing it, so nothing below the fold passes for nothing at all. */
+.nav-rail [data-slot='sidebar-content'] {
+  scrollbar-width: thin;
+  scrollbar-color: var(--console-line) transparent;
+  overscroll-behavior: contain;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+}
+.nav-rail [data-slot='sidebar-content']::-webkit-scrollbar { width: 6px }
+.nav-rail [data-slot='sidebar-content']::-webkit-scrollbar-thumb {
+  background: var(--console-line);
+  border-radius: var(--r-pill);
+}
+
+/* Short windows — a 1280x800 laptop, or a 900px screen once browser chrome is
+   taken off — get a denser rail rather than a scroll fold. */
+@media (max-height: 880px) {
+  .nav-rail .brand-sub { display: none }
+  .nav-rail .workspace { margin: 8px 0 6px; padding: 8px 10px }
+  .nav-rail .nav-label { margin-top: 2px; padding: 8px 12px 4px }
+  .nav-rail [data-slot='sidebar-menu-button'] {
+    min-height: 36px;
+    height: 36px;
+    margin-bottom: 1px;
+  }
+  .nav-rail .privacy { padding: 7px 3px }
+}

@@ -212,8 +212,7 @@ console.log(
   `PASS: ${routeCount} school/superadmin route renders, matrix rules and device configuration.`,
 );
 
-const { SecurityWorkspace, SecurityDashboard } =
-  await import('../dist/audit-ssr/render-entry.js');
+const { SecurityDashboard } = await import('../dist/audit-ssr/render-entry.js');
 const { securityViews, securityRoute } =
   await import('../app/security/workflow.ts');
 const expected = [
