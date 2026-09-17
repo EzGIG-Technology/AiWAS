@@ -149,3 +149,7 @@ Campus insights adds a six-zone school heatmap, occupancy/movement/dwell modes, 
 Choose **Security workspace** from the existing header's **Demo workspace** selector, or open **Security** beneath Platform overview in Superadmin. It adds eight sections inside the existing dashboard: overview, monitoring, incidents, sites, guard dispatch, investigations, detection rules and reports.
 
 The workspace includes the complete 90-feature security specification, site-specific demo rule saving, a guarded incident lifecycle and CSV reports. Commercial security records are separate from school data, and the existing light/dark themes are retained. See [Security integration and completeness audit](docs/security-workspace-audit.md) for tested journeys, scope and remaining production work. This is an interactive frontend demonstration; it does not implement 90 live AI detectors or connect real cameras.
+
+### Dedicated Security dashboard
+
+Choose **Security workspace** in the dashboard selector. Security has a separate shell and nine sections, including **Capability library**. The library maps all 91 capabilities in the supplied CCTV research into 14 categories with per-site setup drafts, related specifications and integration requirements. Export drafts before changing workspace or refreshing. These are UI workflows and implementation scope; no live AI, biometric, camera or external action service is connected.

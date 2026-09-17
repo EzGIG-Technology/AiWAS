@@ -9,6 +9,7 @@ export const securityViews = [
   'Investigations',
   'Detection rules',
   'Reports',
+  'Capability library',
 ] as const;
 export const securityRoute = (view: string) => `Security ${view.toLowerCase()}`;
 export const isSecurityView = (view: string) =>

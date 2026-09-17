@@ -212,7 +212,7 @@ test('all 90 feature specifications retain required details and complete journey
   }
 });
 test('security routes are unique and confined to platform preview roles', () => {
-  assert.equal(new Set(securityViews.map(securityRoute)).size, 8);
+  assert.equal(new Set(securityViews.map(securityRoute)).size, 9);
   securityViews.forEach((view) =>
     assert.equal(securityViewForRoute(securityRoute(view)), view),
   );

@@ -212,7 +212,8 @@ console.log(
   `PASS: ${routeCount} school/superadmin route renders, matrix rules and device configuration.`,
 );
 
-const { SecurityWorkspace } = await import('../dist/audit-ssr/render-entry.js');
+const { SecurityWorkspace, SecurityDashboard } =
+  await import('../dist/audit-ssr/render-entry.js');
 const { securityViews, securityRoute } =
   await import('../app/security/workflow.ts');
 const expected = [
@@ -224,16 +225,23 @@ const expected = [
   'Event search',
   'F090',
   'Export current report',
+  'CV091',
 ];
 for (const [index, view] of securityViews.entries()) {
   const screen = renderToString(
-    React.createElement(SecurityWorkspace, { view, navigate: () => {} }),
+    React.createElement(SecurityDashboard, {
+      view,
+      navigate: () => {},
+      onSwitch: () => {},
+    }),
   );
   assert.ok(
     screen.includes(expected[index]),
     `Security ${view} missing content`,
   );
-  assert.ok(screen.includes('Security sections'));
+  assert.ok(screen.includes('Security dashboard navigation'));
+  assert.ok(!screen.includes('School safety intelligence'));
+  assert.ok(screen.includes('Switch dashboard'));
   assert.ok(!screen.includes('NaN'));
   assert.ok(!screen.includes('[object Object]'));
   const integrated = renderToString(
@@ -256,5 +264,5 @@ assert.ok(
   'School preview must not render security company data',
 );
 console.log(
-  'PASS: all 8 standalone and integrated security views render; school role cannot render security portfolio.',
+  'PASS: all 9 standalone and integrated security views render; school role cannot render security portfolio.',
 );

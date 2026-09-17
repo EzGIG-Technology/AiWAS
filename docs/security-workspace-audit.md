@@ -69,3 +69,19 @@ The current repo and this integration use in-memory fictional records. Before op
 The rules configuration tab demonstrates a generic review-routing setting. It is not a zone editor or the full specialised configuration UI for every one of the 90 capabilities. The investigation view has one session-only case; its CSV is a summary, not an evidentiary export. Monitoring tiles contain no playable security recordings. Reports combine the seed examples with current-session actions; they do not claim historical SLA performance.
 
 This audit verifies the delivered frontend's defined scope and records its gaps. It does not certify detection accuracy, legal compliance, backend security, every accessibility requirement or every edge case in a browser.
+
+## Dedicated dashboard and supplied research cross-check — 17 September 2026
+
+The workspace selector now switches to an independent Security shell with its own sidebar, operator identity, navigation, mobile menu and navy/teal design. The school shell is hidden while Security is active. Security styles are scoped, including portal overlays; school theme preferences remain unchanged.
+
+The supplied `CV_for_CCTV_Security_Research.docx` section 2 contains **91** features in **14** categories. All were extracted verbatim as titles and descriptions into `app/security/research.json`. The Capability library supports search, category filtering, per-site configuration drafts, validation, reset and JSON export. Each capability includes its source category, requirements, commissioning journey, acceptance/failure checks and links to related existing detailed specifications when applicable. Related specifications are partial overlaps, not assertions of exact implementation parity.
+
+The source report's market estimates, vendor claims and legal assertions were not adopted as verified product facts. Governance forms do not establish legal compliance. The taxonomy is product scope, not an instruction to enable biometric processing or external actions.
+
+### Limits
+
+All 91 capabilities are represented in the UI; this is not 91 commissioned AI services. No camera ingestion, face recognition, plate OCR, model training, production authorisation, actual retention enforcement, cryptographic evidence signing, emergency dispatch, lock control or VMS connector was implemented by this UI change. Existing incident, dispatch, search and report workflows continue to use fictional session data. Configuration drafts are held in component memory and are cleared by refresh or leaving the privileged workspace; export before switching dashboards. Draft saving does not change production systems.
+
+### Verification
+
+80 unit tests, TypeScript, focused lint and render checks across 9 Security views passed. Browser checks cover the separate shell, searchable research library, ANPR draft validation/save and per-site isolation, return to school and mobile navigation. Deployment is validated separately through the GitHub/Vercel status.

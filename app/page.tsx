@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import SecurityWorkspace from './security/workspace';
+import SecurityDashboard from './security/dashboard';
 import {
   securityViews,
   securityRoute,
@@ -879,11 +879,27 @@ export default function Home({
   return (
     <>
       <div hidden={view !== 'Teacher app'}>{teacherWorkspace}</div>
-      <div hidden={view === 'Teacher app'}>
+      <Toaster />
+      {canAccessSecurity(role) && (
+        <div hidden={!inSecurity}>
+          <SecurityDashboard
+            visible={inSecurity}
+            view={securityViewForRoute(view)}
+            navigate={(v) => navigate(securityRoute(v))}
+            onSwitch={(workspace) => {
+              setRole(
+                workspace === 'Superadmin' ? 'System Admin' : 'School Admin',
+              );
+              setView('Overview');
+              window.history.pushState(null, '', '#overview');
+            }}
+          />
+        </div>
+      )}
+      <div hidden={view === 'Teacher app' || inSecurity}>
         <SidebarProvider
           style={{ '--sidebar-width': '244px' } as React.CSSProperties}
         >
-          <Toaster />
           <Sidebar className="nav-rail">
             <SidebarHeader>
               <button className="brand" onClick={() => navigate('Overview')}>
@@ -1113,15 +1129,6 @@ export default function Home({
                     </button>
                   ))}
                 </nav>
-              )}
-              {canAccessSecurity(role) && (
-                <div hidden={!inSecurity}>
-                  <SecurityWorkspace
-                    visible={inSecurity}
-                    view={securityViewForRoute(view)}
-                    navigate={(v) => navigate(securityRoute(v))}
-                  />
-                </div>
               )}
               {view === 'Operations room' && (
                 <SecurityOperationsRoom
