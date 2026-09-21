@@ -19,6 +19,7 @@ import {
   SlidersHorizontal,
   Activity,
 } from 'lucide-react';
+import { CameraStill, DemoVideo, securityScene } from '../camera-media';
 import {
   Sheet,
   SheetContent,
@@ -68,6 +69,25 @@ import {
 } from './workflow';
 import { csvCell } from '../workflow';
 import features from './features.json';
+
+/**
+ * Camera positions in the demonstration estate, and the one that is dark.
+ * Both the wall and the camera dialog read this, so a camera cannot be shown
+ * as offline in one place and playing in the other.
+ */
+const cameraZones = [
+  'North fence',
+  'Main entrance',
+  'Loading bay',
+  'Car park',
+  'Reception',
+  'East gate',
+  'Service yard',
+  'South corridor',
+];
+const isCameraOffline = (site: string, zone: string) =>
+  site === sites[2] && zone === cameraZones[3];
+
 const tone = (v: string) =>
   ['Critical', 'New', 'Offline'].includes(v)
     ? 'red'
@@ -591,8 +611,9 @@ export default function SecurityWorkspace({
             <div>
               <strong>Camera workspace preview</strong>
               <span>
-                Streams are not connected. Select a camera to inspect its demo
-                health and related incidents.
+                Every position shows a synthetic demonstration scene, not a
+                connected stream. Select a camera to play its clip and see the
+                related incidents.
               </span>
             </div>
           </div>
@@ -600,24 +621,19 @@ export default function SecurityWorkspace({
             {sites
               .filter((s) => site === 'All sites' || s === site)
               .flatMap((s) =>
-                [
-                  'North fence',
-                  'Main entrance',
-                  'Loading bay',
-                  'Car park',
-                  'Reception',
-                  'East gate',
-                  'Service yard',
-                  'South corridor',
-                ].map((z, k) => {
-                  const offline = s === sites[2] && k === 3;
+                cameraZones.map((z, k) => {
+                  const offline = isCameraOffline(s, z);
                   return (
                     <button
                       className="camera-card"
                       key={s + z}
                       onClick={() => setCamera(s + '|' + z)}
                     >
-                      <div className="camera-screen">
+                      <div
+                        className={
+                          'camera-screen' + (offline ? '' : ' camera-live')
+                        }
+                      >
                         <span className="camera-id">
                           {sites.indexOf(s) + 1} / CAM-0{k + 1}
                         </span>
@@ -626,12 +642,20 @@ export default function SecurityWorkspace({
                         >
                           {offline ? 'OFFLINE' : 'DEMO FEED'}
                         </span>
-                        {offline ? <WifiOff size={32} /> : <Camera size={32} />}
-                        <span>
-                          {offline
-                            ? 'Connection lost'
-                            : 'No video source connected'}
-                        </span>
+                        {offline ? (
+                          <>
+                            <WifiOff size={32} />
+                            <span>
+                              Connection lost — do not read this position as
+                              clear
+                            </span>
+                          </>
+                        ) : (
+                          <CameraStill
+                            scene={securityScene(z)}
+                            overlay={false}
+                          />
+                        )}
                       </div>
                       <div className="camera-caption">
                         <div>
@@ -1175,10 +1199,13 @@ export default function SecurityWorkspace({
                 <Badge value={current.status} />
                 <span className="subtle">Detected {current.time}</span>
               </div>
-              <div className="evidence-panel">
-                <Camera size={30} />
-                <strong>Evidence preview</strong>
-                <p>Demo event. No recorded or live footage is connected.</p>
+              <div className="evidence-scene">
+                <CameraStill scene={securityScene(current.zone)} />
+                <p className="helper">
+                  Illustrative scene for {current.zone}, not footage of this
+                  event. Recorded evidence needs your camera or VMS
+                  integration.
+                </p>
               </div>
               <Tabs defaultValue="response" key={current.id}>
                 <TabsList className="workspace-tabs">
@@ -1522,14 +1549,27 @@ export default function SecurityWorkspace({
             <DialogTitle>{camera?.split('|')[1]} camera</DialogTitle>
             <DialogDescription>{camera?.split('|')[0]}</DialogDescription>
           </DialogHeader>
-          <div className="evidence-panel">
-            <Camera size={32} />
-            <strong>No source connected</strong>
-            <p>
-              Camera credentials and a video integration are required for live
-              monitoring.
-            </p>
-          </div>
+          {camera &&
+          isCameraOffline(camera.split('|')[0], camera.split('|')[1]) ? (
+            <div className="evidence-panel">
+              <Camera size={32} />
+              <strong>No source connected</strong>
+              <p>
+                This position is offline. Coverage is unavailable — do not read
+                it as clear.
+              </p>
+            </div>
+          ) : (
+            camera && (
+              <>
+                <DemoVideo scene={securityScene(camera.split('|')[1])} />
+                <p className="helper">
+                  Synthetic demonstration scene, not footage from this estate.
+                  A live stream needs your camera or VMS integration.
+                </p>
+              </>
+            )
+          )}
           <h3>Related demo incidents</h3>
           {incidents
             .filter((i) => i.site === camera?.split('|')[0])

@@ -1324,3 +1324,57 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Camera positions show their demonstration scene.
+
+   The wall was built with a lucide icon standing in for a feed, so every tile
+   in the security portfolio read as "no video" even though the estate has a
+   scene for each position. The still fills the screen box; the camera id and
+   state chips stay on top of it; an offline position keeps the icon treatment,
+   because a dark camera must never be dressed up as a quiet one.
+--------------------------------------------------------------------------- */
+.aiwas-security .camera-screen.camera-live {
+  gap: 0;
+  padding: 0;
+}
+.aiwas-security .camera-screen .camera-still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+.aiwas-security .camera-screen .camera-id,
+.aiwas-security .camera-screen .camera-state {
+  z-index: 2;
+}
+/* A bright scene washes out plain text, so the chips carry their own ground
+   rather than relying on whatever happens to be behind them. */
+.aiwas-security .camera-screen.camera-live .camera-id,
+.aiwas-security .camera-screen.camera-live .camera-state {
+  background: rgb(10 16 24 / 0.72);
+  padding: 3px 7px;
+  border-radius: 4px;
+  color: #eef3f8;
+}
+.aiwas-security .camera-screen.camera-live .camera-state {
+  color: #7ee2a8;
+  font-weight: 650;
+}
+
+/* Evidence on an incident is the position's own scene, captioned as
+   illustrative rather than presented as a recording of the event. */
+.aiwas-security .evidence-scene {
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.aiwas-security .evidence-scene .helper {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--line);
+}
