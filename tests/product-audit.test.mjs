@@ -88,15 +88,14 @@ test('campus clusters reconcile exactly to each synthetic zone observation and r
 test('navigation groups every active page once and retires duplicate calibration', () => {
   const views = workspaceSections.flatMap((s) => s.views);
   assert.equal(new Set(views).size, views.length);
-  assert.equal(workspaceSections.length, 10);
-  assert.equal(sectionFor('Security overview').label, 'Security');
-  assert.equal(sectionFor('Security reports').label, 'Security');
+  assert.equal(workspaceSections.length, 9);
   assert.equal(sectionFor('Validation queue').label, 'Incidents');
   assert.equal(sectionFor('System health').label, 'Cameras');
   assert.equal(sectionFor('Analytics').label, 'Campus insights');
   assert.equal(sectionFor('Detection tuning').label, 'Detection centre');
   assert.equal(sectionFor('Detection rules'), undefined);
   assert.ok(!views.includes('Facilities & health'));
+  assert.ok(!workspaceSections.some((s) => s.label === 'Security'));
 });
 
 import {

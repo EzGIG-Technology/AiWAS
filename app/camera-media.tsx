@@ -468,34 +468,6 @@ const extraScenes: Record<string, string[]> = {
   education: ['inspection'],
 };
 
-/**
- * The security portfolio is a guarded commercial estate of its own rather than
- * one of the eight industries, so it keeps its own zone map. The scenes are
- * drawn from wherever the view actually matches — a perimeter fence camera
- * looks like a perimeter fence camera whichever register it was generated for.
- */
-const securityScenes: Record<string, string> = {
-  'North fence': 'transit-fence',
-  'Main entrance': 'office-lobby',
-  'East entrance': 'office-lobby',
-  'Loading bay': 'office-dock',
-  'Car park': 'office-carpark',
-  Reception: 'turnstile-line',
-  'East gate': 'office-perimeter',
-  'Service yard': 'plant-yard',
-  'South corridor': 'plant-corridor',
-};
-
-/**
- * Resolve a security-portfolio zone to its camera view. Incident records carry
- * the camera reference in the zone ("North fence · N-02"), so the position is
- * taken from the part before the separator.
- */
-export function securityScene(zone: string) {
-  const position = zone.split('·')[0].trim();
-  return securityScenes[position] ?? 'office-lobby';
-}
-
 /** The view an operator sees first when a zone has no scene of its own. */
 const industryFallback: Record<string, string> = {
   education: 'corridor',

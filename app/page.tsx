@@ -1,14 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import SecurityDashboard from './security/dashboard';
-import {
-  securityViews,
-  securityRoute,
-  isSecurityView,
-  securityViewForRoute,
-  canAccessSecurity,
-} from './security/workflow';
-import './security/security.css';
 import {
   ShieldCheck,
   Settings2,
@@ -145,7 +136,6 @@ const scenarioOptions = [
 ];
 const nav = [
   ['Overview', LayoutDashboard],
-  ...securityViews.map((v) => [securityRoute(v), ShieldCheck] as const),
   ['Teacher app', ClipboardCheck],
   ['Campus insights', MapPin],
   ['Schools', School],
@@ -337,9 +327,7 @@ export default function Home({
     [period, setPeriod] = useState('Today');
   const privileged = role === 'Internal Ops' || role === 'System Admin';
   const canManageUsers = privileged || role === 'School Admin';
-  const inSecurity = isSecurityView(view);
   const allowedNav = nav.filter(([n]) => {
-    if (isSecurityView(n)) return canAccessSecurity(role);
     if (n === 'Device settings' || n === 'Edge appliances') return privileged;
     if (n === 'Schools' || n === 'Platform readiness') return privileged;
     if (n === 'Attendance & presence') return !privileged;
@@ -886,23 +874,7 @@ export default function Home({
     <>
       <div hidden={view !== 'Teacher app'}>{teacherWorkspace}</div>
       <Toaster />
-      {canAccessSecurity(role) && (
-        <div hidden={!inSecurity}>
-          <SecurityDashboard
-            visible={inSecurity}
-            view={securityViewForRoute(view)}
-            navigate={(v) => navigate(securityRoute(v))}
-            onSwitch={(workspace) => {
-              setRole(
-                workspace === 'Superadmin' ? 'System Admin' : 'School Admin',
-              );
-              setView('Overview');
-              window.history.pushState(null, '', '#overview');
-            }}
-          />
-        </div>
-      )}
-      <div hidden={view === 'Teacher app' || inSecurity}>
+      <div hidden={view === 'Teacher app'}>
         <SidebarProvider
           style={{ '--sidebar-width': '244px' } as React.CSSProperties}
         >
@@ -911,25 +883,13 @@ export default function Home({
               <button className="brand" onClick={() => navigate('Overview')}>
                 <AiwasLogo size={28} />
               </button>
-              <p className="brand-sub">
-                {inSecurity
-                  ? 'SECURITY OPERATIONS'
-                  : 'SCHOOL SAFETY INTELLIGENCE'}
-              </p>
+              <p className="brand-sub">SCHOOL SAFETY INTELLIGENCE</p>
               <div className="workspace">
                 <span className="workspace-logo">E</span>
                 <span>
-                  {inSecurity
-                    ? 'Security company demo'
-                    : privileged
-                      ? 'Platform administration'
-                      : 'School operations'}
+                  {privileged ? 'Platform administration' : 'School operations'}
                   <small>
-                    {inSecurity
-                      ? 'Commercial site portfolio'
-                      : privileged
-                        ? 'All connected schools'
-                        : school}
+                    {privileged ? 'All connected schools' : school}
                   </small>
                 </span>
               </div>
@@ -976,11 +936,7 @@ export default function Home({
                 <ShieldCheck />
                 <span>
                   Demo workspace
-                  <small>
-                    {inSecurity
-                      ? 'Fictional security portfolio'
-                      : 'School-scoped preview'}
-                  </small>
+                  <small>School-scoped preview</small>
                 </span>
               </div>
               <div className="profile">
@@ -995,13 +951,7 @@ export default function Home({
             <header className="topbar">
               <div className="breadcrumb">
                 <SidebarTrigger />
-                <span>
-                  {inSecurity
-                    ? 'Security workspace'
-                    : privileged
-                      ? 'Superadmin'
-                      : 'School workspace'}
-                </span>
+                <span>{privileged ? 'Superadmin' : 'School workspace'}</span>
                 <ChevronRight size={14} />
                 <strong>{section?.label || view}</strong>
               </div>
@@ -1011,66 +961,30 @@ export default function Home({
                 <div className="top-role">
                   <Pick
                     label="Demo workspace"
-                    value={
-                      inSecurity
-                        ? 'Security workspace'
-                        : privileged
-                          ? 'Superadmin'
-                          : 'School workspace'
-                    }
+                    value={privileged ? 'Superadmin' : 'School workspace'}
                     onChange={(v) => {
-                      setRole(
-                        v === 'Security workspace'
-                          ? 'Internal Ops'
-                          : v === 'Superadmin'
-                            ? 'System Admin'
-                            : 'School Admin',
-                      );
-                      setView(
-                        v === 'Security workspace'
-                          ? securityRoute('Overview')
-                          : 'Overview',
-                      );
+                      setRole(v === 'Superadmin' ? 'System Admin' : 'School Admin');
+                      setView('Overview');
                       setSelectedId(null);
                       setCamera(null);
-                      window.history.pushState(
-                        null,
-                        '',
-                        v === 'Security workspace'
-                          ? '#security-overview'
-                          : '#overview',
-                      );
+                      window.history.pushState(null, '', '#overview');
                     }}
-                    options={[
-                      'School workspace',
-                      'Superadmin',
-                      'Security workspace',
-                    ]}
+                    options={['School workspace', 'Superadmin']}
                   />
                 </div>
                 <button
                   className="icon-btn notification-bell"
-                  aria-label={
-                    inSecurity
-                      ? 'Open security incident queue'
-                      : 'Open validation queue'
-                  }
-                  onClick={() =>
-                    navigate(
-                      inSecurity
-                        ? securityRoute('Incidents')
-                        : 'Validation queue',
-                    )
-                  }
+                  aria-label="Open validation queue"
+                  onClick={() => navigate('Validation queue')}
                 >
                   <Bell size={18} />
-                  {!inSecurity && pending.length > 0 && <i />}
+                  {pending.length > 0 && <i />}
                 </button>
                 <span className="avatar small">NA</span>
               </div>
             </header>
             <main className="content">
-              {!inSecurity && (
+
                 <div className="page-title">
                   <div>
                     <div className="eyebrow">
@@ -1119,8 +1033,8 @@ export default function Home({
                     </div>
                   )}
                 </div>
-              )}
-              {!inSecurity && sectionViews.length > 1 && (
+
+              {sectionViews.length > 1 && (
                 <nav
                   className="workspace-subnav"
                   aria-label={`${section?.label} sections`}
