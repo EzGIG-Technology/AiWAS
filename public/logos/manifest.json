@@ -22,6 +22,17 @@
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and government sites. National coat of arms; use is regulated by Malaysian law (Emblems and Names (Prevention of Improper Use) Act 1963). Obtain from an official government source or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
+    "id": "umpsa",
+    "name": "Universiti Malaysia Pahang Al-Sultan Abdullah (formerly UMP)",
+    "name_ms": "Universiti Malaysia Pahang Al-Sultan Abdullah",
+    "acronym": "UMPSA",
+    "type": "public",
+    "state": "Pekan, Pahang",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.umpsa.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
     "id": "um",
     "name": "Universiti Malaya",
     "name_ms": "Universiti Malaya",
@@ -43,17 +54,6 @@
     "file": null,
     "source_url": null,
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.usm.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
-  },
-  {
-    "id": "ukm",
-    "name": "National University of Malaysia",
-    "name_ms": "Universiti Kebangsaan Malaysia",
-    "acronym": "UKM",
-    "type": "public",
-    "state": "Bangi, Selangor",
-    "file": null,
-    "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.ukm.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
     "id": "upm",
@@ -78,6 +78,17 @@
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.utm.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
+    "id": "unisza",
+    "name": "Universiti Sultan Zainal Abidin",
+    "name_ms": "Universiti Sultan Zainal Abidin",
+    "acronym": "UniSZA",
+    "type": "public",
+    "state": "Kuala Nerus, Terengganu",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.unisza.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
     "id": "uitm",
     "name": "Universiti Teknologi MARA",
     "name_ms": "Universiti Teknologi MARA",
@@ -89,37 +100,37 @@
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.uitm.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
-    "id": "iium",
-    "name": "International Islamic University Malaysia",
-    "name_ms": "Universiti Islam Antarabangsa Malaysia",
-    "acronym": "IIUM / UIAM",
+    "id": "ukm",
+    "name": "National University of Malaysia",
+    "name_ms": "Universiti Kebangsaan Malaysia",
+    "acronym": "UKM",
     "type": "public",
-    "state": "Gombak, Selangor",
+    "state": "Bangi, Selangor",
     "file": null,
     "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.iium.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.ukm.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
-    "id": "uum",
-    "name": "Universiti Utara Malaysia",
-    "name_ms": "Universiti Utara Malaysia",
-    "acronym": "UUM",
+    "id": "uthm",
+    "name": "Universiti Tun Hussein Onn Malaysia",
+    "name_ms": "Universiti Tun Hussein Onn Malaysia",
+    "acronym": "UTHM",
     "type": "public",
-    "state": "Sintok, Kedah",
+    "state": "Parit Raja, Batu Pahat, Johor",
     "file": null,
     "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.uum.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.uthm.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
-    "id": "unimas",
-    "name": "Universiti Malaysia Sarawak",
-    "name_ms": "Universiti Malaysia Sarawak",
-    "acronym": "UNIMAS",
+    "id": "umk",
+    "name": "Universiti Malaysia Kelantan",
+    "name_ms": "Universiti Malaysia Kelantan",
+    "acronym": "UMK",
     "type": "public",
-    "state": "Kota Samarahan, Sarawak",
+    "state": "Kota Bharu, Kelantan",
     "file": null,
     "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.unimas.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.umk.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
     "id": "ums",
@@ -144,6 +155,61 @@
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.upsi.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
+    "id": "iium",
+    "name": "International Islamic University Malaysia",
+    "name_ms": "Universiti Islam Antarabangsa Malaysia",
+    "acronym": "IIUM / UIAM",
+    "type": "public",
+    "state": "Gombak, Selangor",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.iium.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
+    "id": "unimap",
+    "name": "Universiti Malaysia Perlis",
+    "name_ms": "Universiti Malaysia Perlis",
+    "acronym": "UniMAP",
+    "type": "public",
+    "state": "Arau, Perlis",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.unimap.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
+    "id": "unimas",
+    "name": "Universiti Malaysia Sarawak",
+    "name_ms": "Universiti Malaysia Sarawak",
+    "acronym": "UNIMAS",
+    "type": "public",
+    "state": "Kota Samarahan, Sarawak",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.unimas.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
+    "id": "upnm",
+    "name": "National Defence University of Malaysia",
+    "name_ms": "Universiti Pertahanan Nasional Malaysia",
+    "acronym": "UPNM",
+    "type": "public",
+    "state": "Sungai Besi, Kuala Lumpur",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.upnm.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
+    "id": "uum",
+    "name": "Universiti Utara Malaysia",
+    "name_ms": "Universiti Utara Malaysia",
+    "acronym": "UUM",
+    "type": "public",
+    "state": "Sintok, Kedah",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.uum.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
     "id": "usim",
     "name": "Islamic Science University of Malaysia",
     "name_ms": "Universiti Sains Islam Malaysia",
@@ -166,17 +232,6 @@
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.umt.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
-    "id": "uthm",
-    "name": "Universiti Tun Hussein Onn Malaysia",
-    "name_ms": "Universiti Tun Hussein Onn Malaysia",
-    "acronym": "UTHM",
-    "type": "public",
-    "state": "Parit Raja, Batu Pahat, Johor",
-    "file": null,
-    "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.uthm.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
-  },
-  {
     "id": "utem",
     "name": "Universiti Teknikal Malaysia Melaka",
     "name_ms": "Universiti Teknikal Malaysia Melaka",
@@ -188,81 +243,15 @@
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.utem.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
-    "id": "unimap",
-    "name": "Universiti Malaysia Perlis",
-    "name_ms": "Universiti Malaysia Perlis",
-    "acronym": "UniMAP",
-    "type": "public",
-    "state": "Arau, Perlis",
-    "file": null,
-    "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.unimap.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
-  },
-  {
-    "id": "umpsa",
-    "name": "Universiti Malaysia Pahang Al-Sultan Abdullah (formerly UMP)",
-    "name_ms": "Universiti Malaysia Pahang Al-Sultan Abdullah",
-    "acronym": "UMPSA",
-    "type": "public",
-    "state": "Pekan, Pahang",
-    "file": null,
-    "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.umpsa.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
-  },
-  {
-    "id": "unisza",
-    "name": "Universiti Sultan Zainal Abidin",
-    "name_ms": "Universiti Sultan Zainal Abidin",
-    "acronym": "UniSZA",
-    "type": "public",
-    "state": "Kuala Nerus, Terengganu",
-    "file": null,
-    "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.unisza.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
-  },
-  {
-    "id": "umk",
-    "name": "Universiti Malaysia Kelantan",
-    "name_ms": "Universiti Malaysia Kelantan",
-    "acronym": "UMK",
-    "type": "public",
-    "state": "Kota Bharu, Kelantan",
-    "file": null,
-    "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.umk.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
-  },
-  {
-    "id": "upnm",
-    "name": "National Defence University of Malaysia",
-    "name_ms": "Universiti Pertahanan Nasional Malaysia",
-    "acronym": "UPNM",
-    "type": "public",
-    "state": "Sungai Besi, Kuala Lumpur",
-    "file": null,
-    "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.upnm.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
-  },
-  {
-    "id": "taylors",
-    "name": "Taylor's University",
-    "name_ms": "Universiti Taylor's",
-    "acronym": "Taylor's",
+    "id": "apu",
+    "name": "Asia Pacific University of Technology & Innovation",
+    "name_ms": "Universiti Teknologi & Inovasi Asia Pasifik",
+    "acronym": "APU",
     "type": "private",
-    "state": "Subang Jaya, Selangor",
+    "state": "Bukit Jalil, Kuala Lumpur",
     "file": null,
     "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://university.taylors.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
-  },
-  {
-    "id": "monash-my",
-    "name": "Monash University Malaysia",
-    "name_ms": "Universiti Monash Malaysia",
-    "acronym": "Monash Malaysia",
-    "type": "private",
-    "state": "Bandar Sunway, Selangor",
-    "file": null,
-    "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.monash.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.apu.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
     "id": "sunway",
@@ -276,15 +265,81 @@
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://sunway.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
-    "id": "ucsi",
-    "name": "UCSI University",
-    "name_ms": "Universiti UCSI",
-    "acronym": "UCSI",
+    "id": "taylors",
+    "name": "Taylor's University",
+    "name_ms": "Universiti Taylor's",
+    "acronym": "Taylor's",
     "type": "private",
-    "state": "Cheras, Kuala Lumpur",
+    "state": "Subang Jaya, Selangor",
     "file": null,
     "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.ucsiuniversity.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://university.taylors.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
+    "id": "nottingham",
+    "name": "University of Nottingham Malaysia",
+    "name_ms": "University of Nottingham Malaysia",
+    "acronym": "UNM",
+    "type": "private",
+    "state": "Selangor",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
+  },
+  {
+    "id": "xmum",
+    "name": "Xiamen University Malaysia",
+    "name_ms": "Xiamen University Malaysia",
+    "acronym": "XMUM",
+    "type": "private",
+    "state": "Selangor",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
+  },
+  {
+    "id": "msu",
+    "name": "Management and Science University",
+    "name_ms": "Management and Science University",
+    "acronym": "MSU",
+    "type": "private",
+    "state": "Selangor",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
+  },
+  {
+    "id": "hwum",
+    "name": "Heriot-Watt University Malaysia",
+    "name_ms": "Heriot-Watt University Malaysia",
+    "acronym": "HWUM",
+    "type": "private",
+    "state": "WP Putrajaya",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
+  },
+  {
+    "id": "curtin-my",
+    "name": "Curtin University Malaysia",
+    "name_ms": "Curtin University Malaysia",
+    "acronym": "Curtin",
+    "type": "private",
+    "state": "Sarawak",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
+  },
+  {
+    "id": "utar",
+    "name": "Universiti Tunku Abdul Rahman",
+    "name_ms": "Universiti Tunku Abdul Rahman",
+    "acronym": "UTAR",
+    "type": "private",
+    "state": "Perak",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
   },
   {
     "id": "mmu",
@@ -309,6 +364,61 @@
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.uniten.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
+    "id": "inti",
+    "name": "INTI International University",
+    "name_ms": "INTI International University",
+    "acronym": "INTI",
+    "type": "private",
+    "state": "Negeri Sembilan",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
+  },
+  {
+    "id": "mahsa",
+    "name": "MAHSA University",
+    "name_ms": "MAHSA University",
+    "acronym": "MAHSA",
+    "type": "private",
+    "state": "Selangor",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
+  },
+  {
+    "id": "swinburne",
+    "name": "Swinburne University of Technology Sarawak",
+    "name_ms": "Swinburne University of Technology Sarawak",
+    "acronym": "Swinburne",
+    "type": "private",
+    "state": "Sarawak",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
+  },
+  {
+    "id": "ucsi",
+    "name": "UCSI University",
+    "name_ms": "Universiti UCSI",
+    "acronym": "UCSI",
+    "type": "private",
+    "state": "Cheras, Kuala Lumpur",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.ucsiuniversity.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
+    "id": "monash-my",
+    "name": "Monash University Malaysia",
+    "name_ms": "Universiti Monash Malaysia",
+    "acronym": "Monash Malaysia",
+    "type": "private",
+    "state": "Bandar Sunway, Selangor",
+    "file": null,
+    "source_url": null,
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.monash.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+  },
+  {
     "id": "utp",
     "name": "Universiti Teknologi PETRONAS",
     "name_ms": "Universiti Teknologi PETRONAS",
@@ -320,14 +430,14 @@
     "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.utp.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
   },
   {
-    "id": "apu",
-    "name": "Asia Pacific University of Technology & Innovation",
-    "name_ms": "Universiti Teknologi & Inovasi Asia Pasifik",
-    "acronym": "APU",
+    "id": "segi",
+    "name": "SEGi University",
+    "name_ms": "SEGi University",
+    "acronym": "SEGi",
     "type": "private",
-    "state": "Bukit Jalil, Kuala Lumpur",
+    "state": "Selangor",
     "file": null,
     "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.apu.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked Wikimedia and the institution's own site. Logo is a trademark of the institution; obtain it from the institution's official website and use for identification only. Dashboard falls back to an acronym badge."
   }
 ]

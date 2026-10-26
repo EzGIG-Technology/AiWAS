@@ -3,7 +3,8 @@ import { Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Severity, EventStatus } from '../_data/um';
+import type { DetectorStatus } from '../_data/um';
+import type { AlertStatus, Severity, Verdict } from '../_data/alerts';
 
 /** Tone classes built only from design tokens. */
 export const tone = {
@@ -39,9 +40,8 @@ export function Pill({
 }
 
 export const severityTone: Record<Severity, Tone> = {
-  Critical: 'critical',
-  High: 'warning',
-  Medium: 'info',
+  High: 'critical',
+  Medium: 'warning',
   Low: 'muted',
 };
 
@@ -53,16 +53,43 @@ export function SeverityBadge({ severity }: { severity: Severity }) {
   );
 }
 
-const statusTone: Record<EventStatus, Tone> = {
+export const statusTone: Record<AlertStatus, Tone> = {
   New: 'critical',
-  Verified: 'warning',
-  Shared: 'brand',
+  Acknowledged: 'warning',
+  Verified: 'info',
+  Actioned: 'brand',
   Closed: 'success',
-  'False alarm': 'muted',
 };
 
-export function EventStatusBadge({ status }: { status: EventStatus }) {
+export function AlertStatusBadge({ status }: { status: AlertStatus }) {
   return <Pill t={statusTone[status]}>{status}</Pill>;
+}
+
+const verdictTone: Record<Verdict, Tone> = {
+  True: 'critical',
+  'False alarm': 'muted',
+  Unsure: 'warning',
+};
+
+export function VerdictBadge({ verdict }: { verdict: Verdict }) {
+  return (
+    <Pill t={verdictTone[verdict]}>
+      {verdict === 'True' ? 'Verified true' : verdict}
+    </Pill>
+  );
+}
+
+const detectorTone: Record<DetectorStatus, Tone> = {
+  Live: 'success',
+  PoC: 'warning',
+  Build: 'info',
+  'New model': 'muted',
+  Partner: 'muted',
+  'To confirm': 'muted',
+};
+
+export function DetectorStatusBadge({ status }: { status: DetectorStatus }) {
+  return <Pill t={detectorTone[status]}>{status}</Pill>;
 }
 
 export function Stat({

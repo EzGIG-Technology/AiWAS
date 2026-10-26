@@ -5,10 +5,9 @@ import {
   cameraById,
   cameraByScene,
   zones,
-  isOpenEvent,
-  type CameraEvent,
   type Camera,
 } from '../_data/um';
+import { isOpen, type Alert } from '../_data/alerts';
 import { useDemo } from '../_lib/store';
 
 /**
@@ -110,9 +109,8 @@ const regions: {
 ];
 
 const sevColour: Record<string, string> = {
-  Critical: 'bg-critical',
-  High: 'bg-warning',
-  Medium: 'bg-info',
+  High: 'bg-critical',
+  Medium: 'bg-warning',
   Low: 'bg-muted-foreground',
 };
 
@@ -124,17 +122,29 @@ export type MapLayers = {
 
 export function CampusMap({
   layers = { cameras: true, detections: true, occupancy: true },
+  alerts,
+  focus,
+  path,
   onCamera,
   onEvent,
   className,
 }: {
   layers?: Partial<MapLayers>;
+  /** Alerts to pin; defaults to every open alert with a camera. */
+  alerts?: Alert[];
+  /** Camera to ring, e.g. the one an alert came from. */
+  focus?: string;
+  /** Camera ids in time order, drawn as a cross-camera route. */
+  path?: string[];
   onCamera?: (c: Camera) => void;
-  onEvent?: (e: CameraEvent) => void;
+  onEvent?: (e: Alert) => void;
   className?: string;
 }) {
   const { state } = useDemo();
-  const open = state.events.filter(isOpenEvent);
+  const open = (alerts ?? state.alerts).filter((a) => isOpen(a) && a.camera);
+  const route = (path ?? [])
+    .map((id) => cameraById(id))
+    .filter((c): c is Camera => !!c);
 
   return (
     <div
@@ -188,6 +198,15 @@ export function CampusMap({
           className="fill-info/25 stroke-info/40"
           vectorEffect="non-scaling-stroke"
         />
+        {route.length > 1 && (
+          <polyline
+            points={route.map((c) => `${c.pos[0]},${c.pos[1]}`).join(' ')}
+            className="fill-none stroke-primary"
+            strokeWidth="2.5"
+            strokeDasharray="4 3"
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
       </svg>
       {regions.map((r) => (
         <span
@@ -256,9 +275,11 @@ export function CampusMap({
               'absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-card transition-transform hover:scale-150 focus-visible:scale-150 focus-visible:outline-none',
               c.status === 'online'
                 ? 'bg-foreground/70'
-                : c.status === 'degraded'
-                  ? 'bg-warning'
-                  : 'bg-critical',
+                : c.status === 'offline'
+                  ? 'bg-critical'
+                  : 'bg-warning',
+              (focus === c.id || path?.includes(c.id)) &&
+                'z-10 size-3 bg-primary ring-4 ring-primary/30',
             )}
             style={{ left: `${c.pos[0]}%`, top: `${c.pos[1]}%` }}
           />
@@ -266,14 +287,14 @@ export function CampusMap({
 
       {layers.detections &&
         open.map((e) => {
-          const cam = cameraById(e.camera);
+          const cam = e.camera ? cameraById(e.camera) : undefined;
           if (!cam) return null;
           return (
             <button
               key={e.id}
               type="button"
               onClick={() => onEvent?.(e)}
-              aria-label={`${e.severity} detection: ${e.title}`}
+              aria-label={`${e.severity} alert: ${e.title}`}
               title={e.title}
               className="absolute z-10 -translate-x-1/2 -translate-y-full focus-visible:outline-none"
               style={{ left: `${cam.pos[0]}%`, top: `${cam.pos[1]}%` }}
@@ -299,7 +320,7 @@ export function CampusMap({
         </span>
         <span className="flex items-center gap-1">
           <span className="size-2 rotate-45 bg-warning" />
-          Detection
+          Open alert
         </span>
         <span className="flex items-center gap-1">
           <span className="size-2.5 rounded-full bg-primary/30" />

@@ -1,20 +1,29 @@
 'use client';
 import { createContext, useContext, useMemo, useReducer } from 'react';
 import {
-  cameraEvents as seedEvents,
-  auditLog as seedAudit,
+  DEMO_DATE,
   DEMO_TIME,
-  type CameraEvent,
-  type EventStatus,
+  blocks,
+  type BlockHours,
+  type BlockId,
 } from '../_data/um';
+import {
+  seedAlerts,
+  seedCases,
+  seedRules,
+  type Alert,
+  type CaseFile,
+  type Rule,
+} from '../_data/alerts';
+import { auditSeed } from '../_data/govern';
 import type { PersonaId } from '../_data/personas';
 
 /**
- * Session-memory demo state shared by every workspace, so a detection raised
- * in the console reaches EzVision Mobile and a verification on the phone
+ * Session-memory demo state shared by every workspace, so an alert raised in
+ * the command centre reaches the warden app, and the warden's verification
  * shows in the console. Nothing is persisted; a refresh restores the seed.
  */
-type Audit = {
+export type AuditEntry = {
   time: string;
   who: string;
   action: string;
@@ -24,94 +33,117 @@ type Audit = {
 
 type State = {
   persona: PersonaId | null;
-  events: CameraEvent[];
-  audit: Audit[];
+  alerts: Alert[];
+  cases: CaseFile[];
+  rules: Rule[];
+  hours: Record<BlockId, BlockHours>;
+  audit: AuditEntry[];
+  /** Minutes the demo clock has been moved on from 18:40. */
   clock: number;
+  onDuty: boolean;
 };
 
 type Action =
   | { type: 'persona'; persona: PersonaId | null }
   | {
-      type: 'status';
+      type: 'alert';
       id: string;
-      status: EventStatus;
+      patch: Partial<Alert>;
+      note: string;
       actor: string;
-      note?: string;
     }
-  | { type: 'share'; id: string; team: string; actor: string }
-  | { type: 'bookmark'; id: string }
-  | { type: 'raise'; event: CameraEvent }
-  | { type: 'audit'; entry: Omit<Audit, 'time'> };
+  | { type: 'raise'; alert: Alert }
+  | { type: 'tick'; minutes: number }
+  | {
+      type: 'case';
+      id: string;
+      patch: Partial<CaseFile>;
+      note?: { who: string; text: string };
+    }
+  | { type: 'openCase'; caseFile: CaseFile }
+  | { type: 'rule'; rule: Rule }
+  | { type: 'hours'; block: BlockId; hours: BlockHours }
+  | { type: 'duty'; onDuty: boolean }
+  | { type: 'audit'; entry: Omit<AuditEntry, 'time'> };
 
-/** Demo clock: starts at 18:40 and advances one minute per recorded action. */
-function stamp(clock: number) {
+export function stamp(clock: number) {
   const [h, m] = DEMO_TIME.split(':').map(Number);
   const total = h * 60 + m + clock;
   return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
+const dateStamp = (now: string) => `26 Oct ${now}`;
+
 function reducer(state: State, action: Action): State {
   const now = stamp(state.clock);
-  const tick = { clock: state.clock + 1 };
-  const update = (id: string, fn: (e: CameraEvent) => CameraEvent) =>
-    state.events.map((e) => (e.id === id ? fn(e) : e));
   switch (action.type) {
     case 'persona':
       return { ...state, persona: action.persona };
-    case 'status':
+    case 'alert':
       return {
         ...state,
-        ...tick,
-        events: update(action.id, (e) => ({
-          ...e,
-          status: action.status,
-          timeline: [
-            ...e.timeline,
-            {
-              time: now,
-              text: action.note ?? `Marked ${action.status.toLowerCase()}`,
-              actor: action.actor,
-            },
-          ],
-        })),
-      };
-    case 'share':
-      return {
-        ...state,
-        ...tick,
-        events: update(action.id, (e) => ({
-          ...e,
-          status: 'Shared',
-          sharedWith: action.team,
-          bookmarked: true,
-          timeline: [
-            ...e.timeline,
-            {
-              time: now,
-              text: `Clip shared with ${action.team}`,
-              actor: action.actor,
-            },
-          ],
-        })),
-      };
-    case 'bookmark':
-      return {
-        ...state,
-        events: update(action.id, (e) => ({ ...e, bookmarked: !e.bookmarked })),
+        alerts: state.alerts.map((a) =>
+          a.id === action.id
+            ? {
+                ...a,
+                ...action.patch,
+                timeline: [
+                  ...a.timeline,
+                  { time: now, text: action.note, actor: action.actor },
+                ],
+              }
+            : a,
+        ),
       };
     case 'raise':
       return {
         ...state,
-        ...tick,
-        events: [
+        alerts: [
           {
-            ...action.event,
+            ...action.alert,
+            date: DEMO_DATE,
             time: now,
-            timeline: action.event.timeline.map((t) => ({ ...t, time: now })),
+            timeline: action.alert.timeline.map((t) => ({ ...t, time: now })),
           },
-          ...state.events,
+          ...state.alerts,
         ],
       };
+    case 'tick':
+      return { ...state, clock: state.clock + action.minutes };
+    case 'case':
+      return {
+        ...state,
+        cases: state.cases.map((c) =>
+          c.id === action.id
+            ? {
+                ...c,
+                ...action.patch,
+                notes: action.note
+                  ? [...c.notes, { time: dateStamp(now), ...action.note }]
+                  : c.notes,
+              }
+            : c,
+        ),
+      };
+    case 'openCase':
+      return {
+        ...state,
+        cases: [{ ...action.caseFile, opened: dateStamp(now) }, ...state.cases],
+      };
+    case 'rule':
+      return {
+        ...state,
+        rules: state.rules.map((r) =>
+          r.id === action.rule.id ? action.rule : r,
+        ),
+      };
+    case 'hours':
+      return {
+        ...state,
+        hours: { ...state.hours, [action.block]: action.hours },
+      };
+    case 'duty':
+      return { ...state, onDuty: action.onDuty };
     case 'audit':
       return {
         ...state,
@@ -122,9 +154,16 @@ function reducer(state: State, action: Action): State {
 
 const initial: State = {
   persona: null,
-  events: seedEvents,
-  audit: [...seedAudit],
+  alerts: seedAlerts,
+  cases: seedCases,
+  rules: seedRules,
+  hours: Object.fromEntries(blocks.map((b) => [b.id, b.hours])) as Record<
+    BlockId,
+    BlockHours
+  >,
+  audit: [...auditSeed],
   clock: 0,
+  onDuty: true,
 };
 
 const Ctx = createContext<{
@@ -148,7 +187,12 @@ export function useDemo() {
   return v;
 }
 
-export function nextEventId(events: CameraEvent[]) {
-  const max = Math.max(...events.map((e) => Number(e.id.split('-').pop())));
-  return `EV-26-${max + 1}`;
+export function nextAlertId(alerts: Alert[]) {
+  const max = Math.max(...alerts.map((a) => Number(a.id.split('-').pop())));
+  return `AL-26-${max + 1}`;
+}
+
+export function nextCaseId(cases: CaseFile[]) {
+  const max = Math.max(...cases.map((c) => Number(c.id.split('-').pop())));
+  return `CS-26-${String(max + 1).padStart(3, '0')}`;
 }

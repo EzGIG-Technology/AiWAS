@@ -2,8 +2,9 @@
 import {
   LayoutDashboard,
   Building2,
-  TrendingUp,
-  Video,
+  GitCompareArrows,
+  Globe2,
+  BedDouble,
   ShieldCheck,
   FileDown,
 } from 'lucide-react';
@@ -12,8 +13,9 @@ import type { Persona } from '../../_data/personas';
 import {
   NationalOverview,
   UniversitiesView,
-  DetectionsView,
-  CoverageView,
+  GapsView,
+  BenchmarksView,
+  HostelsView,
   GovernanceView,
   KptReportsView,
 } from './views';
@@ -21,17 +23,19 @@ import {
 export type KptView =
   | 'overview'
   | 'universities'
-  | 'detections'
-  | 'coverage'
+  | 'gaps'
+  | 'benchmarks'
+  | 'hostels'
   | 'governance'
   | 'reports';
 
 export const kptTitles: Record<KptView, string> = {
-  overview: 'National overview',
+  overview: 'Smart-campus overview',
   universities: 'Universities',
-  detections: 'Detection trends',
-  coverage: 'CCTV coverage & uptime',
-  governance: 'Privacy & AI governance',
+  gaps: 'Capability gap',
+  benchmarks: 'Global benchmarks',
+  hostels: 'Hostel integrity pilots',
+  governance: 'Privacy & PDPA',
   reports: 'Reports',
 };
 
@@ -47,22 +51,19 @@ export function KptWorkspace({
   const active = (view && view in kptTitles ? view : 'overview') as KptView;
   const groups: NavGroup[] = [
     {
-      label: 'Oversight',
+      label: 'Audit',
       items: [
-        { id: 'overview', label: 'National overview', icon: LayoutDashboard },
+        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
         { id: 'universities', label: 'Universities', icon: Building2 },
+        { id: 'gaps', label: 'Capability gap', icon: GitCompareArrows },
+        { id: 'benchmarks', label: 'Global benchmarks', icon: Globe2 },
       ],
     },
     {
-      label: 'Analysis',
+      label: 'Pilots & policy',
       items: [
-        { id: 'detections', label: 'Detection trends', icon: TrendingUp },
-        { id: 'coverage', label: 'CCTV coverage & uptime', icon: Video },
-        {
-          id: 'governance',
-          label: 'Privacy & AI governance',
-          icon: ShieldCheck,
-        },
+        { id: 'hostels', label: 'Hostel integrity pilots', icon: BedDouble },
+        { id: 'governance', label: 'Privacy & PDPA', icon: ShieldCheck },
       ],
     },
     {
@@ -70,13 +71,14 @@ export function KptWorkspace({
       items: [{ id: 'reports', label: 'Reports', icon: FileDown }],
     },
   ];
-  const views: Record<KptView, React.ReactNode> = {
-    overview: <NationalOverview />,
-    universities: <UniversitiesView focus={sub} />,
-    detections: <DetectionsView />,
-    coverage: <CoverageView />,
-    governance: <GovernanceView />,
-    reports: <KptReportsView />,
+  const views: Record<KptView, () => React.ReactNode> = {
+    overview: () => <NationalOverview />,
+    universities: () => <UniversitiesView focus={sub} />,
+    gaps: () => <GapsView />,
+    benchmarks: () => <BenchmarksView />,
+    hostels: () => <HostelsView />,
+    governance: () => <GovernanceView />,
+    reports: () => <KptReportsView />,
   };
   return (
     <WorkspaceShell
@@ -84,7 +86,7 @@ export function KptWorkspace({
         id: 'kpt',
         acronym: 'KPT',
         name: 'Kementerian Pendidikan Tinggi',
-        sub: 'Campus Camera Intelligence',
+        sub: 'Smart Campus Oversight',
       }}
       base="/kpt"
       groups={groups}
@@ -92,7 +94,7 @@ export function KptWorkspace({
       title={kptTitles[active]}
       persona={persona}
     >
-      {views[active]}
+      {views[active]()}
     </WorkspaceShell>
   );
 }

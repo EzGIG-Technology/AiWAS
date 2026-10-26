@@ -117,3 +117,50 @@ After the first rebuild, the product was narrowed from a campus safety system to
   - Detection trends.
   - The CCTV items of the inspection directive.
   - Privacy and AI governance.
+
+## Spec build: EzVision Campus (26 October 2026)
+
+The demo was then rebuilt to follow *EzVision Campus — System Spec & Smart Campus Audit* (`docs/spec/`). Where the spec and the camera-intelligence scope differ, the spec wins. Everything still comes from a camera or a sensor; there is still no SOS button and no student app.
+
+**Back in, because the spec asks for them**
+
+- **Hostel Integrity**, the flagship module. Two pilot blocks, one female and one male, with the spec's six rules per block.
+- **Gender estimation**, limited to the lounge-line camera of each single-gender block. It names no one. Before this, the demo refused gender estimation outright.
+- **Search by clothing colour**, and a cross-camera timeline. Before this, the demo refused appearance search; the spec lists both as Safe Campus features. Face search is still refused.
+- **Welfare (AIWAS):** wellbeing signals go to counselling, never to discipline.
+- **Roles back in:** wardens, the Pengetua, HEP, the counsellor and the traffic unit, as the spec's ten roles.
+
+**New**
+
+- **The five-step lifecycle:** New → Acknowledged → Verified (true, false alarm or unsure) → Actioned → Closed.
+  - A hostel alert that nobody accepts escalates to the command centre after 5 minutes.
+  - False alarms feed back to tuning.
+- **Rules studio:**
+  - Lines drawn on the camera view.
+  - Schedules tied to each block's visiting hours and curfew.
+  - Thresholds.
+  - A preview against yesterday's footage.
+  - Rules written in the spec's own language.
+  - Versioned saves.
+- **Cases:**
+  - Notes and outcomes.
+  - Referral to HEP or PDRM.
+  - A real watermarked PDF export with the snapshot embedded; faces are blurred unless the director unblurs.
+- **Warden app**, replacing EzVision Mobile: inbox, on-duty toggle, accept, two-tap outcome, block history.
+- **Camera health** with the four states the spec names: offline, blocked, blurred and moved.
+- **Reports:** weekly and monthly PDFs generated in the browser.
+- **Pilot & rollout:** stage gates, pilot KPIs, sizing, hardware, integrations and the open questions.
+- **KPT view**, rebuilt on the spec's 38-university public-evidence audit, with evidence links. The generated per-university metrics are gone; the only EzVision figures the ministry sees are pilot totals.
+
+**Removed**
+
+- The camera-intelligence-only screens: Overview, AI detections, Footage search and Users & roles. Their content moved into the console, the module pages and Admin & privacy.
+- The 28-institution generated KPT dataset.
+- EzVision Mobile.
+
+**Checks**
+
+- `tsc` and `oxlint` are clean.
+- 51 node tests pass.
+- 16 end-to-end browser checks pass, one or more per role.
+- All 27 screens pass at 1440 px and at 375 px (dark), with no horizontal overflow and no console errors.

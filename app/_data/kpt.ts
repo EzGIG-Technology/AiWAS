@@ -1,29 +1,26 @@
 /**
- * Kementerian Pendidikan Tinggi (KPT) oversight of campus camera
- * intelligence.
+ * Kementerian Pendidikan Tinggi (KPT) view: the smart-campus audit of 38
+ * Malaysian universities, global benchmarks, the capability gap and
+ * aggregate hostel-integrity figures from EzVision pilots.
  *
- * The ministry sees aggregates and compliance status only: camera estate,
- * uptime, analytics in use, detection volumes by category, verification
- * precision, the CCTV items of the 2025 inspection directive and privacy and
- * AI governance. No footage, images, plate numbers or names. Counts from 1
- * to 4 at institution level are suppressed.
+ * Audit rows come from the EzVision Campus System Spec (26 Oct 2026), which
+ * checked public web pages in English and Malay. "Unknown" means no public
+ * evidence, not proof of absence. Every row links to the page it came from.
  *
- * Institution names and states come from public/logos/manifest.json. Every
- * figure except Universiti Malaya's row is generated demonstration data.
+ * The ministry sees no footage, images, plates, camera IDs or names. Counts
+ * from 1 to 4 are suppressed.
  */
-import {
-  cameras as umCameras,
-  cameraEvents as umEvents,
-  analytics as umAnalytics,
-  uptimeWeekly,
-  verifyTimes,
-  verification,
-  cctvChecklist,
-} from './um';
+import { cameras, pilotCameras, uptimeDaily } from './um';
+import { hostelWeekly, precisionByModule, ackTimes, pilotKpis } from './alerts';
 
 export type InstitutionType = 'Public (UA)' | 'Private (IPTS)';
-export type Connection = 'EzVision live' | 'EzVision pilot' | 'Manual return';
-export type Compliance = 'Met' | 'Partly met' | 'Not met';
+export type Maturity =
+  | 'High'
+  | 'Medium–High'
+  | 'Medium'
+  | 'Low–Medium'
+  | 'Low'
+  | 'Unknown';
 
 export type StateId =
   | 'Perlis'
@@ -42,33 +39,6 @@ export type StateId =
   | 'Sabah'
   | 'Sarawak'
   | 'WP Labuan';
-
-export type Institution = {
-  id: string;
-  acronym: string;
-  name: string;
-  type: InstitutionType;
-  state: StateId;
-  city: string;
-  enrolment: number;
-  connection: Connection;
-  /** Cameras registered (reported manually when not on EzVision). */
-  cameras: number;
-  /** Cameras with analytics running; 0 for manual returns. */
-  analysed: number;
-  /** % of residence and campus entrances covered by a camera. */
-  coverage: number;
-  /** % uptime over 30 days; null when not measured by EzVision. */
-  uptime: number | null;
-  analyticsLive: number;
-  detections30d: number | null;
-  /** % of detections an operator confirmed as true. */
-  precision: number | null;
-  verifyP50: number | null;
-  maturity: number;
-  cctv: Compliance[];
-  privacy: boolean[];
-};
 
 /** Tile-grid map of Malaysia: [column, row]. Schematic, not geographic. */
 export const stateTiles: Record<StateId, [number, number]> = {
@@ -90,515 +60,902 @@ export const stateTiles: Record<StateId, [number, number]> = {
   Sarawak: [4, 1],
 };
 
-export const cctvItems = cctvChecklist.map((c) => c.item);
+export type Vehicles =
+  | 'Plate recognition'
+  | 'Plate recognition (likely)'
+  | 'RFID or stickers'
+  | 'Cards or app'
+  | 'Not stated';
 
-export const privacyItems = [
-  'Data protection officer appointed',
-  'DPIA for CCTV and video analytics',
-  'Retention policy published',
-  'CCTV signage in place',
-  'Facial recognition disabled',
-  'Footage access and search audited',
-  'AIGE self-assessment filed',
-] as const;
+export type Institution = {
+  id: string;
+  acronym: string;
+  name: string;
+  type: InstitutionType;
+  state: StateId;
+  city: string;
+  deployed: string;
+  maturity: Maturity;
+  /** Confirmed live AI or vision security system. */
+  ai: boolean;
+  /** CCTV policy that already asks for video analytics. */
+  policyAnalytics: boolean;
+  /** Any AI at hostels: none confirmed anywhere; Taylor's claims it. */
+  hostelAi: 'None found' | 'Claimed, no detail';
+  vehicles: Vehicles;
+  /** Facial recognition in use: sensitive data under the amended PDPA. */
+  faceRecognition: boolean;
+  evidence: { label: string; url: string }[];
+  /** EzVision connection, if any. */
+  ezvision: 'Pilot (demo)' | null;
+};
 
-type Seed = [
-  string,
-  string,
-  string,
-  InstitutionType,
-  StateId,
-  string,
-  number,
-  Connection,
-];
+const I = (
+  id: string,
+  acronym: string,
+  name: string,
+  type: InstitutionType,
+  state: StateId,
+  city: string,
+  maturity: Maturity,
+  deployed: string,
+  evidence: [string, string][],
+  extra: Partial<Institution> = {},
+): Institution => ({
+  id,
+  acronym,
+  name,
+  type,
+  state,
+  city,
+  maturity,
+  deployed,
+  evidence: evidence.map(([label, url]) => ({ label, url })),
+  ai: false,
+  policyAnalytics: false,
+  hostelAi: 'None found',
+  vehicles: 'Not stated',
+  faceRecognition: false,
+  ezvision: null,
+  ...extra,
+});
 
-const seeds: Seed[] = [
-  [
-    'um',
-    'UM',
-    'Universiti Malaya',
-    'Public (UA)',
-    'WP Kuala Lumpur',
-    'Kuala Lumpur',
-    27000,
-    'EzVision live',
-  ],
-  [
-    'usm',
-    'USM',
-    'Universiti Sains Malaysia',
-    'Public (UA)',
-    'Pulau Pinang',
-    'Gelugor',
-    30000,
-    'EzVision pilot',
-  ],
-  [
-    'ukm',
-    'UKM',
-    'Universiti Kebangsaan Malaysia',
-    'Public (UA)',
-    'Selangor',
-    'Bangi',
-    27500,
-    'EzVision pilot',
-  ],
-  [
-    'upm',
-    'UPM',
-    'Universiti Putra Malaysia',
-    'Public (UA)',
-    'Selangor',
-    'Serdang',
-    30500,
-    'EzVision live',
-  ],
-  [
-    'utm',
-    'UTM',
-    'Universiti Teknologi Malaysia',
-    'Public (UA)',
-    'Johor',
-    'Skudai',
-    33000,
-    'EzVision live',
-  ],
-  [
-    'uitm',
-    'UiTM',
-    'Universiti Teknologi MARA',
-    'Public (UA)',
-    'Selangor',
-    'Shah Alam',
-    170000,
-    'Manual return',
-  ],
-  [
-    'iium',
-    'UIAM',
-    'Universiti Islam Antarabangsa Malaysia',
-    'Public (UA)',
-    'Selangor',
-    'Gombak',
-    30000,
-    'Manual return',
-  ],
-  [
-    'uum',
-    'UUM',
-    'Universiti Utara Malaysia',
-    'Public (UA)',
-    'Kedah',
-    'Sintok',
-    30000,
-    'EzVision pilot',
-  ],
-  [
-    'unimas',
-    'UNIMAS',
-    'Universiti Malaysia Sarawak',
-    'Public (UA)',
-    'Sarawak',
-    'Kota Samarahan',
-    19000,
-    'Manual return',
-  ],
-  [
-    'ums',
-    'UMS',
-    'Universiti Malaysia Sabah',
-    'Public (UA)',
-    'Sabah',
-    'Kota Kinabalu',
-    20000,
-    'EzVision pilot',
-  ],
-  [
-    'upsi',
-    'UPSI',
-    'Universiti Pendidikan Sultan Idris',
-    'Public (UA)',
-    'Perak',
-    'Tanjong Malim',
-    20000,
-    'Manual return',
-  ],
-  [
-    'usim',
-    'USIM',
-    'Universiti Sains Islam Malaysia',
-    'Public (UA)',
-    'Negeri Sembilan',
-    'Nilai',
-    12000,
-    'Manual return',
-  ],
-  [
-    'umt',
-    'UMT',
-    'Universiti Malaysia Terengganu',
-    'Public (UA)',
-    'Terengganu',
-    'Kuala Nerus',
-    10000,
-    'EzVision pilot',
-  ],
-  [
-    'uthm',
-    'UTHM',
-    'Universiti Tun Hussein Onn Malaysia',
-    'Public (UA)',
-    'Johor',
-    'Batu Pahat',
-    18000,
-    'Manual return',
-  ],
-  [
-    'utem',
-    'UTeM',
-    'Universiti Teknikal Malaysia Melaka',
-    'Public (UA)',
-    'Melaka',
-    'Durian Tunggal',
-    13000,
-    'Manual return',
-  ],
-  [
+const UA = 'Public (UA)' as const;
+const IPTS = 'Private (IPTS)' as const;
+const NONE =
+  'No public evidence found beyond network deals or sticker systems.';
+const PLAIN = 'Access cards, guards and plain CCTV only.';
+
+export const institutions: Institution[] = [
+  I(
     'umpsa',
     'UMPSA',
     'Universiti Malaysia Pahang Al-Sultan Abdullah',
-    'Public (UA)',
+    UA,
     'Pahang',
     'Pekan',
-    12000,
-    'Manual return',
-  ],
-  [
-    'unimap',
-    'UniMAP',
-    'Universiti Malaysia Perlis',
-    'Public (UA)',
-    'Perlis',
-    'Arau',
-    11000,
-    'Manual return',
-  ],
-  [
+    'High',
+    'Intelligent Operation Centre at Pekan: AI, IoT and analytics for security, traffic and energy, with phased smart CCTV (May 2026). Guards added to hostels after a January 2025 incident; hostel CCTV “under consideration”.',
+    [
+      ['IOC news', 'https://news.umpsa.edu.my/print/pdf/node/10705'],
+      ['Hostel incident', 'https://news.umpsa.edu.my/print/pdf/node/9085'],
+    ],
+    { ai: true, policyAnalytics: true },
+  ),
+  I(
+    'um',
+    'UM',
+    'Universiti Malaya',
+    UA,
+    'WP Kuala Lumpur',
+    'Kuala Lumpur',
+    'Medium',
+    'Facial recognition at the library entrance (live); auxiliary police; “Integrated Surveillance” in the Smart Sustainable Campus 2022–2030 roadmap.',
+    [
+      [
+        'Library',
+        'https://umcms.um.edu.my/sites/um-library/news/facial-recognition-technology-is-now-live-at-the-library-entrance',
+      ],
+      [
+        'Roadmap',
+        'https://ebook.um.edu.my/jtm/SmartCampus/files/basic-html/page4.html',
+      ],
+    ],
+    { ai: true, faceRecognition: true, ezvision: 'Pilot (demo)' },
+  ),
+  I(
+    'usm',
+    'USM',
+    'Universiti Sains Malaysia',
+    UA,
+    'Pulau Pinang',
+    'Gelugor',
+    'Medium',
+    'CCTV policy creates a central control room (SMRC) with “video analytics” (2017, reviewed 2019); no proof the analytics run.',
+    [
+      [
+        'CCTV policy',
+        'https://security.usm.my/index.php/lain-lain/polisi?download=9%3Apolisi-cctv',
+      ],
+    ],
+    { policyAnalytics: true },
+  ),
+  I(
+    'upm',
+    'UPM',
+    'Universiti Putra Malaysia',
+    UA,
+    'Selangor',
+    'Serdang',
+    'Medium',
+    'Plate-recognition barrier (“Palang Automatik LPRS”) likely live; Huawei campus-network MoU (2015). Unverified: the page blocked automated reading.',
+    [['APSeC', 'https://apsec.upm.edu.my/berita/palang_automatik_lprs-85278']],
+    { vehicles: 'Plate recognition (likely)' },
+  ),
+  I(
+    'utm',
+    'UTM',
+    'Universiti Teknologi Malaysia',
+    UA,
+    'Johor',
+    'Skudai',
+    'Low–Medium',
+    'RFID vehicle stickers, e-Pelekat 2.0 (2025); Perodua smart-mobility pilot (January 2026).',
+    [
+      [
+        'Sticker procedure',
+        'https://registrar.utm.my/quality/wp-content/uploads/sites/393/2025/09/03-Prosedur-Pengurusan-Pelekat-Kenderaan-Pindaan-A.pdf',
+      ],
+    ],
+    { vehicles: 'RFID or stickers' },
+  ),
+  I(
     'unisza',
     'UniSZA',
     'Universiti Sultan Zainal Abidin',
-    'Public (UA)',
+    UA,
     'Terengganu',
     'Kuala Nerus',
-    12000,
-    'Manual return',
-  ],
-  [
+    'Low–Medium',
+    'Aimetis video management with motion and perimeter analytics on 40+ cameras across 3 campuses (2011).',
+    [
+      [
+        'asmag',
+        'https://www.asmag.com/mobile/article_detail_amp.aspx?aid=12175',
+      ],
+    ],
+  ),
+  I(
+    'uitm',
+    'UiTM',
+    'Universiti Teknologi MARA',
+    UA,
+    'Selangor',
+    'Shah Alam',
+    'Low',
+    'Huawei smart-campus MoU (networks, 2020); CCTV used after the fact to check a viral Puncak Alam hostel-intrusion claim (April 2024).',
+    [
+      [
+        'SAYS',
+        'https://says.com/my/seismik/polis-bantuan-sahkan-tiada-kelibat-geng-jubah-hitam-yang-didakwa-tular-ceroboh-kolej-uitm',
+      ],
+    ],
+  ),
+  I(
+    'ukm',
+    'UKM',
+    'Universiti Kebangsaan Malaysia',
+    UA,
+    'Selangor',
+    'Bangi',
+    'Low',
+    '40 CCTV cameras per building at one faculty (FKAB); Beam e-scooters.',
+    [['FKAB', 'https://www.ukm.my/fkab/?p=1317']],
+  ),
+  I(
+    'uthm',
+    'UTHM',
+    'Universiti Tun Hussein Onn Malaysia',
+    UA,
+    'Johor',
+    'Batu Pahat',
+    'Low',
+    'Draft CCTV policy: central control room (CMCC), PTZ, video analytics and traffic flow.',
+    [
+      [
+        'Draft policy',
+        'https://keselamatan.uthm.edu.my/images/peraturan-keselamatan/POLISI_CCTV_UTHM.pdf',
+      ],
+    ],
+    { policyAnalytics: true },
+  ),
+  I(
     'umk',
     'UMK',
     'Universiti Malaysia Kelantan',
-    'Public (UA)',
+    UA,
     'Kelantan',
     'Kota Bharu',
-    12000,
-    'EzVision pilot',
-  ],
-  [
+    'Low',
+    'Face, plate and thermal “Smart Security & Surveillance” planned for 2020–22; no proof it was delivered.',
+    [
+      [
+        'Smart campus plan',
+        'https://ditec.umk.edu.my/download/Inisiatif%20Kampus%20Pintar_edited_2607%20(2).pdf',
+      ],
+    ],
+  ),
+  I(
+    'ums',
+    'UMS',
+    'Universiti Malaysia Sabah',
+    UA,
+    'Sabah',
+    'Kota Kinabalu',
+    'Low',
+    'Central CCTV unit; Huawei campus network (2017).',
+    [
+      [
+        'CCTV unit',
+        'https://www.ums.edu.my/keselamatanv2/en/about-us/administration/intelligence-section/cctv-units',
+      ],
+    ],
+  ),
+  I(
+    'upsi',
+    'UPSI',
+    'Universiti Pendidikan Sultan Idris',
+    UA,
+    'Perak',
+    'Tanjong Malim',
+    'Low',
+    'CCTV unit enforces traffic and college rules (2024).',
+    [['CCTV function', 'https://keselamatan.upsi.edu.my/cctv-function/']],
+  ),
+  I(
+    'iium',
+    'IIUM',
+    'International Islamic University Malaysia',
+    UA,
+    'Selangor',
+    'Gombak',
+    'Low',
+    'Control room; lift-CCTV training (July 2026); gate plate recognition is a 2025 research prototype only.',
+    [
+      [
+        'OSeM',
+        'https://office.iium.edu.my/osem/2026/07/20/latihan-tatacara-penggunaan-cctv-lift-di-osem-iium/',
+      ],
+      ['Paper', 'https://journal.ump.edu.my/mekatronika/article/view/12064'],
+    ],
+  ),
+  I(
+    'unimap',
+    'UniMAP',
+    'Universiti Malaysia Perlis',
+    UA,
+    'Perlis',
+    'Arau',
+    'Low',
+    'RFID gateless vehicle entry, a research system under test (2021).',
+    [
+      [
+        'Paper',
+        'https://ammarzakaria.unimap.edu.my/pdf/2021/Smart-Gateless-System-using-RFID-Technology-in-Universiti-Malaysia-PerlisJournal-of-Physics-Conference-Series.pdf',
+      ],
+    ],
+    { vehicles: 'RFID or stickers' },
+  ),
+  I(
+    'unimas',
+    'UNIMAS',
+    'Universiti Malaysia Sarawak',
+    UA,
+    'Sarawak',
+    'Kota Samarahan',
+    'Low',
+    'e-Sticker; 2026 “Smart, Green & Inclusive Campus” priority with no camera plan.',
+    [
+      [
+        'VC address 2026',
+        'https://www.unimas.my/media/attachments/2026/02/13/amanat-nc-2026-website-3-2.pdf',
+      ],
+    ],
+    { vehicles: 'RFID or stickers' },
+  ),
+  I(
     'upnm',
     'UPNM',
     'Universiti Pertahanan Nasional Malaysia',
-    'Public (UA)',
+    UA,
     'WP Kuala Lumpur',
     'Sungai Besi',
-    4000,
-    'Manual return',
-  ],
-  [
-    'taylors',
-    "Taylor's",
-    "Taylor's University",
-    'Private (IPTS)',
-    'Selangor',
-    'Subang Jaya',
-    15000,
-    'EzVision live',
-  ],
-  [
-    'monash-my',
-    'Monash',
-    'Monash University Malaysia',
-    'Private (IPTS)',
-    'Selangor',
-    'Bandar Sunway',
-    8000,
-    'Manual return',
-  ],
-  [
-    'sunway',
-    'Sunway',
-    'Sunway University',
-    'Private (IPTS)',
-    'Selangor',
-    'Bandar Sunway',
-    16000,
-    'EzVision pilot',
-  ],
-  [
-    'ucsi',
-    'UCSI',
-    'UCSI University',
-    'Private (IPTS)',
-    'WP Kuala Lumpur',
-    'Cheras',
-    12000,
-    'Manual return',
-  ],
-  [
-    'mmu',
-    'MMU',
-    'Multimedia University',
-    'Private (IPTS)',
-    'Selangor',
-    'Cyberjaya',
-    18000,
-    'Manual return',
-  ],
-  [
-    'uniten',
-    'UNITEN',
-    'Universiti Tenaga Nasional',
-    'Private (IPTS)',
-    'Selangor',
-    'Kajang',
-    10000,
-    'Manual return',
-  ],
-  [
-    'utp',
-    'UTP',
-    'Universiti Teknologi PETRONAS',
-    'Private (IPTS)',
-    'Perak',
-    'Seri Iskandar',
-    7000,
-    'EzVision pilot',
-  ],
-  [
+    'Low',
+    'CCTV control unit; online vehicle stickers.',
+    [
+      [
+        'Security Division',
+        'https://pendaftar.upnm.edu.my/index.php/jabatan/bahagian-keselamatan',
+      ],
+    ],
+    { vehicles: 'RFID or stickers' },
+  ),
+  I(
+    'uum',
+    'UUM',
+    'Universiti Utara Malaysia',
+    UA,
+    'Kedah',
+    'Sintok',
+    'Unknown',
+    NONE,
+    [],
+  ),
+  I(
+    'usim',
+    'USIM',
+    'Universiti Sains Islam Malaysia',
+    UA,
+    'Negeri Sembilan',
+    'Nilai',
+    'Unknown',
+    NONE,
+    [],
+  ),
+  I(
+    'umt',
+    'UMT',
+    'Universiti Malaysia Terengganu',
+    UA,
+    'Terengganu',
+    'Kuala Nerus',
+    'Unknown',
+    NONE,
+    [],
+  ),
+  I(
+    'utem',
+    'UTeM',
+    'Universiti Teknikal Malaysia Melaka',
+    UA,
+    'Melaka',
+    'Durian Tunggal',
+    'Unknown',
+    NONE,
+    [],
+  ),
+  I(
     'apu',
     'APU',
     'Asia Pacific University of Technology & Innovation',
-    'Private (IPTS)',
+    IPTS,
     'WP Kuala Lumpur',
     'Bukit Jalil',
-    13000,
-    'Manual return',
-  ],
+    'High',
+    'APSPark plate-recognition parking with pre-registered vehicles and cashless APCard; residence access cards; 24/7 security.',
+    [
+      ['Parking', 'https://www.apu.edu.my/campus-parking'],
+      ['Residence', 'https://www.apu.edu.my/apu-on-campus-residence'],
+    ],
+    { ai: true, vehicles: 'Plate recognition' },
+  ),
+  I(
+    'sunway',
+    'Sunway',
+    'Sunway University',
+    IPTS,
+    'Selangor',
+    'Bandar Sunway',
+    'Medium–High',
+    'Facial recognition at library entry and exit, replacing cards (2019, still in use).',
+    [
+      [
+        'SAYS',
+        'https://says.com/my/lifestyle/sunway-university-implements-facial-recognition-system-for-entrance-to-library-so-canggih',
+      ],
+      [
+        'Business Today 2023',
+        'https://www.businesstoday.com.my/2023/04/19/sunway-library-enters-a-new-chapter-in-technology/',
+      ],
+    ],
+    { ai: true, faceRecognition: true },
+  ),
+  I(
+    'taylors',
+    'Taylor’s',
+    'Taylor’s University',
+    IPTS,
+    'Selangor',
+    'Subang Jaya',
+    'Medium',
+    'Residence FAQ claims “AI-CCTV surveillance covering all floors and entrances”; turnstiles, 24-hour guards. A claim with no detail.',
+    [
+      [
+        'Residence FAQ',
+        'https://residence.taylors.edu.my/about-us/frequently-asked-questions',
+      ],
+    ],
+    { hostelAi: 'Claimed, no detail' },
+  ),
+  I(
+    'nottingham',
+    'UNM',
+    'University of Nottingham Malaysia',
+    IPTS,
+    'Selangor',
+    'Semenyih',
+    'Medium',
+    '300+ CCTV cameras; ID-card residence doors; app-based parking permits (2023).',
+    [
+      [
+        'Accommodation handbook',
+        'https://www.nottingham.edu.my/Study/Documents/Accommodation/Digital-Accommodation-Handbook-2023.pdf',
+      ],
+    ],
+    { vehicles: 'Cards or app' },
+  ),
+  I(
+    'xmum',
+    'XMUM',
+    'Xiamen University Malaysia',
+    IPTS,
+    'Selangor',
+    'Sepang',
+    'Medium',
+    'Campus e-card for doors, library and payments; privacy notice already covers CCTV and biometric data; visitors register by hand.',
+    [
+      ['e-card', 'https://linc.xmu.edu.my/campus-id-ecard/'],
+      ['PDP notice', 'https://www.xmu.edu.my/PDP-Notice'],
+    ],
+    { vehicles: 'Cards or app' },
+  ),
+  I(
+    'msu',
+    'MSU',
+    'Management and Science University',
+    IPTS,
+    'Selangor',
+    'Shah Alam',
+    'Low–Medium',
+    'ID-card parking gates; Touch ’n Go visitor parking.',
+    [['Parking', 'https://www.msu.edu.my/msu-parking-area.php']],
+    { vehicles: 'Cards or app' },
+  ),
+  I(
+    'hwum',
+    'HWUM',
+    'Heriot-Watt University Malaysia',
+    IPTS,
+    'WP Putrajaya',
+    'Putrajaya',
+    'Low–Medium',
+    'Cashless parking run by KLCC Parking Management.',
+    [['Transport', 'https://www.hw.ac.uk/malaysia/campus/transport']],
+    { vehicles: 'Cards or app' },
+  ),
+  I(
+    'curtin-my',
+    'Curtin',
+    'Curtin University Malaysia',
+    IPTS,
+    'Sarawak',
+    'Miri',
+    'Low',
+    'Residence cards; CCTV reviewed after incidents; guard-house visitor log; stickers and clamping (2025).',
+    [
+      [
+        'Residence rules',
+        'https://www.curtin.edu.my/study/wp-content/uploads/sites/2/2025/03/Residence-rules-and-regulations.pdf',
+      ],
+    ],
+    { vehicles: 'RFID or stickers' },
+  ),
+  I(
+    'utar',
+    'UTAR',
+    'Universiti Tunku Abdul Rahman',
+    IPTS,
+    'Perak',
+    'Kampar',
+    'Low',
+    'Guarded gates, numbered stickers, visitor passes, clamping.',
+    [['Vehicle stickers', 'https://dsa.kpr.utar.edu.my/Vehicle-Stickers.php']],
+    { vehicles: 'RFID or stickers' },
+  ),
+  I(
+    'mmu',
+    'MMU',
+    'Multimedia University',
+    IPTS,
+    'Selangor',
+    'Cyberjaya',
+    'Low',
+    PLAIN,
+    [['Accommodation', 'https://www.mmu.edu.my/accommodation/']],
+  ),
+  I(
+    'uniten',
+    'UNITEN',
+    'Universiti Tenaga Nasional',
+    IPTS,
+    'Selangor',
+    'Kajang',
+    'Low',
+    PLAIN,
+    [],
+  ),
+  I(
+    'inti',
+    'INTI',
+    'INTI International University',
+    IPTS,
+    'Negeri Sembilan',
+    'Nilai',
+    'Low',
+    PLAIN,
+    [['Accommodation', 'https://newinti.edu.my/accommodation/']],
+  ),
+  I(
+    'mahsa',
+    'MAHSA',
+    'MAHSA University',
+    IPTS,
+    'Selangor',
+    'Jenjarom',
+    'Low',
+    PLAIN,
+    [],
+  ),
+  I(
+    'swinburne',
+    'Swinburne',
+    'Swinburne University of Technology Sarawak',
+    IPTS,
+    'Sarawak',
+    'Kuching',
+    'Low',
+    PLAIN,
+    [],
+  ),
+  I(
+    'ucsi',
+    'UCSI',
+    'UCSI University',
+    IPTS,
+    'WP Kuala Lumpur',
+    'Cheras',
+    'Low',
+    PLAIN,
+    [],
+  ),
+  I(
+    'monash-my',
+    'Monash',
+    'Monash University Malaysia',
+    IPTS,
+    'Selangor',
+    'Bandar Sunway',
+    'Unknown',
+    'No public evidence found.',
+    [],
+  ),
+  I(
+    'utp',
+    'UTP',
+    'Universiti Teknologi PETRONAS',
+    IPTS,
+    'Perak',
+    'Seri Iskandar',
+    'Unknown',
+    'No public evidence found.',
+    [],
+  ),
+  I(
+    'segi',
+    'SEGi',
+    'SEGi University',
+    IPTS,
+    'Selangor',
+    'Kota Damansara',
+    'Unknown',
+    'No public evidence found.',
+    [],
+  ),
 ];
-
-/** Deterministic 0..1 from a string, so every render is identical. */
-function rand(key: string) {
-  let h = 2166136261;
-  for (let i = 0; i < key.length; i++) {
-    h ^= key.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return ((h >>> 0) % 10000) / 10000;
-}
-const pick = (key: string, lo: number, hi: number) =>
-  lo + rand(key) * (hi - lo);
-const round1 = (n: number) => Math.round(n * 10) / 10;
-
-// UM's row comes from its own workspace so the two points of view agree.
-const umConfirmed = verification.reduce((a, v) => a + v.confirmed, 0);
-const umAll = verification.reduce((a, v) => a + v.confirmed + v.false, 0);
-export const umFigures = {
-  cameras: umCameras.length,
-  analysed: umCameras.filter((c) => c.status !== 'offline').length,
-  uptime: uptimeWeekly.at(-1)!.uptime,
-  analyticsLive: Object.values(umAnalytics).filter((a) => a.status === 'Live')
-    .length,
-  detections30d: umEvents.length * 30,
-  precision: Math.round((umConfirmed / umAll) * 100),
-  verifyP50: verifyTimes.at(-1)!.p50,
-  cctv: cctvChecklist.map((c) => c.status) as Compliance[],
-};
-
-function maturityOf(i: Omit<Institution, 'maturity'>) {
-  const cctvMet = i.cctv.filter((c) => c === 'Met').length / i.cctv.length;
-  const priv = i.privacy.filter(Boolean).length / i.privacy.length;
-  const analytics = i.connection === 'Manual return' ? 0 : 1;
-  return Math.round(
-    i.coverage * 0.25 +
-      cctvMet * 25 +
-      priv * 25 +
-      analytics * 15 +
-      (i.uptime ? i.uptime - 90 : 0),
-  );
-}
-
-export const institutions: Institution[] = seeds.map(
-  ([id, acronym, name, type, state, city, enrolment, connection]) => {
-    const live = connection !== 'Manual return';
-    const cameras =
-      id === 'um'
-        ? umFigures.cameras
-        : Math.round((enrolment / 1000) * pick(id + 'cam', 1.6, 4.2));
-    const cctv: Compliance[] =
-      id === 'um'
-        ? umFigures.cctv
-        : cctvItems.map((item) => {
-            const r = rand(id + item);
-            return r > 0.3 ? 'Met' : r > 0.1 ? 'Partly met' : 'Not met';
-          });
-    const privacy = privacyItems.map((p) =>
-      id === 'um'
-        ? true
-        : rand(id + p) > (p === 'Facial recognition disabled' ? 0.08 : 0.24),
-    );
-    const base = {
-      id,
-      acronym,
-      name,
-      type,
-      state,
-      city,
-      enrolment,
-      connection,
-      cameras,
-      analysed:
-        id === 'um'
-          ? umFigures.analysed
-          : live
-            ? Math.round(cameras * pick(id + 'an', 0.35, 0.9))
-            : 0,
-      coverage:
-        id === 'um'
-          ? 94
-          : Math.round(pick(id + 'cov', live ? 72 : 48, live ? 98 : 88)),
-      uptime:
-        id === 'um'
-          ? umFigures.uptime
-          : live
-            ? round1(pick(id + 'up', 93.5, 99.4))
-            : null,
-      analyticsLive:
-        id === 'um'
-          ? umFigures.analyticsLive
-          : live
-            ? Math.round(pick(id + 'al', 4, 13))
-            : 0,
-      detections30d:
-        id === 'um'
-          ? umFigures.detections30d
-          : live
-            ? Math.round(cameras * pick(id + 'det', 4, 14))
-            : null,
-      precision:
-        id === 'um'
-          ? umFigures.precision
-          : live
-            ? Math.round(pick(id + 'pr', 62, 91))
-            : null,
-      verifyP50:
-        id === 'um'
-          ? umFigures.verifyP50
-          : live
-            ? Math.round(pick(id + 'vt', 25, 95))
-            : null,
-      cctv,
-      privacy,
-    };
-    return { ...base, maturity: Math.min(98, maturityOf(base)) };
-  },
-);
 
 export const institutionById = (id: string) =>
   institutions.find((i) => i.id === id);
 
-/** Small-count suppression at institution level (1 to 4 shows as "<5"). */
-export function suppress(n: number): string {
-  return n > 0 && n < 5 ? '<5' : n.toLocaleString('en-MY');
-}
-
-export const detectionCategories = [
-  'Intrusion',
-  'Crowd density',
-  'Vehicle & traffic',
-  'Unattended object',
-  'Person down',
-  'Smoke / fire',
-  'Water level',
-  'Wildlife',
-  'Camera tamper',
-  'PPE',
-] as const;
-
-const months = [
-  'Nov',
-  'Dec',
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
+export const maturityLevels: Maturity[] = [
+  'High',
+  'Medium–High',
+  'Medium',
+  'Low–Medium',
+  'Low',
+  'Unknown',
 ];
-
-/** National monthly detections by category, institutions on EzVision. */
-export const nationalMonthly = months.map((month, m) => {
-  const monsoon = [0, 1, 2, 3].includes(m) ? 1 : 0;
-  const term = [3, 4, 5, 9, 10, 11].includes(m) ? 1 : 0;
-  // Adoption grows through the year as pilots go live.
-  const growth = 0.7 + m * 0.03;
-  const row: Record<string, string | number> = { month };
-  for (const c of detectionCategories) {
-    const base = {
-      Intrusion: 410,
-      'Crowd density': 290,
-      'Vehicle & traffic': 760,
-      'Unattended object': 180,
-      'Person down': 40,
-      'Smoke / fire': 35,
-      'Water level': 22,
-      Wildlife: 95,
-      'Camera tamper': 60,
-      PPE: 70,
-    }[c];
-    const swing =
-      c === 'Water level'
-        ? monsoon * 60
-        : c === 'Crowd density'
-          ? term * 120
-          : 0;
-    row[c] = Math.round(
-      (base + swing + pick(c + month, -base * 0.12, base * 0.12)) * growth,
-    );
-  }
-  return row;
-});
-
-const connected = institutions.filter((i) => i.connection !== 'Manual return');
-const median = (xs: number[]) =>
-  [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-
-export const nationalTotals = {
-  institutions: institutions.length,
-  publicCount: institutions.filter((i) => i.type === 'Public (UA)').length,
-  privateCount: institutions.filter((i) => i.type === 'Private (IPTS)').length,
-  connected: connected.length,
-  cameras: institutions.reduce((a, i) => a + i.cameras, 0),
-  analysed: institutions.reduce((a, i) => a + i.analysed, 0),
-  medianUptime: median(connected.map((i) => i.uptime!)),
-  medianPrecision: median(connected.map((i) => i.precision!)),
-  detections30d: connected.reduce((a, i) => a + i.detections30d!, 0),
-  frDisabled: institutions.filter((i) => i.privacy[4]).length,
+export const maturityScore: Record<Maturity, number> = {
+  High: 4,
+  'Medium–High': 3.5,
+  Medium: 3,
+  'Low–Medium': 2,
+  Low: 1,
+  Unknown: 0,
 };
 
-/** Shown on every KPT screen. */
+export const auditMethod =
+  'Public web pages in English and Malay, opened and checked on 26 Oct 2026. Some university pages blocked automated reading (UPM, UTeM, UniSZA, UMS), and Malaysian news sites search poorly. “Unknown” means no public evidence, not proof of absence; confirm by calling the security office.';
+
+/** Headline findings of the audit, derived from the rows above. */
+export const auditTotals = (() => {
+  const pub = institutions.filter((i) => i.type === UA);
+  const priv = institutions.filter((i) => i.type === IPTS);
+  return {
+    audited: institutions.length,
+    public: pub.length,
+    private: priv.length,
+    aiPublic: pub.filter((i) => i.ai).length,
+    aiPrivate: priv.filter((i) => i.ai).length,
+    ai: institutions.filter((i) => i.ai).length,
+    /** No institution shows confirmed AI at hostels. */
+    hostelAi: 0,
+    hostelClaims: institutions.filter(
+      (i) => i.hostelAi === 'Claimed, no detail',
+    ).length,
+    policyAnalytics: institutions.filter((i) => i.policyAnalytics).length,
+    faceRecognition: institutions.filter((i) => i.faceRecognition).length,
+    stickers: institutions.filter((i) => i.vehicles === 'RFID or stickers')
+      .length,
+    plates: institutions.filter((i) => i.vehicles.startsWith('Plate')).length,
+    unknown: institutions.filter((i) => i.maturity === 'Unknown').length,
+  };
+})();
+
+/** What the pattern means, in the audit's own words. */
+export const patterns = [
+  {
+    title: 'Policies promise analytics that do not exist',
+    text: 'USM, UTHM and UMPSA wrote “video analytics” into CCTV policy years ago. Few campuses can show it running.',
+  },
+  {
+    title: 'Vehicles use RFID stickers, not plate recognition',
+    text: 'UTM, UPNM, UNIMAS and UniMAP run stickers; only APU confirms plate recognition, and UPM probably does.',
+  },
+  {
+    title: 'Big-vendor deals are networks, not security',
+    text: 'Huawei (UPM, UMS, UiTM) and TM ONE (UUM) sold Wi-Fi and data centres. No campus security analytics deal is public.',
+  },
+  {
+    title: 'Incidents bring guards first, cameras later',
+    text: 'UMPSA (2025) and UiTM Puncak Alam (2024) show the trigger is a hostel incident.',
+  },
+  {
+    title: 'No hostel AI anywhere',
+    text: 'No Malaysian university, public or private, shows AI at hostels. Taylor’s claims “AI-CCTV” in residences, with no detail.',
+  },
+];
+
+// ----------------------------------------------------- global benchmarks --
+
+export const leaders = [
+  {
+    university: 'ITS Surabaya (Indonesia)',
+    deployed:
+      '76 face-access terminals; 10 radar plate cameras that send speeding notices over 40 km/h; 42 barriers that open only when rider face and plate match; command centre with a map video wall.',
+    vendor: 'Hikvision',
+    year: '2025',
+    result: 'Vendor reports motorcycle theft and speeding fell (no figures).',
+    url: 'https://internationalsecurityjournal.com/its-surabaya-hikvision-campus/',
+  },
+  {
+    university: 'NTU (Singapore)',
+    deployed:
+      'New CCTV with video analytics, 24/7 Security Command Centre; halls and staff housing first.',
+    vendor: 'Certis',
+    year: '2024',
+    result: 'Goals only, no results published.',
+    url: 'https://www.ntu.edu.sg/news/detail/ntu-to-ramp-up-tech-use-for-safety-and-security-needs-appoints-certis-as-campus-security-provider',
+  },
+  {
+    university: 'NTU, NUS, SMU, SUTD (Singapore)',
+    deployed:
+      'Anti-voyeurism: motion alarms in hall toilets, CCTV at restroom entrances only, controlled toilet access.',
+    vendor: 'Not named',
+    year: '2021',
+    result: 'Layered measures; no cameras inside.',
+    url: 'https://www.sutd.edu.sg/news-listing/spore-universities-polys-explore-motion-sensors-and-other-tech-devices-to-deter-voyeurs/',
+  },
+  {
+    university: 'Arizona State (US)',
+    deployed:
+      'Real Time Analysis Center: 3,000–4,000+ cameras, plate readers, body cams, live 911 transcription.',
+    vendor: 'Genetec',
+    year: '2023',
+    result:
+      'Property and bike theft “decreased significantly”; national awards.',
+    url: 'https://news.asu.edu/b/20251017-asu-police-real-time-analysis-center-earns-national-recognition',
+  },
+  {
+    university: 'Binghamton (US)',
+    deployed:
+      '1,635 cameras, 4,800+ readers, plate readers, crowd-gathering analytics, evidence management.',
+    vendor: 'Genetec',
+    year: '2025',
+    result: 'Faster incident response (not quantified).',
+    url: 'https://www.securitysystemsnews.com/article/binghamton-university-unifies-campus-safety-tools-with-genetec',
+  },
+  {
+    university: 'Michigan State, Grand Canyon (US)',
+    deployed:
+      'MSU: ~3,000 cameras in a 24/7 operations centre with clothing and direction search; GCU: 500+ AI cameras linked to dispatch.',
+    vendor: 'Genetec, Verkada',
+    year: '2025',
+    result: '“Force multiplier”; no metrics.',
+    url: 'https://edtechmagazine.com/higher/article/2026/05/real-time-security-centers-keep-watchful-eye-campus-activity',
+  },
+  {
+    university: 'Chung-Ang (South Korea)',
+    deployed:
+      'Cloud cameras; search by clothing, vehicle or plate; cross-camera timeline; face blur.',
+    vendor: 'Verkada',
+    year: 'n/a',
+    result: 'Tracked one suspect across campus with police.',
+    url: 'https://www.verkada.com/customers/chung-ang-university/',
+  },
+  {
+    university: 'Curtin (Australia)',
+    deployed:
+      'AI that learns “normal” scenes and flags anomalies to operators.',
+    vendor: 'icetana',
+    year: '10+ years; renewed 2026',
+    result: 'Licences more than doubled; contract renewed to 2029.',
+    url: 'https://www.techpartner.news/news/curtin-university-renews-contract-with-icetana-ai-625029',
+  },
+  {
+    university: 'Boston College (US)',
+    deployed: '16 AI walk-through weapons screeners at the stadium and arena.',
+    vendor: 'Evolv',
+    year: '2023',
+    result: 'Events only.',
+    url: 'https://ir.evolvtechnology.com/news-events/press-releases/detail/164/boston-college-using-evolv-for-weapons-detection-screening',
+  },
+  {
+    university: 'Tsinghua, XJTU, Zhejiang (China)',
+    deployed: 'Face scan at enrolment, labs and smart classrooms.',
+    vendor: 'Uniview',
+    year: '~2019',
+    result:
+      'Followed by the Ministry of Education’s 2019 pledge to curb face recognition in schools.',
+    url: 'https://thechinaproject.com/2019/09/06/china-to-curb-facial-recognition-technology-in-schools/',
+  },
+  {
+    university: 'KAUST (Saudi Arabia)',
+    deployed:
+      '15.4 km perimeter with automatic intrusion detection; CCTV and drones with a published privacy notice.',
+    vendor: 'SightLogix, Geutebruck',
+    year: '2009',
+    result: 'Old project.',
+    url: 'https://www.kaust.edu.sa/privacy-notice/cctv-and-drones',
+  },
+];
+
+export const governanceLessons = [
+  {
+    title: 'UCLA dropped face recognition',
+    text: 'In 2020, after a test falsely matched 58 athletes and staff to mugshots.',
+    url: 'https://www.securitysales.com/news/ucla-abandons-facial-recognition-plan/108162/',
+  },
+  {
+    title: 'China cracked down on classroom attention tracking',
+    text: 'Classroom “attentiveness” tracking drew a Ministry of Education pledge to curb face recognition in schools.',
+    url: 'https://thechinaproject.com/2019/09/06/china-to-curb-facial-recognition-technology-in-schools/',
+  },
+  {
+    title: 'Edinburgh publishes the template',
+    text: 'A privacy impact assessment for every camera, privacy masking, 30-day retention, named viewer roles, logged access and quarterly audits.',
+    url: 'https://estates.ed.ac.uk/sites/default/files/2024-08/CCTV%20Protocol%20.pdf',
+  },
+];
+
+/** Capability gap: leaders vs Malaysian campuses vs EzVision today. */
+export const capabilityGap = [
+  {
+    capability: 'Command centre with live alerts',
+    leaders: 'Standard (ASU, MSU, NTU, ITS)',
+    public: 'UMPSA only; others watch screens',
+    private: 'None',
+    ezvision: 'Console exists (ParqOS, Condo)',
+  },
+  {
+    capability: 'Plate recognition at gates',
+    leaders: 'Standard',
+    public: 'UPM likely; others RFID stickers',
+    private: 'APU only',
+    ezvision: 'Live',
+  },
+  {
+    capability: 'Hostel entry analytics',
+    leaders: 'NTU halls first; ITS face gates',
+    public: 'None',
+    private: 'Taylor’s claims only',
+    ezvision: 'Build (this spec)',
+  },
+  {
+    capability: 'Fight, bullying, vape alerts',
+    leaders: 'Verkada fight; nobody does vape',
+    public: 'None',
+    private: 'None',
+    ezvision: 'PoC (AIWAS)',
+  },
+  {
+    capability: 'Search by clothing or plate',
+    leaders: 'Standard',
+    public: 'None',
+    private: 'None',
+    ezvision: 'Build',
+  },
+  {
+    capability: 'Face recognition',
+    leaders: 'Common in China and ITS; dropped at UCLA',
+    public: 'UM library',
+    private: 'Sunway library',
+    ezvision: 'Opt-in only',
+  },
+  {
+    capability: 'Published privacy rules',
+    leaders: 'Edinburgh template',
+    public: 'CCTV policies at USM, UTHM, UMPSA',
+    private: 'XMUM privacy notice',
+    ezvision: 'Ship as standard',
+  },
+];
+
+/** PDPA points that matter to a ministry overseeing campus cameras. */
+export const pdpaPoints = [
+  {
+    title: 'Biometric data is sensitive personal data',
+    text: 'Under the PDPA Amendment Act 2024, face features need explicit consent. UM and Sunway run library face recognition today.',
+  },
+  {
+    title: 'DPO and breach notification from 1 June 2025',
+    text: 'Controllers must appoint a data protection officer and notify breaches. Fines reach RM1,000,000.',
+  },
+  {
+    title: 'Processors carry security duties directly',
+    text: 'Vendors such as EzGIG are now accountable for the security of what they process, not only the university.',
+  },
+];
+export const pdpaUrl =
+  'https://www.dataprotectionreport.com/2025/01/new-horizons-in-data-protection-malaysias-personal-data-protection-amendment-act-2024/';
+
+// ------------------------------------------------- EzVision aggregates --
+
+/** Counts from 1 to 4 are shown as "<5" so no small group can be singled out. */
+export const suppress = (n: number) =>
+  n > 0 && n < 5 ? '<5' : n.toLocaleString();
+
+/**
+ * Aggregate hostel-integrity figures from EzVision pilots. Only UM reports,
+ * and only as totals: no blocks, cameras, footage or people.
+ */
+export const pilotAggregates = {
+  reporting: institutions.filter((i) => i.ezvision).length,
+  blocks: 2,
+  cameras: pilotCameras.length,
+  weekly: hostelWeekly.map((w) => ({
+    week: w.week,
+    confirmed: w.a + w.b,
+    falseAlarms: w.falseA + w.falseB,
+  })),
+  precision: (() => {
+    const h = precisionByModule.find((p) => p.module === 'hostel')!;
+    return Math.round((h.confirmed / (h.confirmed + h.false)) * 100);
+  })(),
+  ackP50: ackTimes.at(-1)!.p50,
+  uptime: uptimeDaily.at(-1)!.pilot,
+  campusCameras: cameras.length,
+  kpis: pilotKpis,
+};
+
 export const kptExclusionLine =
-  'This dashboard holds aggregate camera-analytics figures and compliance status only. It has no footage, images, plate numbers or names, and nothing in it identifies or tracks individuals, protests, assemblies or speech.';
+  'No footage, images, plates, camera IDs or personal names reach the ministry, and counts from 1 to 4 are suppressed.';

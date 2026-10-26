@@ -15,6 +15,9 @@ import type { Camera } from '../_data/um';
  * - An offline camera is an explicit "signal lost" tile that tells the
  *   operator not to read the area as clear. It is never a dark rectangle.
  *
+ * - Blocked, blurred and moved cameras look the way the daily health check
+ *   describes them.
+ *
  * The boxes are hand-placed illustrations, labelled as such.
  */
 export function CameraFeed({
@@ -66,7 +69,10 @@ export function CameraFeed({
         <>
           {live && scene.clip && !failed ? (
             <video
-              className="absolute inset-0 size-full object-cover"
+              className={cn(
+                'absolute inset-0 size-full object-cover',
+                camera.status === 'moved' && 'origin-left rotate-3 scale-110',
+              )}
               src={mediaUrl(scene.clip)}
               poster={mediaUrl(scene.still)}
               autoPlay
@@ -85,6 +91,7 @@ export function CameraFeed({
                 'absolute inset-0 size-full object-cover',
                 live &&
                   'motion-safe:animate-[pan_24s_ease-in-out_infinite_alternate]',
+                camera.status === 'moved' && 'origin-left rotate-3 scale-110',
               )}
             />
           )}
@@ -103,8 +110,13 @@ export function CameraFeed({
                 }}
               />
             ))}
-          {camera.status === 'degraded' && (
-            <span className="absolute inset-0 bg-black/25 backdrop-grayscale" />
+          {camera.status === 'blocked' && (
+            <span className="absolute inset-0 grid place-items-center bg-neutral-950/90 text-xs font-semibold text-white">
+              Lens blocked
+            </span>
+          )}
+          {camera.status === 'blurred' && (
+            <span className="absolute inset-0 backdrop-blur-[3px]" />
           )}
         </>
       )}
@@ -126,8 +138,8 @@ export function CameraFeed({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-2 text-[10px] text-white/85">
           <span className="truncate">{scene.overlay}</span>
           <span className="shrink-0">
-            {camera.status === 'degraded'
-              ? 'Degraded · 8 fps'
+            {camera.status !== 'online'
+              ? `Health: ${camera.status}`
               : scene.clip
                 ? 'Synthetic clip'
                 : 'Synthetic still'}

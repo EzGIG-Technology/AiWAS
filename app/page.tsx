@@ -9,12 +9,12 @@ import { KptWorkspace } from './_views/kpt/workspace';
 import { AppsWorkspace } from './_views/apps/workspace';
 
 /**
- * EzVision camera intelligence: one client application with three workspaces.
+ * EzVision Campus: one client application with three workspaces.
  *
  *   #/            demo sign-in
- *   #/um/<view>   Universiti Malaya camera-intelligence workspace
- *   #/kpt/<view>  KPT national oversight (aggregates only)
- *   #/app/mobile  EzVision Mobile camera-alert app
+ *   #/um/<view>   Universiti Malaya: command centre, six modules, platform
+ *   #/kpt/<view>  KPT: smart-campus audit and pilot aggregates only
+ *   #/app/warden  EzVision Warden, the felo's phone app
  */
 export default function Home() {
   return (

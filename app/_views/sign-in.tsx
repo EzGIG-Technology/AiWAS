@@ -8,8 +8,8 @@ import {
   ShieldCheck,
   Smartphone,
   EyeOff,
-  MapPinOff,
-  Megaphone,
+  UserCheck,
+  HeartHandshake,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -37,12 +37,12 @@ import { navigate } from '../_lib/router';
 import { useDemo } from '../_lib/store';
 
 const mosaic = [
-  'hall',
-  'courtyard',
-  'gate',
-  'transit-concourse',
   'hostel',
-  'hosp-entrance',
+  'care-entrance',
+  'gate',
+  'corridor',
+  'courtyard',
+  'retail-carpark',
 ] as const;
 
 const tabs: {
@@ -68,10 +68,10 @@ const tabs: {
   },
   {
     id: 'app',
-    label: 'Mobile app',
+    label: 'Warden app',
     icon: Smartphone,
-    org: { id: 'um', acronym: 'UM', name: 'EzVision Mobile' },
-    sso: 'Open the app preview',
+    org: { id: 'um', acronym: 'UM', name: 'EzVision Warden' },
+    sso: 'Open the warden app',
   },
 ];
 
@@ -81,7 +81,7 @@ export function SignIn() {
   const [choice, setChoice] = useState<Record<Workspace, Persona['id']>>({
     um: 'director',
     kpt: 'kpt',
-    app: 'mobile',
+    app: 'warden',
   });
 
   const go = (ws: Workspace) => {
@@ -103,14 +103,14 @@ export function SignIn() {
         </div>
         <div className="relative mt-10 max-w-lg">
           <h1 className="text-4xl leading-tight font-semibold tracking-tight">
-            Camera intelligence for universities, from every camera to the
-            ministry.
+            One AI layer over the cameras a campus already has.
           </h1>
           <p className="mt-4 text-white/75">
-            AI analytics on a university’s existing CCTV: detections an operator
-            verifies, anonymous occupancy and footfall, vehicle and crowd
-            counts, and searchable footage. The Ministry of Higher Education
-            sees the aggregates.
+            EzVision Campus: six modules on one engine, led by Hostel Integrity
+            for opposite-gender entry, overstays and fire-exit use, then Safe
+            Campus, Mobility, Welfare, HSE and Space &amp; Admin. Alerts go to
+            the right office; the Ministry of Higher Education sees the
+            aggregates.
           </p>
         </div>
         <div className="relative mt-8 grid grid-cols-3 gap-2">
@@ -126,16 +126,17 @@ export function SignIn() {
         <ul className="relative mt-auto grid gap-3 pt-8 text-sm text-white/80">
           <li className="flex gap-3">
             <EyeOff className="mt-0.5 size-4 shrink-0 text-sidebar-primary" />
-            No facial recognition. Analytics describe events, never identities.
+            No face recognition by default. Gender is estimated only at
+            single-gender block doors, and names no one.
           </li>
           <li className="flex gap-3">
-            <Megaphone className="mt-0.5 size-4 shrink-0 text-sidebar-primary" />
-            No protest, assembly or speech monitoring, in any report or search.
+            <UserCheck className="mt-0.5 size-4 shrink-0 text-sidebar-primary" />
+            A warden or operator checks every alert. AI never issues a penalty.
           </li>
           <li className="flex gap-3">
-            <MapPinOff className="mt-0.5 size-4 shrink-0 text-sidebar-primary" />
-            People are counted, never tracked. Every footage search needs a
-            purpose and is audited.
+            <HeartHandshake className="mt-0.5 size-4 shrink-0 text-sidebar-primary" />
+            Welfare is not discipline: wellbeing alerts go to counselling.
+            Toilets and changing rooms use radar, never cameras.
           </li>
         </ul>
       </section>
@@ -178,8 +179,8 @@ export function SignIn() {
                       <div className="grid gap-2">
                         <UniversityLockup id="um" name="Universiti Malaya" />
                         <CardDescription>
-                          Detections, video wall, occupancy, vehicles, footage
-                          search and privacy
+                          Command centre, six modules, rules studio, cases and
+                          privacy, for ten roles
                         </CardDescription>
                       </div>
                     ) : (
@@ -193,8 +194,8 @@ export function SignIn() {
                           <CardTitle>{t.org.name}</CardTitle>
                           <CardDescription>
                             {t.id === 'kpt'
-                              ? 'National oversight: camera estate, analytics, CCTV coverage and governance'
-                              : 'Camera alerts on a responder’s phone'}
+                              ? 'Smart-campus audit of 38 universities, benchmarks and pilot aggregates'
+                              : 'Hostel alerts on the felo’s phone, for KK12'}
                           </CardDescription>
                         </div>
                       </>
@@ -285,7 +286,7 @@ export function SignIn() {
           </p>
         </div>
         <footer className="text-center text-xs text-muted-foreground">
-          EzVision Camera Intelligence · powered by AiWAS · EzGIG Technology
+          EzVision Campus · powered by AiWAS · EzGIG Technology
         </footer>
       </section>
     </div>

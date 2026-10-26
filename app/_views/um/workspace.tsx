@@ -1,87 +1,114 @@
 'use client';
 import {
-  LayoutDashboard,
-  ScanEye,
-  MonitorPlay,
-  Map,
-  Search,
-  Users,
+  Activity,
+  BedDouble,
+  BellRing,
+  Boxes,
+  Building2,
   CarFront,
-  UsersRound,
   FileBarChart,
-  SlidersHorizontal,
+  FolderOpen,
+  HardHat,
+  HeartHandshake,
+  MonitorDot,
+  MonitorPlay,
+  Rocket,
+  Search,
+  Shield,
   ShieldCheck,
-  Server,
-  UserCog,
   Smartphone,
+  Workflow,
 } from 'lucide-react';
 import { WorkspaceShell, type NavGroup } from '../../_components/shell';
 import type { Persona, PersonaId } from '../../_data/personas';
-import { isOpenEvent } from '../../_data/um';
 import { useDemo } from '../../_lib/store';
-import { Overview, EventsView, VideoWall, MapView } from './operations';
+import { alertsFor } from '../../_lib/scope';
+import { ConsoleView, AlertsView, VideoWall } from './console';
+import { SearchView, CasesView } from './investigate';
 import {
-  OccupancyView,
-  VehiclesView,
-  CrowdView,
-  SearchView,
-  ReportsView,
-} from './insight';
-import { AnalyticsView, PrivacyView, DevicesView, UsersView } from './govern';
-import { MobileShowcase } from '../apps/workspace';
+  ModulesOverview,
+  HostelView,
+  SafeView,
+  MobilityView,
+  WelfareView,
+  HseView,
+  SpaceView,
+} from './modules';
+import { RulesStudio } from './studio';
+import { HealthView, ReportsView, AdminView, RolloutView } from './govern';
+import { WardenShowcase } from '../apps/workspace';
 
 export type UmView =
-  | 'overview'
-  | 'events'
+  | 'console'
+  | 'alerts'
   | 'wall'
-  | 'map'
   | 'search'
-  | 'occupancy'
-  | 'vehicles'
-  | 'crowd'
+  | 'cases'
+  | 'modules'
+  | 'hostel'
+  | 'safe'
+  | 'mobility'
+  | 'welfare'
+  | 'hse'
+  | 'space'
+  | 'rules'
+  | 'health'
   | 'reports'
-  | 'analytics'
-  | 'devices'
-  | 'privacy'
-  | 'users'
-  | 'mobile';
+  | 'admin'
+  | 'rollout'
+  | 'warden';
 
 export const umTitles: Record<UmView, string> = {
-  overview: 'Overview',
-  events: 'AI detections',
+  console: 'Command centre',
+  alerts: 'Alerts',
   wall: 'Video wall',
-  map: 'Camera map',
-  search: 'Footage search',
-  occupancy: 'Occupancy & footfall',
-  vehicles: 'Vehicles & parking',
-  crowd: 'Crowd analytics',
+  search: 'Search & investigation',
+  cases: 'Cases',
+  modules: 'Modules',
+  hostel: 'Hostel dashboard',
+  safe: 'Safe Campus',
+  mobility: 'Mobility',
+  welfare: 'Welfare',
+  hse: 'HSE',
+  space: 'Space & Admin',
+  rules: 'Rules studio',
+  health: 'Camera health',
   reports: 'Reports',
-  analytics: 'AI analytics & exclusions',
-  devices: 'Cameras & edge health',
-  privacy: 'Privacy centre',
-  users: 'Users & roles',
-  mobile: 'EzVision Mobile',
+  admin: 'Admin & privacy',
+  rollout: 'Pilot & rollout',
+  warden: 'Warden app',
 };
 
-/** Which views each role may open. Roles without video never get the wall. */
+/**
+ * Which screens each role may open, following the spec's role table. Roles
+ * without video (Pengetua, HEP, counsellor, DPO) never get the wall, search
+ * or the console.
+ */
 export const umAccess: Record<
-  Exclude<PersonaId, 'kpt' | 'mobile'>,
+  Exclude<PersonaId, 'kpt' | 'warden'>,
   UmView[]
 > = {
   director: Object.keys(umTitles) as UmView[],
   operator: [
-    'overview',
-    'events',
+    'console',
+    'alerts',
     'wall',
-    'map',
     'search',
-    'crowd',
-    'vehicles',
-    'devices',
-    'mobile',
+    'cases',
+    'modules',
+    'hostel',
+    'safe',
+    'health',
+    'reports',
+    'warden',
   ],
-  facilities: ['occupancy', 'vehicles', 'crowd', 'reports', 'devices'],
-  dpo: ['privacy', 'analytics', 'reports', 'users', 'devices'],
+  pengetua: ['hostel', 'rules', 'reports'],
+  hep: ['cases', 'reports'],
+  counsellor: ['welfare'],
+  facilities: ['hse', 'space', 'alerts', 'health', 'reports'],
+  traffic: ['mobility', 'alerts', 'search', 'reports'],
+  dpo: ['admin', 'reports'],
+  sysadmin: ['health', 'admin', 'rules', 'modules', 'rollout'],
 };
 
 export function UmWorkspace({
@@ -99,46 +126,59 @@ export function UmWorkspace({
   const active = (
     allowed.includes(view as UmView) ? view : allowed[0]
   ) as UmView;
-  const awaiting = state.events.filter((e) => e.status === 'New').length;
-  const open = state.events.filter(isOpenEvent).length;
+  const fresh = alertsFor(persona, state.alerts).filter(
+    (a) => a.status === 'New',
+  ).length;
 
   const groups: NavGroup[] = [
     {
-      label: 'Monitor',
+      label: 'Command centre',
       items: [
-        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+        { id: 'console', label: 'Console', icon: MonitorDot },
         {
-          id: 'events',
-          label: 'AI detections',
-          icon: ScanEye,
-          badge: awaiting || open,
+          id: 'alerts',
+          label: 'Alerts',
+          icon: BellRing,
+          badge: fresh || undefined,
         },
         { id: 'wall', label: 'Video wall', icon: MonitorPlay },
-        { id: 'map', label: 'Camera map', icon: Map },
-        { id: 'search', label: 'Footage search', icon: Search },
+        { id: 'search', label: 'Search & investigation', icon: Search },
+        {
+          id: 'cases',
+          label: persona.id === 'hep' ? 'Confirmed cases' : 'Cases',
+          icon: FolderOpen,
+        },
       ],
     },
     {
-      label: 'Insight',
+      label: 'Modules',
       items: [
-        { id: 'occupancy', label: 'Occupancy & footfall', icon: Users },
-        { id: 'vehicles', label: 'Vehicles & parking', icon: CarFront },
-        { id: 'crowd', label: 'Crowd analytics', icon: UsersRound },
+        { id: 'modules', label: 'All modules', icon: Boxes },
+        { id: 'hostel', label: 'Hostel Integrity', icon: BedDouble },
+        { id: 'safe', label: 'Safe Campus', icon: Shield },
+        { id: 'mobility', label: 'Mobility', icon: CarFront },
+        {
+          id: 'welfare',
+          label: persona.id === 'counsellor' ? 'Wellbeing alerts' : 'Welfare',
+          icon: HeartHandshake,
+        },
+        { id: 'hse', label: 'HSE', icon: HardHat },
+        { id: 'space', label: 'Space & Admin', icon: Building2 },
+      ],
+    },
+    {
+      label: 'Platform',
+      items: [
+        { id: 'rules', label: 'Rules studio', icon: Workflow },
+        { id: 'health', label: 'Camera health', icon: Activity },
         { id: 'reports', label: 'Reports', icon: FileBarChart },
-      ],
-    },
-    {
-      label: 'Configure',
-      items: [
-        { id: 'analytics', label: 'AI analytics', icon: SlidersHorizontal },
-        { id: 'devices', label: 'Cameras & edge health', icon: Server },
-        { id: 'privacy', label: 'Privacy centre', icon: ShieldCheck },
-        { id: 'users', label: 'Users & roles', icon: UserCog },
+        { id: 'admin', label: 'Admin & privacy', icon: ShieldCheck },
+        { id: 'rollout', label: 'Pilot & rollout', icon: Rocket },
       ],
     },
     {
       label: 'Apps',
-      items: [{ id: 'mobile', label: 'EzVision Mobile', icon: Smartphone }],
+      items: [{ id: 'warden', label: 'Warden app', icon: Smartphone }],
     },
   ]
     .map((g) => ({
@@ -147,21 +187,25 @@ export function UmWorkspace({
     }))
     .filter((g) => g.items.length);
 
-  const views: Record<UmView, React.ReactNode> = {
-    overview: <Overview persona={persona} />,
-    events: <EventsView persona={persona} focus={sub} />,
-    wall: <VideoWall />,
-    map: <MapView persona={persona} />,
-    search: <SearchView persona={persona} />,
-    occupancy: <OccupancyView persona={persona} />,
-    vehicles: <VehiclesView persona={persona} />,
-    crowd: <CrowdView persona={persona} />,
-    reports: <ReportsView persona={persona} />,
-    analytics: <AnalyticsView persona={persona} />,
-    devices: <DevicesView persona={persona} />,
-    privacy: <PrivacyView persona={persona} />,
-    users: <UsersView />,
-    mobile: <MobileShowcase />,
+  const views: Record<UmView, () => React.ReactNode> = {
+    console: () => <ConsoleView persona={persona} />,
+    alerts: () => <AlertsView persona={persona} focus={sub} />,
+    wall: () => <VideoWall persona={persona} />,
+    search: () => <SearchView persona={persona} />,
+    cases: () => <CasesView persona={persona} focus={sub} />,
+    modules: () => <ModulesOverview persona={persona} />,
+    hostel: () => <HostelView persona={persona} />,
+    safe: () => <SafeView persona={persona} />,
+    mobility: () => <MobilityView persona={persona} />,
+    welfare: () => <WelfareView persona={persona} />,
+    hse: () => <HseView persona={persona} />,
+    space: () => <SpaceView persona={persona} />,
+    rules: () => <RulesStudio persona={persona} focus={sub} />,
+    health: () => <HealthView persona={persona} />,
+    reports: () => <ReportsView persona={persona} />,
+    admin: () => <AdminView persona={persona} />,
+    rollout: () => <RolloutView />,
+    warden: () => <WardenShowcase />,
   };
 
   return (
@@ -170,7 +214,7 @@ export function UmWorkspace({
         id: 'um',
         acronym: 'UM',
         name: 'Universiti Malaya',
-        sub: 'Camera Intelligence',
+        sub: 'EzVision Campus',
       }}
       base="/um"
       groups={groups}
@@ -178,7 +222,7 @@ export function UmWorkspace({
       title={umTitles[active]}
       persona={persona}
     >
-      {views[active]}
+      {views[active]()}
     </WorkspaceShell>
   );
 }

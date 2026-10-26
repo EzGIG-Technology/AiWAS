@@ -49,7 +49,7 @@ export function AiwasSpark({ className }: { className?: string }) {
   );
 }
 
-/** Product lockup: AiWAS wordmark with the EzVision Camera Intelligence line. */
+/** Product lockup: AiWAS wordmark with the EzVision Campus line. */
 export function ProductLockup({
   className,
   inverted,
@@ -66,7 +66,7 @@ export function ProductLockup({
           inverted ? 'text-white/70' : 'text-muted-foreground',
         )}
       >
-        EzVision · Camera Intelligence
+        EzVision · Campus
       </span>
     </div>
   );

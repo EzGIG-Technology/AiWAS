@@ -1,65 +1,49 @@
 # Two points of view: Universiti Malaya and KPT
 
-EzVision is a **camera-intelligence** product. It adds AI analytics to a university's existing CCTV and turns the result into information people can use: detections an operator verifies, anonymous counts, vehicle and crowd figures, and searchable footage. It is not a safety-desk system. There is no SOS, dispatch, mass notification or welfare casework; those belong to the systems a university already runs, and EzVision hands a verified clip to them.
+EzVision Campus is one AI layer over the cameras a university already has. It has six modules, led by **Hostel Integrity**, on one engine, and every alert goes to the office that acts on it. The demo shows it from two sides:
 
-The demo shows the product from two sides: Universiti Malaya running its own cameras, and the Ministry of Higher Education (KPT) looking across every university.
+- **Universiti Malaya**, running the system across its ten roles.
+- **The Ministry of Higher Education (KPT)**, looking across all Malaysian universities.
 
 The core rule is the same on both sides: the further a person sits from the camera, the less detail they see.
 
-- **Operator:** sees live video.
-- **Facilities planner:** sees counts.
-- **KPT:** sees aggregates by university, with small numbers suppressed.
+- The command centre and the warden see the clip.
+- The Pengetua, HEP, the counsellor and the DPO see records and counts, with no video.
+- KPT sees aggregates and the public-evidence audit, with small numbers suppressed.
 
 ## Universiti Malaya
 
-| Who | What they need from the cameras | Where in the demo |
+| Who | What they need | Where in the demo |
 |---|---|---|
-| **Director, Security Technology** | Camera uptime and gaps in coverage; which analytics run where and how often they are right; time to verify; the CCTV evidence for KPT's inspection directive | Overview, Cameras & edge health, AI analytics, Reports |
-| **Video analytics operator** | One queue of AI detections, each with its camera, clip and model confidence; verify or reject each one; share verified clips; find recorded moments fast | AI detections (with the event sheet), Video wall, Camera map, Footage search |
-| **Facilities & space planning** (no footage) | How full each space is now and across the week; footfall by hour; car-park occupancy and gate traffic; crowd density at events | Occupancy & footfall, Vehicles & parking, Crowd analytics, Reports |
-| **Data protection officer** (no footage) | Who viewed, searched or exported which footage and why; footage requests to approve; retention; DPIAs | Privacy centre, AI analytics & exclusions, Users & roles |
-| **Mobile responder** | Camera alerts on the phone; live view; verify, reject or keep a clip; which cameras are down | EzVision Mobile |
+| **Command centre operator** | One queue of live alerts from every module, most urgent first, with hostel alerts that nobody accepted escalated to the top. For each alert: the clip, the rule that fired, and where it is. Search by clothing or plate, and a timeline across cameras. | Console, Alerts, Video wall, Search & investigation, Cases |
+| **Security director** | Everything above, plus whether the system is working: precision by module, time to acknowledge, camera uptime, and the pilot KPIs. Approves evidence exports and changes rules. | Console, Rules studio, Reports, Pilot & rollout |
+| **Warden or felo on duty** | Hostel alerts for their own college on the phone, a clear accept button before the 5-minute escalation, and a two-tap way to record what they found | Warden app |
+| **Pengetua** | Their college's breaches by block, door and hour, and whether the trend is falling. Sets visiting hours and curfew. No live video. | Hostel dashboard, Rules studio (read-only), Reports |
+| **HEP discipline officer** | Only cases a person has confirmed and referred, with the record but not the video. Decides on disciplinary action; the AI never does. | Confirmed cases |
+| **Counsellor** | Wellbeing signals (repeated late-night presence at a high-risk spot, a person past a safe line at height). Never routed to discipline, and no identity attached. | Wellbeing alerts |
+| **Facilities and OSH officer** | Smoke, PPE, floods, radar falls and animals; room and space occupancy; empty rooms switched off | HSE, Space & Admin |
+| **Traffic and parking officer** | Plate reads against permits and the blacklist, OKU-bay and keep-clear parking, and the shift from RFID stickers to plates | Mobility |
+| **University DPO** | Who viewed, searched, exported or changed what, and why; data requests to decide; retention | Admin & privacy |
+| **System admin** | Camera health, edge boxes, model versions, adding cameras and users | Camera health, Admin & privacy |
 
-UM facts used in the demo (verify before showing it externally):
+UM facts used in the demo:
 
-- About 350 ha in Lembah Pantai.
-- KK1–KK13 plus International House. KK9 and International House are in Zone 5, Petaling Jaya.
-- Dewan Tunku Canselor, Perpustakaan Utama, Canselori, Rimba Ilmu and Tasik Varsiti.
-- UMMC on campus.
-- Main gate on Jalan Universiti, and an entrance off Jalan Pantai Baru.
-- UM Central shuttle hub, and the Universiti LRT station.
+- KK12 Raja Dr Nazrin Shah is on the main campus; KK9 Tun Syed Zahiruddin is in Zone 5, Petaling Jaya.
+- UMMC sits on campus.
+- The main gate is on Jalan Universiti.
+- UM Central is the shuttle hub, linked to the Universiti LRT station.
+- UM's library runs face recognition at its entrance, as the audit records. EzVision does not use it.
 
-Several detections reflect real campus conditions:
-
-- The basement car-park water-level detection reflects the October 2024 flash flood.
-- The macaque detection reflects macaques entering residential colleges.
-
-Every detection, count, plate and person in the demo is fictional.
+Which block is female or male, and every alert, plate, person and number, is fictional.
 
 ## KPT (Kementerian Pendidikan Tinggi)
 
-| Who | What they need | Where in the demo |
-|---|---|---|
-| **Ministry leadership** | How much of the national camera estate has analytics, how well it works, and where to act | National overview (state map, maturity ranking) |
-| **Jabatan Pendidikan Tinggi** | Each university's status on the CCTV items of the 2025 safety-inspection directive: entrances and corridors covered, uptime of at least 95%, repairs within 72 hours, coverage map, retention, signage and rooftops | Universities, CCTV coverage & uptime |
-| **Analysts** | National detection volumes by category; detections per camera; precision and time to verify per university | Detection trends |
-| **Data protection / legal** | DPO, DPIA for CCTV and analytics, retention, signage, facial recognition switched off, audited search, AIGE self-assessment | Privacy & AI governance |
+| Question the ministry asks | Where in the demo |
+|---|---|
+| Where do universities stand on campus video analytics? | Overview: 38 universities audited, maturity by type and by state |
+| What has each university actually deployed, and what is the evidence? | Universities: the audit table, with a profile for each university that links to its source |
+| How far are we from the world's leaders? | Capability gap; Global benchmarks |
+| Are hostel pilots working, and are the numbers improving? | Hostel integrity pilots: weekly confirmed breaches, precision, time to acknowledge and uptime, as totals only |
+| What does the amended PDPA mean for campus cameras? | Privacy & PDPA: face recognition in use, CCTV policies that ask for analytics, the Edinburgh template, and the red lines |
 
-What KPT never sees:
-
-- Footage, images, plate numbers, camera identifiers or names.
-- Any count from 1 to 4 at institution level. These show as "<5".
-- Anything about protests, assemblies or speech. The banner on every KPT screen says so.
-
-Universities not on EzVision file a manual return. For them, uptime, detections and precision show as "—" rather than a guess.
-
-UM's row in the KPT view is computed from UM's own workspace, so the two points of view agree, and a test enforces it. The row covers:
-
-- Camera count.
-- Uptime.
-- Precision.
-- Time to verify.
-- CCTV checklist.
-- Privacy controls.
-
-Rows for every other institution are generated demonstration figures.
+The ministry never sees footage, images, plates, camera IDs, hostel block names or people's names. Counts from 1 to 4 are suppressed. Tests and browser checks enforce this.

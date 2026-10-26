@@ -3,7 +3,7 @@ import '../vercel-entry/fonts.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'EzVision Camera Intelligence · AiWAS',
+  title: 'EzVision Campus · AiWAS',
   description:
     'Camera intelligence demonstration for universities: Universiti Malaya analytics workspace, KPT national oversight and the EzVision Mobile app.',
 };

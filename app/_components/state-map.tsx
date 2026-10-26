@@ -1,6 +1,11 @@
 'use client';
 import { cn } from '@/lib/utils';
-import { institutions, stateTiles, type StateId } from '../_data/kpt';
+import {
+  institutions,
+  maturityScore,
+  stateTiles,
+  type StateId,
+} from '../_data/kpt';
 
 const abbr: Record<StateId, string> = {
   Perlis: 'PLS',
@@ -55,16 +60,18 @@ export function StateTileMap({
           return <div key={cell} />;
         }
         const list = institutions.filter((i) => i.state === state);
-        const avg = list.length
-          ? Math.round(list.reduce((a, i) => a + i.maturity, 0) / list.length)
+        const known = list.filter((i) => i.maturity !== 'Unknown');
+        const avg = known.length
+          ? known.reduce((a, i) => a + maturityScore[i.maturity], 0) /
+            known.length
           : 0;
         const level =
-          avg >= 75
+          avg >= 3
             ? 'bg-success/30'
-            : avg >= 60
+            : avg >= 2
               ? 'bg-warning/30'
               : avg > 0
-                ? 'bg-critical/30'
+                ? 'bg-critical/25'
                 : '';
         return (
           <button
@@ -72,7 +79,7 @@ export function StateTileMap({
             type="button"
             onClick={() => onSelect?.(selected === state ? null : state)}
             aria-pressed={selected === state}
-            title={`${state}: ${list.length} institutions`}
+            title={`${state}: ${list.length} universities audited`}
             className={cn(
               'flex aspect-square flex-col justify-between rounded-md p-1 text-left ring-1 ring-border transition-shadow focus-visible:ring-3 focus-visible:ring-ring/60 focus-visible:outline-none sm:p-1.5',
               list.length ? level : 'bg-muted/50 text-muted-foreground',
@@ -85,7 +92,7 @@ export function StateTileMap({
             <span className="tabular text-[9px] leading-tight opacity-90 sm:text-[10px]">
               {list.length ? `${list.length} inst.` : '—'}
               {list.length > 0 && <br />}
-              {list.length > 0 && `Maturity ${avg}`}
+              {known.length > 0 && `Avg ${avg.toFixed(1)}`}
             </span>
           </button>
         );

@@ -5,25 +5,28 @@ import { AiwasLogo } from '../../_components/brand';
 import { ThemeToggle } from '../../_components/theme-toggle';
 import { PageHeader, Note } from '../../_components/ui-bits';
 import { navigate } from '../../_lib/router';
-import { MobileApp } from './mobile-app';
+import { WardenApp } from './warden-app';
 
-/** The phone app inside the UM workspace. */
-export function MobileShowcase() {
+/** The warden app inside the UM workspace. */
+export function WardenShowcase() {
   return (
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
-        title="EzVision Mobile"
-        description="Camera alerts on a responder's phone. A detection raised in the console arrives here; verify it on the phone and the console updates."
+        title="Warden app"
+        description="What the felo on duty at KK12 carries. Hostel alerts arrive here first; if nobody accepts within 5 minutes they escalate to the command centre. Accept, check, then record the outcome in two taps."
       />
       <div className="grid justify-center">
-        <MobileApp />
+        <WardenApp />
       </div>
-      <Note>App preview on synthetic data. No real notification is sent.</Note>
+      <Note>
+        App preview on synthetic data. In the pilot, alerts also arrive by
+        WhatsApp; no real message is sent here.
+      </Note>
     </div>
   );
 }
 
-/** Standalone app preview at #/app/mobile. */
+/** Standalone app preview at #/app/warden. */
 export function AppsWorkspace() {
   return (
     <div className="min-h-svh bg-muted/40">
@@ -37,15 +40,15 @@ export function AppsWorkspace() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/um/events')}
+            onClick={() => navigate('/um/console')}
           >
-            Open console
+            Open command centre
           </Button>
           <ThemeToggle />
         </div>
       </header>
       <main className="grid place-items-center sm:py-8">
-        <MobileApp />
+        <WardenApp />
       </main>
     </div>
   );
