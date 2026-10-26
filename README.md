@@ -71,7 +71,7 @@ The 7 scenes without a clip show their own still with a slow pan, rather than bo
 
 ## University logos
 
-`public/logos/manifest.json` lists KPT and the 28 universities. The official logo files could not be downloaded, because Wikimedia, the KPT site and the university sites were blocked by the network policy. Until they are added, `UniversityLogo` shows a neutral acronym crest.
+`public/logos/manifest.json` lists KPT and the 28 universities. **Universiti Malaya's logo is in place**: `um.png` is the crest, used in the sidebar, tables and the EzSafe app, and `um-lockup.png` is the full lockup, used on the sign-in page. Both were supplied by EzGIG. The other logos could not be downloaded, because Wikimedia, the KPT site and the university sites were blocked by the network policy. Until they are added, `UniversityLogo` shows a neutral acronym crest.
 
 To add a logo:
 

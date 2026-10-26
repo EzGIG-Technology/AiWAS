@@ -28,9 +28,10 @@
     "acronym": "UM",
     "type": "public",
     "state": "Kuala Lumpur (WP Kuala Lumpur)",
-    "file": null,
+    "file": "um.png",
     "source_url": null,
-    "licence_note": "MISSING - not downloaded: the build environment's network policy blocked upload.wikimedia.org, commons.wikimedia.org, en.wikipedia.org and the institution's own site. Logo is a trademark of the institution; obtain from its official website (https://www.um.edu.my/) or its Wikimedia Commons file page and use for identification only. Dashboard should fall back to an acronym badge."
+    "licence_note": "Supplied by EzGIG Technology (uploaded in the build session, 26 Oct 2026). um-lockup.png is the full crest and wordmark as supplied; um.png is the crest cropped from it. Trademark of Universiti Malaya; used in this demo for identification only.",
+    "lockup": "um-lockup.png"
   },
   {
     "id": "usm",

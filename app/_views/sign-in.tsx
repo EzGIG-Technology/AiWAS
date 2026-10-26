@@ -23,7 +23,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { AiwasLogo, UniversityLogo } from '../_components/brand';
+import {
+  AiwasLogo,
+  UniversityLockup,
+  UniversityLogo,
+} from '../_components/brand';
 import { ThemeToggle } from '../_components/theme-toggle';
 import { CameraFeed } from '../_components/camera-feed';
 import { initials } from '../_components/shell';
@@ -170,22 +174,31 @@ export function SignIn() {
               <TabsContent key={t.id} value={t.id} className="mt-3">
                 <Card>
                   <CardHeader className="flex flex-row items-center gap-3">
-                    <UniversityLogo
-                      id={t.org.id}
-                      acronym={t.org.acronym}
-                      className="size-10"
-                    />
-                    <div className="min-w-0">
-                      <CardTitle>{t.org.name}</CardTitle>
-                      <CardDescription>
-                        {t.id === 'um' &&
-                          'Security operations, residential colleges, student affairs and privacy'}
-                        {t.id === 'kpt' &&
-                          'National oversight: aggregate trends, compliance and escalations'}
-                        {t.id === 'app' &&
-                          'Phone apps for students, staff and patrol officers'}
-                      </CardDescription>
-                    </div>
+                    {t.id === 'um' ? (
+                      <div className="grid gap-2">
+                        <UniversityLockup id="um" name="Universiti Malaya" />
+                        <CardDescription>
+                          Security operations, residential colleges, student
+                          affairs and privacy
+                        </CardDescription>
+                      </div>
+                    ) : (
+                      <>
+                        <UniversityLogo
+                          id={t.org.id}
+                          acronym={t.org.acronym}
+                          className="size-10"
+                        />
+                        <div className="min-w-0">
+                          <CardTitle>{t.org.name}</CardTitle>
+                          <CardDescription>
+                            {t.id === 'kpt'
+                              ? 'National oversight: aggregate trends, compliance and escalations'
+                              : 'Phone apps for students, staff and patrol officers'}
+                          </CardDescription>
+                        </div>
+                      </>
+                    )}
                   </CardHeader>
                   <CardContent className="grid gap-2">
                     <RadioGroup

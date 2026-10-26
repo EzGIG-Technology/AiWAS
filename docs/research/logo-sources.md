@@ -23,7 +23,7 @@ The list of 20 public universities (UA) matches the Ministry of Higher Education
 |---|---|---|---|---|---|---|---|
 | kpt | Kementerian Pendidikan Tinggi Malaysia (KPT) | ministry | Putrajaya (WP Putrajaya) | missing | https://www.mohe.gov.my/ | not obtained | Trademark of the institution; identification only |
 | jata-negara | Jata Negara Malaysia (Jata Negara) | ministry | National emblem (Putrajaya) | missing | official government source | not obtained | National emblem; Act 193 applies |
-| um | Universiti Malaya (UM) | public | Kuala Lumpur (WP Kuala Lumpur) | missing | https://www.um.edu.my/ | not obtained | Trademark of the institution; identification only |
+| um | Universiti Malaya (UM) | public | Kuala Lumpur (WP Kuala Lumpur) | um.png (crest), um-lockup.png (full) | Supplied by EzGIG, 26 Oct 2026 | supplied | Trademark of the institution; identification only |
 | usm | Universiti Sains Malaysia (USM) | public | Gelugor, George Town, Pulau Pinang | missing | https://www.usm.my/ | not obtained | Trademark of the institution; identification only |
 | ukm | Universiti Kebangsaan Malaysia (UKM) | public | Bangi, Selangor | missing | https://www.ukm.my/ | not obtained | Trademark of the institution; identification only |
 | upm | Universiti Putra Malaysia (UPM) | public | Serdang, Selangor | missing | https://www.upm.edu.my/ | not obtained | Trademark of the institution; identification only |

@@ -5,10 +5,18 @@
  * (the hosts were blocked; see docs/research/logo-sources.md). To add one,
  * place the official file in public/logos (for example `um.svg`) and set its
  * entry here. `UniversityLogo` then renders it instead of the acronym crest.
+ *
+ * Universiti Malaya's logo was supplied by EzGIG: `um.png` is the crest cut
+ * from the supplied lockup, `um-lockup.png` the full crest-and-wordmark.
  */
+/** Full horizontal lockups (crest and wordmark), where supplied. */
+export const logoLockups: Record<string, string> = {
+  um: 'um-lockup.png',
+};
+
 export const logoFiles: Record<string, string | null> = {
   kpt: null,
-  um: null,
+  um: 'um.png',
   usm: null,
   ukm: null,
   upm: null,

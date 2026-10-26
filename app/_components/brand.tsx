@@ -1,7 +1,7 @@
 /* oxlint-disable next/no-img-element */
 import { useId } from 'react';
 import { cn } from '@/lib/utils';
-import { logoFiles } from '../_data/logos';
+import { logoFiles, logoLockups } from '../_data/logos';
 import { assetUrl } from '../_data/media';
 
 /**
@@ -89,6 +89,37 @@ const crestColours: Record<string, [string, string]> = {
  * added to public/logos and registered in app/_data/logos.ts; until then a
  * neutral acronym crest, so no institution is shown with a wrong mark.
  */
+/**
+ * Full crest-and-wordmark lockup on a white plate, so its dark wordmark stays
+ * legible on dark surfaces. Renders nothing when no lockup was supplied.
+ */
+export function UniversityLockup({
+  id,
+  name,
+  className,
+}: {
+  id: string;
+  name: string;
+  className?: string;
+}) {
+  const file = logoLockups[id];
+  if (!file) return null;
+  return (
+    <span
+      className={cn(
+        'inline-flex w-fit shrink-0 justify-self-start rounded-lg bg-white px-3 py-2 ring-1 ring-black/10',
+        className,
+      )}
+    >
+      <img
+        src={assetUrl(`logos/${file}`)}
+        alt={`${name} logo`}
+        className="h-11 w-auto"
+      />
+    </span>
+  );
+}
+
 export function UniversityLogo({
   id,
   acronym,
