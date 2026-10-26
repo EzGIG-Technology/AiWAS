@@ -1,13 +1,11 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
-  Siren,
-  LifeBuoy,
-  Footprints,
+  ScanEye,
   Video,
+  Users,
   Timer,
-  CalendarDays,
-  CloudRain,
+  BadgeCheck,
   ArrowRight,
   Search,
   Grid2x2,
@@ -15,7 +13,8 @@ import {
   LayoutGrid,
   ChevronLeft,
   ChevronRight,
-  Phone,
+  Zap,
+  Bookmark,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -52,48 +51,47 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { CameraFeed } from '../../_components/camera-feed';
-import { CampusMap } from '../../_components/campus-map';
+import { CampusMap, type MapLayers } from '../../_components/campus-map';
 import {
   PageHeader,
   Stat,
   SeverityBadge,
-  StatusBadge,
+  EventStatusBadge,
   Pill,
-  Note,
   Meter,
 } from '../../_components/ui-bits';
 import {
   cameras,
   cameraById,
   cameraByScene,
-  officers,
-  guardTours,
-  helpPoints,
-  events,
   precincts,
   precinctIds,
-  responseTimes,
   analytics,
+  zones,
+  verifyTimes,
+  verification,
+  demoDetections,
+  isOpenEvent,
   type Camera,
-  type Incident,
+  type CameraEvent,
   type PrecinctId,
 } from '../../_data/um';
 import type { Persona } from '../../_data/personas';
-import { useDemo } from '../../_lib/store';
+import { useDemo, nextEventId } from '../../_lib/store';
 import { navigate } from '../../_lib/router';
 import { notify } from '../../_lib/notify';
-import { IncidentSheet } from './incident-sheet';
+import { EventSheet } from './event-sheet';
 
-const isOpen = (i: Incident) => !['Resolved', 'False alarm'].includes(i.status);
 const sevRank = { Critical: 0, High: 1, Medium: 2, Low: 3 } as const;
 
-function AlarmRow({
-  incident,
+function EventRow({
+  event,
   onOpen,
 }: {
-  incident: Incident;
+  event: CameraEvent;
   onOpen: () => void;
 }) {
+  const cam = cameraById(event.camera)!;
   return (
     <button
       type="button"
@@ -103,31 +101,72 @@ function AlarmRow({
       <span
         className={cn(
           'h-9 w-1 shrink-0 rounded-full',
-          incident.severity === 'Critical'
+          event.severity === 'Critical'
             ? 'bg-critical'
-            : incident.severity === 'High'
+            : event.severity === 'High'
               ? 'bg-warning'
-              : incident.severity === 'Medium'
+              : event.severity === 'Medium'
                 ? 'bg-info'
                 : 'bg-muted-foreground/40',
         )}
       />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium">{incident.title}</div>
+        <div className="truncate text-sm font-medium">{event.title}</div>
         <div className="truncate text-xs text-muted-foreground">
-          {incident.restricted ? 'Location withheld' : incident.location} ·{' '}
-          {incident.source}
-          {incident.confidence !== undefined &&
-            ` · ${Math.round(incident.confidence * 100)}%`}
+          {cam.id} · {analytics[event.analytic].name} ·{' '}
+          {Math.round(event.confidence * 100)}%
         </div>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
-        <StatusBadge status={incident.status} />
+        <EventStatusBadge status={event.status} />
         <span className="tabular text-xs text-muted-foreground">
-          {incident.time}
+          {event.time}
         </span>
       </div>
     </button>
+  );
+}
+
+/** Simulates a new detection so the console → mobile loop can be shown live. */
+function DemoDetectionButton() {
+  const { state, dispatch } = useDemo();
+  const [n, setN] = useState(0);
+  return (
+    <Button
+      variant="outline"
+      onClick={() => {
+        const d = demoDetections[n % demoDetections.length];
+        const id = nextEventId(state.events);
+        dispatch({
+          type: 'raise',
+          event: {
+            id,
+            title: d.title,
+            analytic: d.analytic,
+            severity: d.severity,
+            status: 'New',
+            confidence: 0.84,
+            camera: cameraByScene(d.scene).id,
+            time: '',
+            date: '2026-10-26',
+            summary:
+              'Raised by the demo control to show a live detection arriving in the console and on EzVision Mobile.',
+            timeline: [
+              {
+                time: '',
+                text: `${analytics[d.analytic].name} detected`,
+                actor: 'EzVision',
+              },
+            ],
+          },
+        });
+        setN(n + 1);
+        notify.warning('New detection', `${id} · ${d.title}`);
+      }}
+    >
+      <Zap />
+      Run a demo detection
+    </Button>
   );
 }
 
@@ -136,67 +175,40 @@ function AlarmRow({
 export function Overview({ persona }: { persona: Persona }) {
   const { state } = useDemo();
   const [openId, setOpenId] = useState<string | null>(null);
-  const open = state.incidents
-    .filter(isOpen)
+  const open = state.events
+    .filter(isOpenEvent)
     .sort((a, b) => sevRank[a.severity] - sevRank[b.severity]);
-  const critical = open.filter(
-    (i) => i.severity === 'Critical' || i.severity === 'High',
-  );
+  const awaiting = state.events.filter((e) => e.status === 'New').length;
   const online = cameras.filter((c) => c.status === 'online').length;
-  const responding = officers.filter((o) => o.status !== 'On break').length;
-  const live = state.sessions.filter(
-    (s) => s.kind === 'SOS' || s.kind === 'Friend Walk',
-  );
-  const priority = open.find(
-    (i) =>
-      i.camera && !i.restricted && cameraById(i.camera)?.status === 'online',
-  );
-  const wallPreview = (
-    ['security-queue', 'hall', 'gate', 'transit-concourse'] as const
-  ).map(cameraByScene);
+  const people = zones.reduce((a, z) => a + z.now, 0);
+  const confirmed = verification.reduce((a, v) => a + v.confirmed, 0);
+  const all = verification.reduce((a, v) => a + v.confirmed + v.false, 0);
+  const priority = open.find((e) => cameraById(e.camera)?.status === 'online');
+  const busiest = [...zones]
+    .sort((a, b) => b.now / b.capacity - a.now / a.capacity)
+    .slice(0, 6);
 
   return (
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
-        eyebrow="Universiti Malaya · Main campus"
-        title="Command overview"
-        description="Everything that needs a decision right now: open alarms, people who asked for help, officers on the ground and what the cameras can and cannot see."
+        eyebrow="Universiti Malaya · Camera intelligence"
+        title="Overview"
+        description="What the campus cameras and their analytics are seeing now: detections awaiting a person, live counts, and which cameras are not seeing anything."
         actions={
           <>
             <Button variant="outline" onClick={() => navigate('/um/wall')}>
               <Video />
               Video wall
             </Button>
-            <Button onClick={() => navigate('/um/incidents')}>
-              <Siren />
-              Alarm queue
+            <Button onClick={() => navigate('/um/events')}>
+              <ScanEye />
+              Detections
             </Button>
           </>
         }
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <Stat
-          label="Open alarms"
-          value={open.length}
-          hint={`${critical.length} critical or high`}
-          icon={Siren}
-          t="critical"
-        />
-        <Stat
-          label="SOS & safe walks"
-          value={live.length}
-          hint={`${state.sessions.filter((s) => s.kind === 'SOS').length} SOS active`}
-          icon={LifeBuoy}
-          t="brand"
-        />
-        <Stat
-          label="Officers on duty"
-          value={responding}
-          hint={`${officers.filter((o) => o.status === 'Responding').length} responding`}
-          icon={Footprints}
-          t="info"
-        />
         <Stat
           label="Cameras online"
           value={`${online}/${cameras.length}`}
@@ -205,50 +217,68 @@ export function Overview({ persona }: { persona: Persona }) {
           t="warning"
         />
         <Stat
-          label="P90 response"
-          value={`${responseTimes.at(-1)!.p90} min`}
-          hint="Week 43 · target 8"
+          label="Analytics live"
+          value={
+            Object.values(analytics).filter((a) => a.status === 'Live').length
+          }
+          hint="2 pilot · 1 evaluation"
+          icon={ScanEye}
+          t="brand"
+        />
+        <Stat
+          label="Detections today"
+          value={state.events.length}
+          hint={`${awaiting} awaiting verification`}
+          icon={Zap}
+          t="critical"
+        />
+        <Stat
+          label="People counted now"
+          value={people.toLocaleString()}
+          hint={`${zones.length} counting zones`}
+          icon={Users}
+          t="info"
+        />
+        <Stat
+          label="Time to verify"
+          value={`${verifyTimes.at(-1)!.p50} s`}
+          hint={`P90 ${verifyTimes.at(-1)!.p90} s`}
           icon={Timer}
           t="success"
         />
         <Stat
-          label="Events live"
-          value="1"
-          hint="Convocation 19:30"
-          icon={CalendarDays}
-          t="info"
+          label="Precision (90 d)"
+          value={`${Math.round((confirmed / all) * 100)}%`}
+          hint="Operator-confirmed"
+          icon={BadgeCheck}
+          t="success"
         />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader>
-            <CardTitle>Live alarm queue</CardTitle>
+            <CardTitle>Open detections</CardTitle>
             <CardDescription>
-              AI video, access control, app SOS, help points and patrol reports
-              in one list.
+              New and verified detections from every analytic, most severe
+              first.
             </CardDescription>
             <CardAction>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/um/incidents')}
+                onClick={() => navigate('/um/events')}
               >
                 All <ArrowRight />
               </Button>
             </CardAction>
           </CardHeader>
           <CardContent className="grid gap-0.5">
-            {open.slice(0, 7).map((i) => (
-              <AlarmRow
-                key={i.id}
-                incident={i}
-                onOpen={() => setOpenId(i.id)}
-              />
+            {open.slice(0, 7).map((e) => (
+              <EventRow key={e.id} event={e} onOpen={() => setOpenId(e.id)} />
             ))}
           </CardContent>
         </Card>
-
         <div className="grid content-start gap-4">
           {priority && (
             <Card size="sm">
@@ -263,122 +293,73 @@ export function Overview({ persona }: { persona: Persona }) {
               </CardHeader>
               <CardContent>
                 <CameraFeed
-                  camera={cameraById(priority.camera!)!}
+                  camera={cameraById(priority.camera)!}
                   onClick={() => setOpenId(priority.id)}
                 />
               </CardContent>
             </Card>
           )}
-          <Card size="sm" className="bg-info-soft/60">
-            <CardContent className="flex gap-3">
-              <CloudRain className="mt-0.5 size-5 shrink-0 text-info" />
-              <div className="text-sm">
-                <div className="font-medium">
-                  Heavy rain warning until 22:00
-                </div>
-                <div className="text-muted-foreground">
-                  MetMalaysia warning for Kuala Lumpur. Faculty of Law basement
-                  car park flooded in October 2024; the water-level analytic is
-                  armed there.
-                </div>
-              </div>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>Busiest zones now</CardTitle>
+              <CardAction>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/um/occupancy')}
+                >
+                  Counts <ArrowRight />
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="grid gap-2.5">
+              {busiest.map((z) => {
+                const pct = Math.round((z.now / z.capacity) * 100);
+                return (
+                  <div key={z.id} className="grid gap-1">
+                    <div className="flex justify-between gap-2 text-sm">
+                      <span className="truncate">{z.name}</span>
+                      <span className="tabular shrink-0 text-muted-foreground">
+                        {z.now.toLocaleString()} · {pct}%
+                      </span>
+                    </div>
+                    <Meter
+                      value={pct}
+                      t={pct > 85 ? 'critical' : pct > 60 ? 'warning' : 'brand'}
+                    />
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>Campus picture</CardTitle>
-            <CardDescription>
-              Cameras, open incidents, officers and active SOS or Friend Walk
-              sessions.
-            </CardDescription>
-            <CardAction>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/um/map')}
-              >
-                Map <ArrowRight />
-              </Button>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            <CampusMap
-              onIncident={(i) => setOpenId(i.id)}
-              onCamera={() => navigate('/um/wall')}
-            />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>People who asked for help</CardTitle>
-            <CardDescription>
-              Location is shared only for the length of each session.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            {state.sessions.slice(0, 5).map((s) => (
-              <div
-                key={s.id}
-                className="flex items-center gap-3 rounded-lg border p-2.5"
-              >
-                <Pill
-                  t={
-                    s.kind === 'SOS'
-                      ? 'critical'
-                      : s.kind === 'Safety timer'
-                        ? 'warning'
-                        : 'brand'
-                  }
-                >
-                  {s.kind}
-                </Pill>
-                <div className="min-w-0 flex-1 text-sm">
-                  <div className="truncate">
-                    {s.from}
-                    {s.to !== '—' && ` → ${s.to}`}
-                  </div>
-                  <div className="truncate text-xs text-muted-foreground">
-                    {s.who} · {s.status}
-                  </div>
-                </div>
-                <span className="tabular text-xs text-muted-foreground">
-                  {s.started}
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Convocation tonight · Dewan Tunku Canselor</CardTitle>
+          <CardTitle>Camera map</CardTitle>
           <CardDescription>
-            {events[0].attendance.toLocaleString()} guests expected ·{' '}
-            {events[0].staff} staff deployed · readiness {events[0].readiness}%
+            Cameras, open detections and anonymous people counts by zone.
           </CardDescription>
           <CardAction>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/um/events')}
+              onClick={() => navigate('/um/map')}
             >
-              Event mode <ArrowRight />
+              Map <ArrowRight />
             </Button>
           </CardAction>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-          {wallPreview.map((c) => (
-            <CameraFeed key={c.id} camera={c} />
-          ))}
+        <CardContent>
+          <CampusMap
+            onEvent={(e) => setOpenId(e.id)}
+            onCamera={() => navigate('/um/wall')}
+          />
         </CardContent>
       </Card>
 
-      <IncidentSheet
+      <EventSheet
         id={openId}
         persona={persona}
         onClose={() => setOpenId(null)}
@@ -387,9 +368,9 @@ export function Overview({ persona }: { persona: Persona }) {
   );
 }
 
-// --------------------------------------------------------------- incidents --
+// --------------------------------------------------------------- detections --
 
-export function IncidentsView({
+export function EventsView({
   persona,
   focus,
 }: {
@@ -400,23 +381,21 @@ export function IncidentsView({
   const [openId, setOpenId] = useState<string | null>(focus ?? null);
   const [tab, setTab] = useState<'open' | 'all' | 'closed'>('open');
   const [q, setQ] = useState('');
-  const [sev, setSev] = useState('all');
+  const [analytic, setAnalytic] = useState('all');
 
-  const scoped =
-    persona.id === 'pengetua'
-      ? state.incidents.filter(
-          (i) => i.college === 'kk12' || i.precinct === 'residential',
-        )
-      : state.incidents;
-  const rows = scoped
-    .filter((i) =>
-      tab === 'open' ? isOpen(i) : tab === 'closed' ? !isOpen(i) : true,
+  const rows = state.events
+    .filter((e) =>
+      tab === 'open'
+        ? isOpenEvent(e)
+        : tab === 'closed'
+          ? !isOpenEvent(e)
+          : true,
     )
-    .filter((i) => sev === 'all' || i.severity === sev)
+    .filter((e) => analytic === 'all' || e.analytic === analytic)
     .filter(
-      (i) =>
+      (e) =>
         !q ||
-        `${i.id} ${i.title} ${i.location} ${i.category}`
+        `${e.id} ${e.title} ${e.camera} ${cameraById(e.camera)?.name}`
           .toLowerCase()
           .includes(q.toLowerCase()),
     )
@@ -429,15 +408,12 @@ export function IncidentsView({
   return (
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
-        title={
-          persona.id === 'pengetua'
-            ? 'KK12 alarms & incidents'
-            : 'Alarm queue & incidents'
-        }
-        description={
-          persona.id === 'pengetua'
-            ? 'Alarms in and around your college. Case details for the wider campus stay with the security office.'
-            : 'Every signal becomes one incident with one owner. AI candidates show a model confidence and must be verified by an operator before anything leaves the SOC.'
+        title="AI detections"
+        description="Every detection from every analytic, with the camera, the model's confidence and the operator's decision. Nothing is shared with anyone until an operator has verified it on video."
+        actions={
+          (persona.id === 'director' || persona.id === 'operator') && (
+            <DemoDetectionButton />
+          )
         }
       />
       <Card>
@@ -446,7 +422,7 @@ export function IncidentsView({
             <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
               <TabsList>
                 <TabsTrigger value="open">
-                  Open ({scoped.filter(isOpen).length})
+                  Open ({state.events.filter(isOpenEvent).length})
                 </TabsTrigger>
                 <TabsTrigger value="closed">Closed</TabsTrigger>
                 <TabsTrigger value="all">All</TabsTrigger>
@@ -458,22 +434,22 @@ export function IncidentsView({
                 <Input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search incidents"
+                  placeholder="Search detections"
                   className="pl-8"
-                  aria-label="Search incidents"
+                  aria-label="Search detections"
                 />
               </div>
               <NativeSelect
-                value={sev}
-                onChange={(e) => setSev(e.target.value)}
-                aria-label="Severity"
+                value={analytic}
+                onChange={(e) => setAnalytic(e.target.value)}
+                aria-label="Analytic"
               >
                 <NativeSelectOption value="all">
-                  All severities
+                  All analytics
                 </NativeSelectOption>
-                {Object.keys(sevRank).map((s) => (
-                  <NativeSelectOption key={s} value={s}>
-                    {s}
+                {Object.entries(analytics).map(([id, a]) => (
+                  <NativeSelectOption key={id} value={id}>
+                    {a.name}
                   </NativeSelectOption>
                 ))}
               </NativeSelect>
@@ -485,62 +461,63 @@ export function IncidentsView({
                 <TableHead className="hidden w-24 sm:table-cell">
                   Severity
                 </TableHead>
-                <TableHead>Incident</TableHead>
-                <TableHead className="hidden md:table-cell">Source</TableHead>
+                <TableHead>Detection</TableHead>
+                <TableHead className="hidden md:table-cell">Analytic</TableHead>
+                <TableHead className="hidden text-right lg:table-cell">
+                  Confidence
+                </TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="hidden lg:table-cell">Assigned</TableHead>
                 <TableHead className="hidden text-right sm:table-cell">
                   Time
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((i) => (
+              {rows.map((e) => (
                 <TableRow
-                  key={i.id}
+                  key={e.id}
                   className="cursor-pointer"
-                  onClick={() => setOpenId(i.id)}
+                  onClick={() => setOpenId(e.id)}
                 >
                   <TableCell className="hidden sm:table-cell">
-                    <SeverityBadge severity={i.severity} />
+                    <SeverityBadge severity={e.severity} />
                   </TableCell>
                   <TableCell className="whitespace-normal">
                     <div className="mb-1 sm:hidden">
-                      <SeverityBadge severity={i.severity} />
+                      <SeverityBadge severity={e.severity} />
                     </div>
                     <button
                       type="button"
                       className="text-left font-medium hover:underline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenId(i.id);
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        setOpenId(e.id);
                       }}
                     >
-                      {i.title}
+                      {e.title}
                     </button>
-                    <div className="text-xs text-muted-foreground">
-                      <span className="font-mono">{i.id}</span> ·{' '}
-                      {i.restricted ? 'Location withheld' : i.location}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="font-mono">{e.id}</span> ·{' '}
+                      {cameraById(e.camera)?.name}
+                      {e.bookmarked && (
+                        <Bookmark
+                          className="size-3 text-primary"
+                          aria-label="Clip kept"
+                        />
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="text-sm">{i.source}</div>
-                    {i.confidence !== undefined && (
-                      <div className="tabular text-xs text-muted-foreground">
-                        {Math.round(i.confidence * 100)}% confidence
-                      </div>
-                    )}
+                  <TableCell className="hidden whitespace-normal md:table-cell">
+                    {analytics[e.analytic].name}
+                  </TableCell>
+                  <TableCell className="tabular hidden text-right lg:table-cell">
+                    {Math.round(e.confidence * 100)}%
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={i.status} />
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {i.assigned ?? (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    <EventStatusBadge status={e.status} />
                   </TableCell>
                   <TableCell className="tabular hidden text-right text-muted-foreground sm:table-cell">
-                    {i.time}
+                    {e.time}
                   </TableCell>
                 </TableRow>
               ))}
@@ -550,7 +527,7 @@ export function IncidentsView({
                     colSpan={6}
                     className="py-10 text-center text-muted-foreground"
                   >
-                    No incidents match.
+                    No detections match.
                   </TableCell>
                 </TableRow>
               )}
@@ -558,7 +535,7 @@ export function IncidentsView({
           </Table>
         </CardContent>
       </Card>
-      <IncidentSheet
+      <EventSheet
         id={openId}
         persona={persona}
         onClose={() => setOpenId(null)}
@@ -578,8 +555,9 @@ export function CameraDialog({
 }) {
   const { state, dispatch } = useDemo();
   const linked = camera
-    ? state.incidents.filter((i) => i.camera === camera.id)
+    ? state.events.filter((e) => e.camera === camera.id)
     : [];
+  const zone = camera ? zones.find((z) => z.scene === camera.scene) : undefined;
   return (
     <Dialog open={!!camera} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-3xl">
@@ -594,8 +572,8 @@ export function CameraDialog({
               </DialogDescription>
             </DialogHeader>
             <CameraFeed camera={camera} />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="sm:col-span-2">
                 <div className="mb-1.5 text-xs font-medium text-muted-foreground">
                   Analytics on this camera
                 </div>
@@ -609,17 +587,15 @@ export function CameraDialog({
                     </Pill>
                   ))}
                 </div>
-              </div>
-              <div>
-                <div className="mb-1.5 text-xs font-medium text-muted-foreground">
-                  Linked incidents
+                <div className="mt-3 mb-1.5 text-xs font-medium text-muted-foreground">
+                  Detections today
                 </div>
                 {linked.length ? (
                   <ul className="grid gap-1 text-sm">
-                    {linked.map((i) => (
-                      <li key={i.id} className="flex items-center gap-2">
-                        <StatusBadge status={i.status} />
-                        <span className="truncate">{i.title}</span>
+                    {linked.map((e) => (
+                      <li key={e.id} className="flex items-center gap-2">
+                        <EventStatusBadge status={e.status} />
+                        <span className="truncate">{e.title}</span>
                       </li>
                     ))}
                   </ul>
@@ -627,6 +603,20 @@ export function CameraDialog({
                   <p className="text-sm text-muted-foreground">None today.</p>
                 )}
               </div>
+              {zone && (
+                <div className="rounded-lg bg-muted/60 p-3">
+                  <div className="text-xs text-muted-foreground">
+                    People in view now
+                  </div>
+                  <div className="tabular text-2xl font-semibold">
+                    {zone.now.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    of {zone.capacity.toLocaleString()} · peak{' '}
+                    {zone.peak.toLocaleString()} at {zone.peakAt}
+                  </div>
+                </div>
+              )}
             </div>
             <Button
               variant="outline"
@@ -762,28 +752,31 @@ export function VideoWall() {
 // --------------------------------------------------------------------- map --
 
 export function MapView({ persona }: { persona: Persona }) {
-  const [layers, setLayers] = useState({
+  const [layers, setLayers] = useState<MapLayers>({
     cameras: true,
-    incidents: true,
-    officers: true,
-    colleges: true,
-    sessions: true,
+    detections: true,
+    occupancy: true,
   });
   const [openId, setOpenId] = useState<string | null>(null);
   const [cam, setCam] = useState<Camera | null>(null);
   const { state } = useDemo();
+  const labels: Record<keyof MapLayers, string> = {
+    cameras: 'Cameras',
+    detections: 'Open detections',
+    occupancy: 'People counts',
+  };
   return (
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
-        title="Campus map"
-        description="Schematic plan of the main campus with Zone 5 in Petaling Jaya inset. Select a camera or an incident marker."
+        title="Camera map"
+        description="Schematic plan of the main campus with Zone 5 in Petaling Jaya inset. Select a camera or a detection."
       />
       <div className="grid gap-4 xl:grid-cols-[1fr_18rem]">
         <Card>
           <CardContent>
             <CampusMap
               layers={layers}
-              onIncident={(i) => setOpenId(i.id)}
+              onEvent={(e) => setOpenId(e.id)}
               onCamera={setCam}
             />
           </CardContent>
@@ -794,11 +787,9 @@ export function MapView({ persona }: { persona: Persona }) {
               <CardTitle>Layers</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {(Object.keys(layers) as (keyof typeof layers)[]).map((k) => (
+              {(Object.keys(layers) as (keyof MapLayers)[]).map((k) => (
                 <div key={k} className="flex items-center justify-between">
-                  <Label htmlFor={`layer-${k}`} className="capitalize">
-                    {k === 'sessions' ? 'SOS & walks' : k}
-                  </Label>
+                  <Label htmlFor={`layer-${k}`}>{labels[k]}</Label>
                   <Switch
                     id={`layer-${k}`}
                     checked={layers[k]}
@@ -817,8 +808,10 @@ export function MapView({ persona }: { persona: Persona }) {
             <CardContent className="grid gap-2 text-sm">
               {precinctIds.map((id) => {
                 const cams = cameras.filter((c) => c.precinct === id);
-                const open = state.incidents.filter(
-                  (i) => i.precinct === id && isOpen(i),
+                const down = cams.filter((c) => c.status !== 'online').length;
+                const open = state.events.filter(
+                  (e) =>
+                    isOpenEvent(e) && cameraById(e.camera)?.precinct === id,
                 ).length;
                 return (
                   <div
@@ -827,7 +820,8 @@ export function MapView({ persona }: { persona: Persona }) {
                   >
                     <span className="truncate">{precincts[id].name}</span>
                     <span className="tabular shrink-0 text-xs text-muted-foreground">
-                      {cams.length} cam{open ? ` · ${open} open` : ''}
+                      {cams.length} cam{down ? ` · ${down} down` : ''}
+                      {open ? ` · ${open} open` : ''}
                     </span>
                   </div>
                 );
@@ -836,337 +830,12 @@ export function MapView({ persona }: { persona: Persona }) {
           </Card>
         </div>
       </div>
-      <IncidentSheet
+      <EventSheet
         id={openId}
         persona={persona}
         onClose={() => setOpenId(null)}
       />
       <CameraDialog camera={cam} onClose={() => setCam(null)} />
-    </div>
-  );
-}
-
-// --------------------------------------------------------------------- SOS --
-
-export function SosView({ persona }: { persona: Persona }) {
-  const { state } = useDemo();
-  const [openId, setOpenId] = useState<string | null>(null);
-  const sosIncident = state.incidents.find(
-    (i) => i.source === 'Student app SOS' && isOpen(i),
-  );
-  const okHp = helpPoints.filter((h) => h.ok).length;
-  return (
-    <div className="grid grid-cols-1 gap-5">
-      <PageHeader
-        title="SOS & safe walks"
-        description="Requests from the EzSafe app and the blue-light help points. Location is visible only while a session is running and is deleted when a Friend Walk ends."
-      />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat
-          label="Active SOS"
-          value={state.sessions.filter((s) => s.kind === 'SOS').length}
-          icon={Siren}
-          t="critical"
-        />
-        <Stat
-          label="Friend Walks"
-          value={state.sessions.filter((s) => s.kind === 'Friend Walk').length}
-          icon={Footprints}
-          t="brand"
-        />
-        <Stat
-          label="Escort requests"
-          value={
-            state.sessions.filter((s) => s.kind === 'Escort request').length
-          }
-          icon={LifeBuoy}
-          t="info"
-        />
-        <Stat
-          label="Help points working"
-          value={`${okHp}/${helpPoints.length}`}
-          icon={Phone}
-          t="warning"
-        />
-      </div>
-      <div className="grid gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>Active sessions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Route</TableHead>
-                  <TableHead className="hidden sm:table-cell">
-                    Requester
-                  </TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Started</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {state.sessions.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell>
-                      <Pill
-                        t={
-                          s.kind === 'SOS'
-                            ? 'critical'
-                            : s.kind === 'Safety timer'
-                              ? 'warning'
-                              : 'brand'
-                        }
-                      >
-                        {s.kind}
-                      </Pill>
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      {s.from}
-                      {s.to !== '—' && ` → ${s.to}`}
-                    </TableCell>
-                    <TableCell className="hidden text-muted-foreground sm:table-cell">
-                      {s.who}
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      {s.status}
-                    </TableCell>
-                    <TableCell className="tabular text-right">
-                      {s.started}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        <div className="grid content-start gap-4">
-          {sosIncident && (
-            <Card size="sm" className="ring-critical/40">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Siren className="size-4 text-critical" />
-                  SOS in progress
-                </CardTitle>
-                <CardDescription>{sosIncident.location}</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-2">
-                {sosIncident.camera && persona.video && (
-                  <CameraFeed camera={cameraById(sosIncident.camera)!} />
-                )}
-                <Button onClick={() => setOpenId(sosIncident.id)}>
-                  Open incident
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Help points</CardTitle>
-              <CardDescription>
-                Blue-light intercoms, last self-test 06:00
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-6 gap-1.5">
-              {helpPoints.map((h) => (
-                <span
-                  key={h.id}
-                  title={`${h.id} ${h.ok ? 'OK' : 'fault'}`}
-                  className={cn(
-                    'rounded py-1 text-center font-mono text-[10px]',
-                    h.ok
-                      ? 'bg-success-soft text-success'
-                      : 'bg-critical-soft text-critical',
-                  )}
-                >
-                  {h.id.slice(3)}
-                </span>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-      <IncidentSheet
-        id={openId}
-        persona={persona}
-        onClose={() => setOpenId(null)}
-      />
-    </div>
-  );
-}
-
-// ------------------------------------------------------------------ patrol --
-
-export function PatrolView({ persona }: { persona: Persona }) {
-  const { state, dispatch } = useDemo();
-  const waiting = useMemo(
-    () =>
-      state.incidents.filter((i) => isOpen(i) && !i.assigned && !i.restricted),
-    [state.incidents],
-  );
-  return (
-    <div className="grid grid-cols-1 gap-5">
-      <PageHeader
-        title="Patrol & dispatch"
-        description="Polis Bantuan and security officers on shift, guard-tour progress and incidents still waiting for an officer."
-      />
-      <div className="grid gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>Officers on shift</CardTitle>
-            <CardDescription>Shift ends 23:00</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Callsign</TableHead>
-                  <TableHead>Officer</TableHead>
-                  <TableHead className="hidden md:table-cell">Beat</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {officers.map((o) => {
-                  const job = state.incidents.find(
-                    (i) => i.assigned === o.callsign && isOpen(i),
-                  );
-                  return (
-                    <TableRow key={o.id}>
-                      <TableCell className="font-mono text-xs font-semibold">
-                        {o.callsign}
-                      </TableCell>
-                      <TableCell>
-                        <div>{o.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {o.rank}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden whitespace-normal md:table-cell">
-                        {o.beat}
-                      </TableCell>
-                      <TableCell className="whitespace-normal">
-                        <Pill
-                          t={
-                            job
-                              ? 'brand'
-                              : o.status === 'On break'
-                                ? 'muted'
-                                : 'info'
-                          }
-                        >
-                          {job ? 'Responding' : o.status}
-                        </Pill>
-                        {job && (
-                          <div className="mt-1 max-w-[14rem] truncate text-xs text-muted-foreground">
-                            {job.title}
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        <div className="grid content-start gap-4">
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Waiting for an officer</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2">
-              {waiting.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Every open incident has an officer.
-                </p>
-              )}
-              {waiting.map((i) => (
-                <div
-                  key={i.id}
-                  className="flex items-center gap-2 rounded-lg border p-2"
-                >
-                  <SeverityBadge severity={i.severity} />
-                  <span className="min-w-0 flex-1 truncate text-sm">
-                    {i.title}
-                  </span>
-                  {(persona.id === 'chief' || persona.id === 'soc') && (
-                    <Button
-                      size="xs"
-                      onClick={() => {
-                        const o =
-                          officers.find(
-                            (x) =>
-                              x.status === 'On patrol' &&
-                              x.precinct === i.precinct,
-                          ) ?? officers.find((x) => x.status === 'On patrol')!;
-                        dispatch({
-                          type: 'assign',
-                          id: i.id,
-                          officer: o.callsign,
-                          actor: persona.name,
-                        });
-                        notify.success(`${o.callsign} dispatched`, i.title);
-                      }}
-                    >
-                      Dispatch nearest
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Guard tours tonight</CardTitle>
-              <CardDescription>
-                NFC checkpoints scanned in the EzPatrol app
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              {guardTours.map((g) => (
-                <div key={g.route} className="grid gap-1">
-                  <div className="flex items-center justify-between gap-2 text-sm">
-                    <span className="truncate">{g.route}</span>
-                    <span className="tabular shrink-0 text-xs text-muted-foreground">
-                      {g.done}/{g.checkpoints}
-                    </span>
-                  </div>
-                  <Meter
-                    value={(g.done / g.checkpoints) * 100}
-                    t={
-                      g.missed > 1
-                        ? 'warning'
-                        : g.done === g.checkpoints
-                          ? 'success'
-                          : 'brand'
-                    }
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>
-                      {g.officer === '—' ? 'Unassigned' : g.officer}
-                      {g.missed > 0 && ` · ${g.missed} missed`}
-                    </span>
-                    <span
-                      className={
-                        g.due === 'Overdue' ? 'font-medium text-critical' : ''
-                      }
-                    >
-                      {g.due === 'Overdue' ? 'Overdue' : `Due ${g.due}`}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              <Note>
-                Rimba Ilmu boundary has no officer and a camera is offline on
-                the southern fence. Consider reassigning PB-08 after break.
-              </Note>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
     </div>
   );
 }

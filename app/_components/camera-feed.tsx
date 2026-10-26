@@ -56,7 +56,8 @@ export function CameraFeed({
             <span className="text-xs font-semibold">Signal lost</span>
             {!compact && (
               <span className="max-w-[24ch] text-[11px] text-white/70">
-                Do not read this area as clear. Patrol checkpoint added.
+                Do not read this area as clear: it is a coverage gap until
+                repaired.
               </span>
             )}
           </div>

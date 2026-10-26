@@ -1,20 +1,18 @@
 'use client';
 import { createContext, useContext, useMemo, useReducer } from 'react';
 import {
-  incidents as seedIncidents,
-  appSessions as seedSessions,
-  broadcasts as seedBroadcasts,
+  cameraEvents as seedEvents,
   auditLog as seedAudit,
   DEMO_TIME,
-  type Incident,
-  type IncidentStatus,
+  type CameraEvent,
+  type EventStatus,
 } from '../_data/um';
 import type { PersonaId } from '../_data/personas';
 
 /**
- * Session-memory demo state shared by every workspace, so an SOS raised in
- * the student app appears in the UM operations console and the patrol app.
- * Nothing is persisted or sent anywhere; a refresh restores the seed data.
+ * Session-memory demo state shared by every workspace, so a detection raised
+ * in the console reaches EzVision Mobile and a verification on the phone
+ * shows in the console. Nothing is persisted; a refresh restores the seed.
  */
 type Audit = {
   time: string;
@@ -23,20 +21,10 @@ type Audit = {
   target: string;
   reason: string;
 };
-type Session = (typeof seedSessions)[number];
-type Broadcast = {
-  time: string;
-  template: string;
-  audience: string;
-  reach: number;
-  read: number;
-};
 
 type State = {
   persona: PersonaId | null;
-  incidents: Incident[];
-  sessions: Session[];
-  broadcasts: Broadcast[];
+  events: CameraEvent[];
   audit: Audit[];
   clock: number;
 };
@@ -46,14 +34,13 @@ type Action =
   | {
       type: 'status';
       id: string;
-      status: IncidentStatus;
+      status: EventStatus;
       actor: string;
       note?: string;
     }
-  | { type: 'assign'; id: string; officer: string; actor: string }
-  | { type: 'sop'; id: string; index: number }
-  | { type: 'raise'; incident: Incident; session?: Session }
-  | { type: 'broadcast'; broadcast: Broadcast }
+  | { type: 'share'; id: string; team: string; actor: string }
+  | { type: 'bookmark'; id: string }
+  | { type: 'raise'; event: CameraEvent }
   | { type: 'audit'; entry: Omit<Audit, 'time'> };
 
 /** Demo clock: starts at 18:40 and advances one minute per recorded action. */
@@ -66,6 +53,8 @@ function stamp(clock: number) {
 function reducer(state: State, action: Action): State {
   const now = stamp(state.clock);
   const tick = { clock: state.clock + 1 };
+  const update = (id: string, fn: (e: CameraEvent) => CameraEvent) =>
+    state.events.map((e) => (e.id === id ? fn(e) : e));
   switch (action.type) {
     case 'persona':
       return { ...state, persona: action.persona };
@@ -73,77 +62,55 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         ...tick,
-        incidents: state.incidents.map((i) =>
-          i.id === action.id
-            ? {
-                ...i,
-                status: action.status,
-                timeline: [
-                  ...i.timeline,
-                  {
-                    time: now,
-                    text:
-                      action.note ?? `Marked ${action.status.toLowerCase()}`,
-                    actor: action.actor,
-                  },
-                ],
-              }
-            : i,
-        ),
+        events: update(action.id, (e) => ({
+          ...e,
+          status: action.status,
+          timeline: [
+            ...e.timeline,
+            {
+              time: now,
+              text: action.note ?? `Marked ${action.status.toLowerCase()}`,
+              actor: action.actor,
+            },
+          ],
+        })),
       };
-    case 'assign':
+    case 'share':
       return {
         ...state,
         ...tick,
-        incidents: state.incidents.map((i) =>
-          i.id === action.id
-            ? {
-                ...i,
-                assigned: action.officer,
-                status:
-                  i.status === 'New' || i.status === 'Acknowledged'
-                    ? 'Dispatched'
-                    : i.status,
-                timeline: [
-                  ...i.timeline,
-                  {
-                    time: now,
-                    text: `${action.officer} dispatched`,
-                    actor: action.actor,
-                  },
-                ],
-              }
-            : i,
-        ),
+        events: update(action.id, (e) => ({
+          ...e,
+          status: 'Shared',
+          sharedWith: action.team,
+          bookmarked: true,
+          timeline: [
+            ...e.timeline,
+            {
+              time: now,
+              text: `Clip shared with ${action.team}`,
+              actor: action.actor,
+            },
+          ],
+        })),
       };
-    case 'sop':
+    case 'bookmark':
       return {
         ...state,
-        incidents: state.incidents.map((i) =>
-          i.id === action.id
-            ? {
-                ...i,
-                sop: i.sop.map((s, n) =>
-                  n === action.index ? { ...s, done: !s.done } : s,
-                ),
-              }
-            : i,
-        ),
+        events: update(action.id, (e) => ({ ...e, bookmarked: !e.bookmarked })),
       };
     case 'raise':
       return {
         ...state,
         ...tick,
-        incidents: [{ ...action.incident, time: now }, ...state.incidents],
-        sessions: action.session
-          ? [{ ...action.session, started: now }, ...state.sessions]
-          : state.sessions,
-      };
-    case 'broadcast':
-      return {
-        ...state,
-        ...tick,
-        broadcasts: [{ ...action.broadcast, time: now }, ...state.broadcasts],
+        events: [
+          {
+            ...action.event,
+            time: now,
+            timeline: action.event.timeline.map((t) => ({ ...t, time: now })),
+          },
+          ...state.events,
+        ],
       };
     case 'audit':
       return {
@@ -155,9 +122,7 @@ function reducer(state: State, action: Action): State {
 
 const initial: State = {
   persona: null,
-  incidents: seedIncidents,
-  sessions: [...seedSessions],
-  broadcasts: [...seedBroadcasts],
+  events: seedEvents,
   audit: [...seedAudit],
   clock: 0,
 };
@@ -183,7 +148,7 @@ export function useDemo() {
   return v;
 }
 
-export function nextIncidentId(incidents: Incident[]) {
-  const max = Math.max(...incidents.map((i) => Number(i.id.split('-').pop())));
-  return `UM-26-${max + 1}`;
+export function nextEventId(events: CameraEvent[]) {
+  const max = Math.max(...events.map((e) => Number(e.id.split('-').pop())));
+  return `EV-26-${max + 1}`;
 }

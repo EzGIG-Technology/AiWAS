@@ -3,44 +3,35 @@ import {
   LayoutDashboard,
   Building2,
   TrendingUp,
-  ClipboardCheck,
-  TriangleAlert,
-  BedDouble,
-  CloudRain,
+  Video,
+  ShieldCheck,
   FileDown,
 } from 'lucide-react';
 import { WorkspaceShell, type NavGroup } from '../../_components/shell';
 import type { Persona } from '../../_data/personas';
-import { escalations } from '../../_data/kpt';
 import {
   NationalOverview,
   UniversitiesView,
-  TrendsView,
-  ComplianceView,
-  EscalationsView,
-  ResidentialView,
-  ReadinessView,
+  DetectionsView,
+  CoverageView,
+  GovernanceView,
   KptReportsView,
 } from './views';
 
 export type KptView =
   | 'overview'
   | 'universities'
-  | 'trends'
-  | 'compliance'
-  | 'escalations'
-  | 'residential'
-  | 'readiness'
+  | 'detections'
+  | 'coverage'
+  | 'governance'
   | 'reports';
 
 export const kptTitles: Record<KptView, string> = {
   overview: 'National overview',
   universities: 'Universities',
-  trends: 'Incident trends',
-  compliance: 'Inspection & compliance',
-  escalations: 'Escalations',
-  residential: 'Residential & welfare',
-  readiness: 'Disaster & event readiness',
+  detections: 'Detection trends',
+  coverage: 'CCTV coverage & uptime',
+  governance: 'Privacy & AI governance',
   reports: 'Reports',
 };
 
@@ -54,32 +45,24 @@ export function KptWorkspace({
   sub?: string;
 }) {
   const active = (view && view in kptTitles ? view : 'overview') as KptView;
-  const open = escalations.filter((e) => e.status !== 'Closed').length;
   const groups: NavGroup[] = [
     {
       label: 'Oversight',
       items: [
         { id: 'overview', label: 'National overview', icon: LayoutDashboard },
         { id: 'universities', label: 'Universities', icon: Building2 },
-        {
-          id: 'escalations',
-          label: 'Escalations',
-          icon: TriangleAlert,
-          badge: open,
-        },
       ],
     },
     {
       label: 'Analysis',
       items: [
-        { id: 'trends', label: 'Incident trends', icon: TrendingUp },
+        { id: 'detections', label: 'Detection trends', icon: TrendingUp },
+        { id: 'coverage', label: 'CCTV coverage & uptime', icon: Video },
         {
-          id: 'compliance',
-          label: 'Inspection & compliance',
-          icon: ClipboardCheck,
+          id: 'governance',
+          label: 'Privacy & AI governance',
+          icon: ShieldCheck,
         },
-        { id: 'residential', label: 'Residential & welfare', icon: BedDouble },
-        { id: 'readiness', label: 'Disaster & events', icon: CloudRain },
       ],
     },
     {
@@ -90,11 +73,9 @@ export function KptWorkspace({
   const views: Record<KptView, React.ReactNode> = {
     overview: <NationalOverview />,
     universities: <UniversitiesView focus={sub} />,
-    trends: <TrendsView />,
-    compliance: <ComplianceView />,
-    escalations: <EscalationsView />,
-    residential: <ResidentialView />,
-    readiness: <ReadinessView />,
+    detections: <DetectionsView />,
+    coverage: <CoverageView />,
+    governance: <GovernanceView />,
     reports: <KptReportsView />,
   };
   return (
@@ -103,7 +84,7 @@ export function KptWorkspace({
         id: 'kpt',
         acronym: 'KPT',
         name: 'Kementerian Pendidikan Tinggi',
-        sub: 'Campus Safety Oversight',
+        sub: 'Campus Camera Intelligence',
       }}
       base="/kpt"
       groups={groups}

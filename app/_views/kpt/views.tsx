@@ -6,17 +6,16 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  ReferenceLine,
   XAxis,
   YAxis,
+  ReferenceLine,
 } from 'recharts';
 import {
   Building2,
-  Users,
   Video,
-  TriangleAlert,
-  Timer,
-  ClipboardCheck,
+  ScanEye,
+  Activity,
+  BadgeCheck,
   ShieldCheck,
   EyeOff,
   Search,
@@ -26,8 +25,6 @@ import {
   CircleDashed,
   XCircle,
   Send,
-  CloudRain,
-  CalendarDays,
   FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -83,12 +80,9 @@ import {
   institutions,
   institutionById,
   nationalMonthly,
-  nationalCategories,
+  detectionCategories,
   nationalTotals,
-  escalations,
-  nationalEvents,
-  inspectionItems,
-  policyItems,
+  cctvItems,
   privacyItems,
   suppress,
   kptExclusionLine,
@@ -121,17 +115,17 @@ const cTone: Record<Compliance, string> = {
   'Partly met': 'text-warning',
   'Not met': 'text-critical',
 };
-const metCount = (i: Institution) =>
-  i.inspection.filter((x) => x === 'Met').length;
-const siTone = (si: number): 'success' | 'warning' | 'critical' =>
-  si >= 80 ? 'success' : si >= 70 ? 'warning' : 'critical';
+const mTone = (m: number): 'success' | 'warning' | 'critical' =>
+  m >= 75 ? 'success' : m >= 60 ? 'warning' : 'critical';
+const dash = (v: number | null, suffix = '') =>
+  v === null ? '—' : `${v.toLocaleString('en-MY')}${suffix}`;
 
 const slug = (c: string) => c.toLowerCase().replace(/[^a-z]+/g, '-');
 const trendCats = [
-  'Accident',
-  'Medical',
-  'Theft',
-  'Flood & weather',
+  'Vehicle & traffic',
+  'Intrusion',
+  'Crowd density',
+  'Unattended object',
   'Wildlife',
 ] as const;
 const trendConfig: ChartConfig = Object.fromEntries(
@@ -150,22 +144,16 @@ const trendData = nationalMonthly.map((r) => ({
 export function NationalOverview() {
   const [state, setState] = useState<StateId | null>(null);
   const inState = state ? institutions.filter((i) => i.state === state) : [];
-  const inspectionPct = Math.round(
-    (institutions.reduce((a, i) => a + metCount(i), 0) /
-      (institutions.length * inspectionItems.length)) *
-      100,
-  );
-  const openEsc = escalations.filter((e) => e.status !== 'Closed');
   return (
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
         eyebrow="Jabatan Pendidikan Tinggi · KPT"
-        title="National campus safety overview"
-        description={`${nationalTotals.publicCount} public universities and ${nationalTotals.privateCount} private universities reporting. Live figures come from campuses on EzVision; the rest file a monthly return.`}
+        title="Campus camera intelligence"
+        description={`${nationalTotals.publicCount} public and ${nationalTotals.privateCount} private universities. Universities on EzVision report live figures; the rest file a monthly CCTV return.`}
         actions={
-          <Button onClick={() => navigate('/kpt/escalations')}>
-            <TriangleAlert />
-            Escalations ({openEsc.length})
+          <Button onClick={() => navigate('/kpt/coverage')}>
+            <Video />
+            CCTV coverage
           </Button>
         }
       />
@@ -178,37 +166,38 @@ export function NationalOverview() {
           icon={Building2}
         />
         <Stat
-          label="Students covered"
-          value={`${Math.round(nationalTotals.enrolment / 1000)}k`}
-          icon={Users}
+          label="Cameras registered"
+          value={nationalTotals.cameras.toLocaleString()}
+          hint={`${nationalTotals.analysed.toLocaleString()} with analytics`}
+          icon={Video}
           t="info"
         />
         <Stat
-          label="Cameras on analytics"
-          value={nationalTotals.cameras.toLocaleString()}
-          icon={Video}
-          t="muted"
+          label="Detections (30 d)"
+          value={nationalTotals.detections30d.toLocaleString()}
+          hint="EzVision campuses"
+          icon={ScanEye}
+          t="brand"
         />
         <Stat
-          label="Open high-severity"
-          value={nationalTotals.openHigh}
-          hint="Across all institutions"
-          icon={TriangleAlert}
-          t="critical"
-        />
-        <Stat
-          label="Median P90 response"
-          value={`${nationalTotals.medianP90} min`}
-          hint="Target under 8"
-          icon={Timer}
-          t="warning"
-        />
-        <Stat
-          label="Inspection items met"
-          value={`${inspectionPct}%`}
-          hint="KPT 2025 directive"
-          icon={ClipboardCheck}
+          label="Median uptime"
+          value={`${nationalTotals.medianUptime}%`}
+          hint="Target 95%"
+          icon={Activity}
           t="success"
+        />
+        <Stat
+          label="Median precision"
+          value={`${nationalTotals.medianPrecision}%`}
+          hint="Operator-confirmed"
+          icon={BadgeCheck}
+          t="success"
+        />
+        <Stat
+          label="Facial recognition off"
+          value={`${nationalTotals.frDisabled}/${nationalTotals.institutions}`}
+          icon={ShieldCheck}
+          t="warning"
         />
       </div>
       <div className="grid gap-4 xl:grid-cols-[22rem_1fr]">
@@ -216,7 +205,7 @@ export function NationalOverview() {
           <CardHeader>
             <CardTitle>By state</CardTitle>
             <CardDescription>
-              Open high-severity incidents. Select a state.
+              Average camera-intelligence maturity. Select a state.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
@@ -239,7 +228,7 @@ export function NationalOverview() {
                       className="size-7"
                     />
                     <span className="min-w-0 flex-1 truncate">{i.name}</span>
-                    <Pill t={siTone(i.safetyIndex)}>{i.safetyIndex}</Pill>
+                    <Pill t={mTone(i.maturity)}>{i.maturity}</Pill>
                   </button>
                 ))}
               </div>
@@ -248,16 +237,15 @@ export function NationalOverview() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>National incident trend</CardTitle>
+            <CardTitle>National detections</CardTitle>
             <CardDescription>
-              Five largest categories, all reporting institutions, last 12
-              months
+              Five largest categories, campuses on EzVision, last 12 months
             </CardDescription>
             <CardAction>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/kpt/trends')}
+                onClick={() => navigate('/kpt/detections')}
               >
                 All categories <ArrowRight />
               </Button>
@@ -271,7 +259,7 @@ export function NationalOverview() {
               <AreaChart data={trendData} margin={{ left: 0, right: 8 }}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                <YAxis width={32} tickLine={false} axisLine={false} />
+                <YAxis width={40} tickLine={false} axisLine={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend
                   content={<ChartLegendContent className="flex-wrap" />}
@@ -292,84 +280,45 @@ export function NationalOverview() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Needs ministry attention</CardTitle>
-            <CardAction>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/kpt/escalations')}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lowest camera-intelligence maturity</CardTitle>
+          <CardDescription>
+            Composite of entrance coverage, CCTV directive items, privacy
+            governance, analytics in use and uptime
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-2.5 md:grid-cols-2">
+          {[...institutions]
+            .sort((a, b) => a.maturity - b.maturity)
+            .slice(0, 8)
+            .map((i) => (
+              <button
+                key={i.id}
+                type="button"
+                onClick={() => navigate(`/kpt/universities/${i.id}`)}
+                className="grid grid-cols-[auto_1fr_3rem] items-center gap-3 rounded-md p-1 text-left hover:bg-muted"
               >
-                All <ArrowRight />
-              </Button>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            {openEsc.map((e) => {
-              const inst = institutionById(e.institution)!;
-              return (
-                <div
-                  key={e.id}
-                  className="flex items-start gap-3 rounded-lg border p-3"
-                >
-                  <UniversityLogo id={inst.id} acronym={inst.acronym} />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium">{e.type}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {inst.name} · opened {e.opened} · next update{' '}
-                      {e.nextUpdate}
-                    </div>
-                  </div>
-                  <Pill t={e.severity === 'Critical' ? 'critical' : 'warning'}>
-                    {e.status}
-                  </Pill>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Lowest safety index</CardTitle>
-            <CardDescription>
-              Composite of inspection, policy and privacy compliance, adjusted
-              for flood exposure
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-2.5">
-            {[...institutions]
-              .sort((a, b) => a.safetyIndex - b.safetyIndex)
-              .slice(0, 6)
-              .map((i) => (
-                <button
-                  key={i.id}
-                  type="button"
-                  onClick={() => navigate(`/kpt/universities/${i.id}`)}
-                  className="grid grid-cols-[auto_1fr_3rem] items-center gap-3 rounded-md p-1 text-left hover:bg-muted"
-                >
-                  <UniversityLogo
-                    id={i.id}
-                    acronym={i.acronym}
-                    className="size-7"
+                <UniversityLogo
+                  id={i.id}
+                  acronym={i.acronym}
+                  className="size-7"
+                />
+                <div className="min-w-0">
+                  <div className="truncate text-sm">{i.name}</div>
+                  <Meter
+                    value={i.maturity}
+                    t={mTone(i.maturity)}
+                    className="mt-1"
                   />
-                  <div className="min-w-0">
-                    <div className="truncate text-sm">{i.name}</div>
-                    <Meter
-                      value={i.safetyIndex}
-                      t={siTone(i.safetyIndex)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <span className="tabular text-right text-sm font-semibold">
-                    {i.safetyIndex}
-                  </span>
-                </button>
-              ))}
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+                <span className="tabular text-right text-sm font-semibold">
+                  {i.maturity}
+                </span>
+              </button>
+            ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -405,18 +354,18 @@ function UniversityProfile({
             <div className="grid gap-4 p-4">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {[
-                  ['Safety index', i.safetyIndex],
-                  ['Enrolment', i.enrolment.toLocaleString()],
-                  ['Open high-severity', suppress(i.openHigh)],
-                  ['Incidents (12 mo)', suppress(i.incidents12m)],
+                  ['Maturity', i.maturity],
+                  ['Cameras registered', i.cameras.toLocaleString()],
+                  ['With analytics', i.analysed.toLocaleString()],
+                  ['Entrance coverage', `${i.coverage}%`],
+                  ['Uptime (30 d)', dash(i.uptime, '%')],
+                  ['Analytics live', i.analyticsLive],
                   [
-                    'Per 1,000 students',
-                    ((i.incidents12m / i.enrolment) * 1000).toFixed(1),
+                    'Detections (30 d)',
+                    i.detections30d === null ? '—' : suppress(i.detections30d),
                   ],
-                  ['P50 / P90 response', `${i.p50} / ${i.p90} min`],
-                  ['Students housed', `${i.housedPct}%`],
-                  ['Flood risk', i.floodRisk],
-                  ['Last drill', i.lastDrill],
+                  ['Precision', dash(i.precision, '%')],
+                  ['Median time to verify', dash(i.verifyP50, ' s')],
                 ].map(([k, v]) => (
                   <div
                     key={k as string}
@@ -429,77 +378,57 @@ function UniversityProfile({
               </div>
               <div>
                 <div className="mb-2 text-xs font-medium text-muted-foreground">
-                  Inspection directive
+                  Inspection directive: CCTV items
                 </div>
                 <ul className="grid gap-1.5">
-                  {inspectionItems.map((item, n) => {
-                    const I = cIcon[i.inspection[n]];
+                  {cctvItems.map((item, n) => {
+                    const I = cIcon[i.cctv[n]];
                     return (
                       <li
                         key={item}
                         className="flex items-center gap-2 text-sm"
                       >
                         <I
-                          className={cn(
-                            'size-4 shrink-0',
-                            cTone[i.inspection[n]],
-                          )}
+                          className={cn('size-4 shrink-0', cTone[i.cctv[n]])}
                         />
                         <span className="flex-1">{item}</span>
                         <span className="text-xs text-muted-foreground">
-                          {i.inspection[n]}
+                          {i.cctv[n]}
                         </span>
                       </li>
                     );
                   })}
                 </ul>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <div className="mb-2 text-xs font-medium text-muted-foreground">
-                    Policies adopted
-                  </div>
-                  <ul className="grid gap-1 text-sm">
-                    {policyItems.map((p, n) => (
-                      <li key={p} className="flex items-start gap-2">
-                        {i.policies[n] ? (
-                          <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-success" />
-                        ) : (
-                          <XCircle className="mt-0.5 size-3.5 shrink-0 text-critical" />
-                        )}
-                        <span>{p}</span>
-                      </li>
-                    ))}
-                  </ul>
+              <div>
+                <div className="mb-2 text-xs font-medium text-muted-foreground">
+                  Privacy & AI governance
                 </div>
-                <div>
-                  <div className="mb-2 text-xs font-medium text-muted-foreground">
-                    Privacy & AI governance
-                  </div>
-                  <ul className="grid gap-1 text-sm">
-                    {privacyItems.map((p, n) => (
-                      <li key={p} className="flex items-start gap-2">
-                        {i.privacy[n] ? (
-                          <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-success" />
-                        ) : (
-                          <XCircle className="mt-0.5 size-3.5 shrink-0 text-critical" />
-                        )}
-                        <span>{p}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <ul className="grid gap-1 text-sm sm:grid-cols-2">
+                  {privacyItems.map((p, n) => (
+                    <li key={p} className="flex items-start gap-2">
+                      {i.privacy[n] ? (
+                        <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-success" />
+                      ) : (
+                        <XCircle className="mt-0.5 size-3.5 shrink-0 text-critical" />
+                      )}
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <Note>
-                The ministry view stops at institution-level category counts.
-                Case detail, names and footage stay with the university and are
-                shared only through a formal escalation.
-              </Note>
+              {i.connection === 'Manual return' && (
+                <Note>
+                  This university is not on EzVision, so uptime, detections and
+                  precision are not measured. Its figures come from the monthly
+                  CCTV return.
+                </Note>
+              )}
               <Button
                 onClick={() =>
                   notify.success(
                     `Update requested from ${i.acronym}`,
-                    'The university security office receives the request in its EzVision inbox',
+                    'The university receives the request in its EzVision inbox',
                   )
                 }
               >
@@ -537,7 +466,7 @@ export function UniversitiesView({ focus }: { focus?: string }) {
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
         title="Universities"
-        description="Every public university and the private universities in this programme, with their safety index, inspection status and response performance."
+        description="Each university's camera estate, analytics in use, uptime and precision, and its CCTV directive status."
       />
       <ExclusionBanner />
       <Card>
@@ -579,17 +508,19 @@ export function UniversitiesView({ focus }: { focus?: string }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Institution</TableHead>
-                <TableHead className="hidden lg:table-cell">State</TableHead>
                 <TableHead className="hidden md:table-cell">Data</TableHead>
-                <TableHead className="text-right">Safety index</TableHead>
+                <TableHead className="text-right">Maturity</TableHead>
                 <TableHead className="hidden text-right sm:table-cell">
-                  Inspection
+                  Cameras
                 </TableHead>
-                <TableHead className="hidden text-right md:table-cell">
-                  Open high
+                <TableHead className="hidden text-right lg:table-cell">
+                  Coverage
+                </TableHead>
+                <TableHead className="hidden text-right lg:table-cell">
+                  Uptime
                 </TableHead>
                 <TableHead className="hidden text-right xl:table-cell">
-                  P90
+                  Precision
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -615,13 +546,10 @@ export function UniversitiesView({ focus }: { focus?: string }) {
                           {i.name}
                         </button>
                         <div className="text-xs text-muted-foreground">
-                          {i.acronym} · {i.type}
+                          {i.acronym} · {i.state}
                         </div>
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {i.state}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <Pill
@@ -637,16 +565,19 @@ export function UniversitiesView({ focus }: { focus?: string }) {
                     </Pill>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Pill t={siTone(i.safetyIndex)}>{i.safetyIndex}</Pill>
+                    <Pill t={mTone(i.maturity)}>{i.maturity}</Pill>
                   </TableCell>
                   <TableCell className="tabular hidden text-right sm:table-cell">
-                    {metCount(i)}/{inspectionItems.length}
+                    {i.cameras.toLocaleString()}
                   </TableCell>
-                  <TableCell className="tabular hidden text-right md:table-cell">
-                    {suppress(i.openHigh)}
+                  <TableCell className="tabular hidden text-right lg:table-cell">
+                    {i.coverage}%
+                  </TableCell>
+                  <TableCell className="tabular hidden text-right lg:table-cell">
+                    {dash(i.uptime, '%')}
                   </TableCell>
                   <TableCell className="tabular hidden text-right xl:table-cell">
-                    {i.p90} min
+                    {dash(i.precision, '%')}
                   </TableCell>
                 </TableRow>
               ))}
@@ -665,29 +596,24 @@ export function UniversitiesView({ focus }: { focus?: string }) {
   );
 }
 
-// ------------------------------------------------------------------ trends --
+// -------------------------------------------------------------- detections --
 
-export function TrendsView() {
-  const totals = nationalCategories.map((c) => ({
+export function DetectionsView() {
+  const totals = detectionCategories.map((c) => ({
     category: c,
     total: nationalMonthly.reduce((a, r) => a + (r[c] as number), 0),
     last: nationalMonthly.at(-1)![c] as number,
     prev: nationalMonthly.at(-2)![c] as number,
   }));
-  const byType = (['Public (UA)', 'Private (IPTS)'] as const).map((t) => {
-    const list = institutions.filter((i) => i.type === t);
-    const inc = list.reduce((a, i) => a + i.incidents12m, 0);
-    const enr = list.reduce((a, i) => a + i.enrolment, 0);
-    return { t, inc, per: ((inc / enr) * 1000).toFixed(1) };
-  });
   const catConfig = {
-    total: { label: 'Incidents (12 months)', color: 'var(--chart-1)' },
+    total: { label: 'Detections (12 months)', color: 'var(--chart-1)' },
   } satisfies ChartConfig;
+  const connected = institutions.filter((i) => i.detections30d !== null);
   return (
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
-        title="Incident trends"
-        description="Twelve months of incidents reported by universities, by category. Flood and weather rise with the east-coast monsoon; theft and medical cases follow the semester."
+        title="Detection trends"
+        description="What campus analytics detected across universities on EzVision, by category. Water-level detections rise with the east-coast monsoon; crowd density follows convocations and the semester."
       />
       <ExclusionBanner />
       <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
@@ -710,7 +636,7 @@ export function TrendsView() {
                 <YAxis
                   type="category"
                   dataKey="category"
-                  width={104}
+                  width={112}
                   tickLine={false}
                   axisLine={false}
                 />
@@ -741,13 +667,13 @@ export function TrendsView() {
                     <TableRow key={t.category}>
                       <TableCell>{t.category}</TableCell>
                       <TableCell className="tabular text-right">
-                        {t.last}
+                        {t.last.toLocaleString()}
                       </TableCell>
                       <TableCell
                         className={cn(
                           'tabular text-right',
                           d > 0
-                            ? 'text-critical'
+                            ? 'text-warning'
                             : d < 0
                               ? 'text-success'
                               : 'text-muted-foreground',
@@ -763,45 +689,97 @@ export function TrendsView() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {byType.map((b) => (
-          <Stat
-            key={b.t}
-            label={`${b.t}: incidents per 1,000 students`}
-            value={b.per}
-            hint={`${b.inc.toLocaleString()} incidents in 12 months`}
-            icon={Building2}
-          />
-        ))}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Detections per camera and precision</CardTitle>
+          <CardDescription>
+            Universities on EzVision, last 30 days
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Institution</TableHead>
+                <TableHead className="text-right">Detections</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">
+                  Per camera
+                </TableHead>
+                <TableHead className="text-right">Precision</TableHead>
+                <TableHead className="hidden text-right md:table-cell">
+                  Time to verify
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {connected.map((i) => (
+                <TableRow key={i.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <UniversityLogo
+                        id={i.id}
+                        acronym={i.acronym}
+                        className="size-7"
+                      />
+                      {i.acronym}
+                    </div>
+                  </TableCell>
+                  <TableCell className="tabular text-right">
+                    {suppress(i.detections30d!)}
+                  </TableCell>
+                  <TableCell className="tabular hidden text-right sm:table-cell">
+                    {(i.detections30d! / Math.max(1, i.analysed)).toFixed(1)}
+                  </TableCell>
+                  <TableCell className="tabular text-right">
+                    {i.precision}%
+                  </TableCell>
+                  <TableCell className="tabular hidden text-right md:table-cell">
+                    {i.verifyP50} s
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-// -------------------------------------------------------------- compliance --
+// ---------------------------------------------------------------- coverage --
 
-export function ComplianceView() {
-  const pct = (arr: boolean[][], n: number) =>
-    Math.round((arr.filter((a) => a[n]).length / arr.length) * 100);
+export function CoverageView() {
+  const uptimeData = institutions
+    .filter((i) => i.uptime !== null)
+    .sort((a, b) => b.uptime! - a.uptime!)
+    .map((i) => ({
+      acronym: i.acronym,
+      ok: i.uptime! >= 95 ? i.uptime! : 0,
+      low: i.uptime! < 95 ? i.uptime! : 0,
+    }));
+  const config = {
+    ok: { label: 'At or above 95%', color: 'var(--chart-4)' },
+    low: { label: 'Below 95%', color: 'var(--warning)' },
+  } satisfies ChartConfig;
   return (
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
-        title="Inspection & compliance"
-        description="KPT's 2025 campus and residence safety-inspection directive, the student-safety policies each university has adopted, and PDPA and AI-governance readiness."
+        title="CCTV coverage & uptime"
+        description="The CCTV items of KPT's 2025 campus and residence safety-inspection directive, and camera uptime at each university on EzVision."
       />
       <ExclusionBanner />
       <Card>
         <CardHeader>
-          <CardTitle>Inspection directive by university</CardTitle>
+          <CardTitle>Inspection directive: CCTV items by university</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="w-full min-w-[44rem] text-xs">
+          <table className="w-full min-w-[46rem] text-xs">
             <thead>
               <tr>
                 <th className="sticky left-0 bg-card p-2 text-left font-medium text-muted-foreground">
                   Institution
                 </th>
-                {inspectionItems.map((it) => (
+                {cctvItems.map((it) => (
                   <th
                     key={it}
                     className="p-2 text-center align-bottom font-medium text-muted-foreground"
@@ -823,13 +801,13 @@ export function ComplianceView() {
                       {i.acronym}
                     </button>
                   </td>
-                  {i.inspection.map((c, n) => {
+                  {i.cctv.map((c, n) => {
                     const I = cIcon[c];
                     return (
                       <td
                         key={n}
                         className="p-2 text-center"
-                        title={`${inspectionItems[n]}: ${c}`}
+                        title={`${cctvItems[n]}: ${c}`}
                       >
                         <I
                           className={cn('mx-auto size-4', cTone[c])}
@@ -844,45 +822,83 @@ export function ComplianceView() {
           </table>
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Camera uptime, last 30 days</CardTitle>
+          <CardDescription>
+            Universities on EzVision; dashed line is the 95% directive target
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={config} className="aspect-auto h-64 w-full">
+            <BarChart data={uptimeData} margin={{ left: 0, right: 8 }}>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="acronym"
+                tickLine={false}
+                axisLine={false}
+                interval={0}
+                angle={-45}
+                textAnchor="end"
+                height={50}
+                fontSize={10}
+              />
+              <YAxis
+                width={32}
+                tickLine={false}
+                axisLine={false}
+                domain={[90, 100]}
+              />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <ReferenceLine
+                y={95}
+                stroke="var(--foreground)"
+                strokeDasharray="4 4"
+              />
+              <Bar
+                dataKey="ok"
+                stackId="u"
+                fill="var(--color-ok)"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="low"
+                stackId="u"
+                fill="var(--color-low)"
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------- governance --
+
+export function GovernanceView() {
+  const pct = (n: number) =>
+    Math.round(
+      (institutions.filter((i) => i.privacy[n]).length / institutions.length) *
+        100,
+    );
+  const frOn = institutions.filter((i) => !i.privacy[4]);
+  return (
+    <div className="grid grid-cols-1 gap-5">
+      <PageHeader
+        title="Privacy & AI governance"
+        description="PDPA readiness under the 2024 amendments and MOSTI's AI governance guidelines, for every camera-analytics deployment."
+      />
+      <ExclusionBanner />
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Policy adoption</CardTitle>
-            <CardDescription>
-              Share of institutions with each policy in force
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3">
-            {policyItems.map((p, n) => {
-              const v = pct(
-                institutions.map((i) => i.policies),
-                n,
-              );
-              return (
-                <div key={p} className="grid gap-1">
-                  <div className="flex justify-between text-sm">
-                    <span>{p}</span>
-                    <span className="tabular text-muted-foreground">{v}%</span>
-                  </div>
-                  <Meter value={v} t={v >= 85 ? 'success' : 'warning'} />
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Privacy & AI governance</CardTitle>
-            <CardDescription>
-              PDPA 2024 amendments and MOSTI’s AI governance guidelines
-            </CardDescription>
+            <CardTitle>Adoption across institutions</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
             {privacyItems.map((p, n) => {
-              const v = pct(
-                institutions.map((i) => i.privacy),
-                n,
-              );
+              const v = pct(n);
               return (
                 <div key={p} className="grid gap-1">
                   <div className="flex justify-between text-sm">
@@ -900,329 +916,45 @@ export function ComplianceView() {
             })}
           </CardContent>
         </Card>
-      </div>
-    </div>
-  );
-}
-
-// ------------------------------------------------------------- escalations --
-
-export function EscalationsView() {
-  const [status, setStatus] = useState<Record<string, string>>({});
-  return (
-    <div className="grid grid-cols-1 gap-5">
-      <PageHeader
-        title="Escalations"
-        description="Events a university has escalated to the ministry: deaths and serious injuries, bomb threats, disasters, data breaches. Each carries an owner and the time of the next update."
-      />
-      <ExclusionBanner />
-      <div className="grid gap-3 lg:grid-cols-2">
-        {escalations.map((e) => {
-          const inst = institutionById(e.institution)!;
-          const s = status[e.id] ?? e.status;
-          return (
-            <Card key={e.id}>
-              <CardHeader>
-                <div className="flex items-start gap-3">
-                  <UniversityLogo
-                    id={inst.id}
-                    acronym={inst.acronym}
-                    className="size-10"
-                  />
-                  <div className="min-w-0">
-                    <CardTitle>{e.type}</CardTitle>
-                    <CardDescription>
-                      {inst.name} · {e.id}
-                    </CardDescription>
+        <Card>
+          <CardHeader>
+            <CardTitle>Facial recognition still enabled</CardTitle>
+            <CardDescription>
+              Biometric data is sensitive under the PDPA amendments. These
+              institutions need a DPIA justification or to switch it off.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2">
+            {frOn.length === 0 && (
+              <p className="text-sm text-muted-foreground">None.</p>
+            )}
+            {frOn.map((i) => (
+              <div
+                key={i.id}
+                className="flex items-center gap-3 rounded-lg border p-2.5"
+              >
+                <UniversityLogo
+                  id={i.id}
+                  acronym={i.acronym}
+                  className="size-8"
+                />
+                <div className="min-w-0 flex-1 text-sm">
+                  <div className="font-medium">{i.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    DPIA for CCTV: {i.privacy[1] ? 'filed' : 'missing'}
                   </div>
                 </div>
-                <CardAction>
-                  <Pill
-                    t={
-                      s === 'Closed'
-                        ? 'muted'
-                        : e.severity === 'Critical'
-                          ? 'critical'
-                          : 'warning'
-                    }
-                  >
-                    {s}
-                  </Pill>
-                </CardAction>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <p className="text-sm">{e.summary}</p>
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                  <dt className="text-muted-foreground">Opened</dt>
-                  <dd>{e.opened}</dd>
-                  <dt className="text-muted-foreground">Owner</dt>
-                  <dd>{e.owner}</dd>
-                  <dt className="text-muted-foreground">Next update</dt>
-                  <dd>{e.nextUpdate}</dd>
-                </dl>
-                {s !== 'Closed' && (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setStatus((x) => ({ ...x, [e.id]: 'Monitoring' }));
-                        notify.info('Acknowledged by KPT', e.id);
-                      }}
-                    >
-                      Acknowledge
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        notify.success(
-                          `Update requested from ${inst.acronym}`,
-                          e.id,
-                        )
-                      }
-                    >
-                      <Send />
-                      Request update
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setStatus((x) => ({ ...x, [e.id]: 'Closed' }));
-                        notify.success('Escalation closed', e.id);
-                      }}
-                    >
-                      Close
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ------------------------------------------------------------- residential --
-
-export function ResidentialView() {
-  const data = [...institutions]
-    .filter((i) => i.type === 'Public (UA)')
-    .sort((a, b) => b.housedPct - a.housedPct)
-    .map((i) => ({
-      acronym: i.acronym,
-      housed: i.housedPct,
-      met: i.housedPct >= 70 ? i.housedPct : 0,
-      below: i.housedPct < 70 ? i.housedPct : 0,
-    }));
-  const config = {
-    met: { label: 'At or above target (%)', color: 'var(--chart-1)' },
-    below: { label: 'Below target (%)', color: 'var(--warning)' },
-  } satisfies ChartConfig;
-  const meeting = data.filter((d) => d.housed >= 70).length;
-  return (
-    <div className="grid grid-cols-1 gap-5">
-      <PageHeader
-        title="Residential & welfare"
-        description="Residential capacity against the target of housing at least 70% of full-time undergraduates by 2035, and counselling referrals per 1,000 students."
-      />
-      <ExclusionBanner />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <Stat
-          label="Public universities at 70% or more"
-          value={`${meeting}/${data.length}`}
-          icon={Building2}
-          t="success"
-        />
-        <Stat
-          label="Counselling referrals per 1,000"
-          value={(
-            institutions.reduce((a, i) => a + i.counsellingPer1000, 0) /
-            institutions.length
-          ).toFixed(2)}
-          hint="Mean across institutions"
-          icon={Users}
-          t="info"
-        />
-        <Stat
-          label="Escalated welfare events (30 d)"
-          value="<5"
-          hint="Suppressed below 5"
-          icon={TriangleAlert}
-          t="muted"
-        />
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Students housed, public universities</CardTitle>
-          <CardDescription>Dashed line: 70% target for 2035</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={config} className="aspect-auto h-72 w-full">
-            <BarChart data={data} margin={{ left: 0, right: 8 }}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="acronym"
-                tickLine={false}
-                axisLine={false}
-                interval={0}
-                angle={-45}
-                textAnchor="end"
-                height={50}
-                fontSize={10}
-              />
-              <YAxis
-                width={28}
-                tickLine={false}
-                axisLine={false}
-                domain={[0, 100]}
-              />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <ReferenceLine
-                y={70}
-                stroke="var(--foreground)"
-                strokeDasharray="4 4"
-              />
-              <Bar
-                dataKey="met"
-                stackId="h"
-                fill="var(--color-met)"
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar
-                dataKey="below"
-                stackId="h"
-                fill="var(--color-below)"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// --------------------------------------------------------------- readiness --
-
-export function ReadinessView() {
-  const flood = institutions
-    .filter((i) => i.floodRisk !== 'Low')
-    .sort(
-      (a, b) =>
-        (a.floodRisk === 'High' ? -1 : 1) - (b.floodRisk === 'High' ? -1 : 1),
-    );
-  return (
-    <div className="grid grid-cols-1 gap-5">
-      <PageHeader
-        title="Disaster & event readiness"
-        description="Flood-exposed campuses ahead of the November–March monsoon, and high-risk events such as convocations, inter-varsity games and examinations."
-      />
-      <ExclusionBanner />
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CloudRain className="size-4 text-info" />
-              Flood exposure
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Institution</TableHead>
-                  <TableHead>Risk</TableHead>
-                  <TableHead className="hidden sm:table-cell">
-                    BCP plan
-                  </TableHead>
-                  <TableHead className="text-right">Last drill</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {flood.map((i) => (
-                  <TableRow key={i.id}>
-                    <TableCell className="whitespace-normal">
-                      <div className="flex items-center gap-2">
-                        <UniversityLogo
-                          id={i.id}
-                          acronym={i.acronym}
-                          className="size-7"
-                        />
-                        {i.acronym}
-                        <span className="hidden text-muted-foreground md:inline">
-                          · {i.city}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Pill t={i.floodRisk === 'High' ? 'critical' : 'warning'}>
-                        {i.floodRisk}
-                      </Pill>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {i.policies[6] ? (
-                        'In force'
-                      ) : (
-                        <span className="text-critical">Missing</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="tabular text-right">
-                      {i.lastDrill}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarDays className="size-4 text-primary" />
-              High-risk events
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3">
-            {nationalEvents.map((e) => {
-              const inst = institutionById(e.institution)!;
-              return (
-                <div
-                  key={e.name}
-                  className="grid grid-cols-[auto_1fr] items-center gap-3"
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    notify.success(`Justification requested from ${i.acronym}`)
+                  }
                 >
-                  <UniversityLogo
-                    id={inst.id}
-                    acronym={inst.acronym}
-                    className="size-8"
-                  />
-                  <div className="min-w-0">
-                    <div className="flex justify-between gap-2 text-sm">
-                      <span className="truncate font-medium">{e.name}</span>
-                      <span className="tabular shrink-0 text-muted-foreground">
-                        {e.readiness}%
-                      </span>
-                    </div>
-                    <div className="mb-1 text-xs text-muted-foreground">
-                      {e.when} · {e.risk}
-                    </div>
-                    <Meter
-                      value={e.readiness}
-                      t={
-                        e.readiness >= 70
-                          ? 'success'
-                          : e.readiness >= 50
-                            ? 'warning'
-                            : 'critical'
-                      }
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                  Request
+                </Button>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
@@ -1244,53 +976,57 @@ export function KptReportsView() {
         {[
           {
             title: 'Institution summary (CSV)',
-            desc: 'Safety index, inspection status, response times and suppressed incident counts per institution.',
+            desc: 'Camera estate, coverage, uptime, analytics, detections, precision and maturity per institution.',
             run: () =>
-              csvDownload('kpt-institution-summary.csv', [
+              csvDownload('kpt-camera-intelligence-summary.csv', [
                 [
                   'acronym',
                   'name',
                   'type',
                   'state',
                   'data_source',
-                  'safety_index',
-                  'inspection_met',
-                  'open_high',
-                  'incidents_12m',
-                  'p90_min',
+                  'cameras',
+                  'with_analytics',
+                  'coverage_pct',
+                  'uptime_pct',
+                  'detections_30d',
+                  'precision_pct',
+                  'maturity',
                 ],
-                ...institutions.map((i) => [
+                ...institutions.map((i: Institution) => [
                   i.acronym,
                   i.name,
                   i.type,
                   i.state,
                   i.connection,
-                  i.safetyIndex,
-                  metCount(i),
-                  suppress(i.openHigh),
-                  suppress(i.incidents12m),
-                  i.p90,
+                  i.cameras,
+                  i.analysed,
+                  i.coverage,
+                  i.uptime ?? '',
+                  i.detections30d === null ? '' : suppress(i.detections30d),
+                  i.precision ?? '',
+                  i.maturity,
                 ]),
               ]),
           },
           {
-            title: 'National monthly trend (CSV)',
-            desc: 'Twelve months by category across all reporting institutions.',
+            title: 'National detections (CSV)',
+            desc: 'Twelve months by detection category across EzVision campuses.',
             run: () =>
-              csvDownload('kpt-national-monthly.csv', [
-                ['month', ...nationalCategories],
+              csvDownload('kpt-national-detections.csv', [
+                ['month', ...detectionCategories],
                 ...nationalMonthly.map((r) => [
                   r.month as string,
-                  ...nationalCategories.map((c) => r[c] as number),
+                  ...detectionCategories.map((c) => r[c] as number),
                 ]),
               ]),
           },
           {
-            title: 'Parliamentary reply pack',
-            desc: 'One-page brief on campus safety: trends, inspection compliance, escalations and actions.',
+            title: 'Briefing note',
+            desc: 'One page on campus CCTV and analytics: coverage, uptime, governance and where to act.',
             run: () =>
               notify.success(
-                'Brief generated',
+                'Briefing note generated',
                 'Aggregates only, ready for review by the KSU office',
               ),
           },

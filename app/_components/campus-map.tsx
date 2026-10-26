@@ -2,9 +2,11 @@
 import { cn } from '@/lib/utils';
 import {
   cameras,
-  colleges,
-  officers,
-  type Incident,
+  cameraById,
+  cameraByScene,
+  zones,
+  isOpenEvent,
+  type CameraEvent,
   type Camera,
 } from '../_data/um';
 import { useDemo } from '../_lib/store';
@@ -32,7 +34,7 @@ const regions: {
     cls: 'fill-success/15 stroke-success/30',
   },
   {
-    label: 'Zone 5 · Petaling Jaya (off campus)',
+    label: 'Zone 5 · Petaling Jaya',
     x: 2,
     y: 1,
     w: 21,
@@ -114,34 +116,25 @@ const sevColour: Record<string, string> = {
   Low: 'bg-muted-foreground',
 };
 
+export type MapLayers = {
+  cameras: boolean;
+  detections: boolean;
+  occupancy: boolean;
+};
+
 export function CampusMap({
-  layers = {
-    cameras: true,
-    incidents: true,
-    officers: true,
-    colleges: true,
-    sessions: true,
-  },
+  layers = { cameras: true, detections: true, occupancy: true },
   onCamera,
-  onIncident,
-  highlightCollege,
+  onEvent,
   className,
 }: {
-  layers?: Partial<
-    Record<
-      'cameras' | 'incidents' | 'officers' | 'colleges' | 'sessions',
-      boolean
-    >
-  >;
+  layers?: Partial<MapLayers>;
   onCamera?: (c: Camera) => void;
-  onIncident?: (i: Incident) => void;
-  highlightCollege?: string;
+  onEvent?: (e: CameraEvent) => void;
   className?: string;
 }) {
   const { state } = useDemo();
-  const open = state.incidents.filter(
-    (i) => !['Resolved', 'False alarm'].includes(i.status) && !i.restricted,
-  );
+  const open = state.events.filter(isOpenEvent);
 
   return (
     <div
@@ -156,7 +149,6 @@ export function CampusMap({
         className="absolute inset-0 size-full"
         aria-hidden="true"
       >
-        {/* Roads */}
         <path
           d="M0 22 H30 Q40 22 46 14 H100"
           className="fill-none stroke-border"
@@ -225,21 +217,32 @@ export function CampusMap({
         ◂ Jalan Pantai Baru
       </span>
 
-      {layers.colleges &&
-        colleges.map((c) => (
-          <span
-            key={c.id}
-            className={cn(
-              'absolute -translate-x-1/2 -translate-y-1/2 rounded px-1 py-px text-[9px] font-semibold ring-1',
-              highlightCollege === c.id
-                ? 'z-10 bg-primary text-primary-foreground ring-primary'
-                : 'bg-card/90 text-foreground ring-border',
-            )}
-            style={{ left: `${c.pos[0]}%`, top: `${c.pos[1]}%` }}
-          >
-            {c.short}
-          </span>
-        ))}
+      {layers.occupancy &&
+        zones.map((z) => {
+          const c = cameraByScene(z.scene);
+          const pct = z.now / z.capacity;
+          const size = 14 + Math.sqrt(z.now) * 0.9;
+          return (
+            <span
+              key={z.id}
+              title={`${z.name}: ${z.now} people (${Math.round(pct * 100)}% of capacity)`}
+              className={cn(
+                'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full',
+                pct > 0.85
+                  ? 'bg-critical/25'
+                  : pct > 0.6
+                    ? 'bg-warning/25'
+                    : 'bg-primary/15',
+              )}
+              style={{
+                left: `${c.pos[0]}%`,
+                top: `${c.pos[1]}%`,
+                width: size,
+                height: size,
+              }}
+            />
+          );
+        })}
 
       {layers.cameras &&
         cameras.map((c) => (
@@ -261,70 +264,24 @@ export function CampusMap({
           />
         ))}
 
-      {layers.officers &&
-        officers.map((o) => (
-          <span
-            key={o.id}
-            title={`${o.callsign} · ${o.status}`}
-            className={cn(
-              'absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-1.5 py-px font-mono text-[9px] font-bold text-white shadow',
-              o.status === 'Responding'
-                ? 'bg-primary'
-                : o.status === 'On break'
-                  ? 'bg-muted-foreground'
-                  : 'bg-info',
-            )}
-            style={{ left: `${o.pos[0]}%`, top: `${o.pos[1] - 3}%` }}
-          >
-            {o.callsign}
-          </span>
-        ))}
-
-      {layers.sessions &&
-        state.sessions
-          .filter((s) => s.kind === 'SOS' || s.kind === 'Friend Walk')
-          .map((s) => (
-            <span
-              key={s.id}
-              title={`${s.kind} · ${s.status}`}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${s.pos[0]}%`, top: `${s.pos[1]}%` }}
-            >
-              <span
-                className={cn(
-                  'absolute -inset-2 animate-ping rounded-full',
-                  s.kind === 'SOS' ? 'bg-critical/40' : 'bg-primary/30',
-                )}
-              />
-              <span
-                className={cn(
-                  'relative block size-3 rounded-full ring-2 ring-card',
-                  s.kind === 'SOS' ? 'bg-critical' : 'bg-primary',
-                )}
-              />
-            </span>
-          ))}
-
-      {layers.incidents &&
-        open.map((i) => {
-          const cam = i.camera
-            ? cameras.find((c) => c.id === i.camera)
-            : undefined;
+      {layers.detections &&
+        open.map((e) => {
+          const cam = cameraById(e.camera);
           if (!cam) return null;
           return (
             <button
-              key={i.id}
+              key={e.id}
               type="button"
-              onClick={() => onIncident?.(i)}
-              aria-label={`${i.severity} incident: ${i.title}`}
-              title={i.title}
+              onClick={() => onEvent?.(e)}
+              aria-label={`${e.severity} detection: ${e.title}`}
+              title={e.title}
               className="absolute z-10 -translate-x-1/2 -translate-y-full focus-visible:outline-none"
               style={{ left: `${cam.pos[0]}%`, top: `${cam.pos[1]}%` }}
             >
               <span
                 className={cn(
                   'block size-4 rotate-45 rounded-sm rounded-br-none shadow ring-2 ring-card',
-                  sevColour[i.severity],
+                  sevColour[e.severity],
                 )}
               />
             </button>
@@ -338,17 +295,15 @@ export function CampusMap({
         </span>
         <span className="flex items-center gap-1">
           <span className="size-2 rounded-full bg-critical" />
-          Offline / SOS
+          Offline
         </span>
         <span className="flex items-center gap-1">
           <span className="size-2 rotate-45 bg-warning" />
-          Incident
+          Detection
         </span>
         <span className="flex items-center gap-1">
-          <span className="rounded-full bg-info px-1 font-mono text-[8px] text-white">
-            PB
-          </span>
-          Officer
+          <span className="size-2.5 rounded-full bg-primary/30" />
+          People counted
         </span>
         <span>Schematic, not to scale</span>
       </div>

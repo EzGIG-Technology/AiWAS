@@ -3,7 +3,7 @@ import { Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Severity, IncidentStatus } from '../_data/um';
+import type { Severity, EventStatus } from '../_data/um';
 
 /** Tone classes built only from design tokens. */
 export const tone = {
@@ -53,16 +53,15 @@ export function SeverityBadge({ severity }: { severity: Severity }) {
   );
 }
 
-const statusTone: Record<IncidentStatus, Tone> = {
+const statusTone: Record<EventStatus, Tone> = {
   New: 'critical',
-  Acknowledged: 'warning',
-  Dispatched: 'brand',
-  'On scene': 'info',
-  Resolved: 'success',
+  Verified: 'warning',
+  Shared: 'brand',
+  Closed: 'success',
   'False alarm': 'muted',
 };
 
-export function StatusBadge({ status }: { status: IncidentStatus }) {
+export function EventStatusBadge({ status }: { status: EventStatus }) {
   return <Pill t={statusTone[status]}>{status}</Pill>;
 }
 

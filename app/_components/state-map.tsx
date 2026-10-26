@@ -29,11 +29,9 @@ const abbr: Record<StateId, string> = {
 export function StateTileMap({
   selected,
   onSelect,
-  metric = 'openHigh',
 }: {
   selected?: StateId | null;
   onSelect?: (s: StateId | null) => void;
-  metric?: 'openHigh' | 'safetyIndex';
 }) {
   return (
     <fieldset className="grid grid-cols-6 gap-1.5">
@@ -57,28 +55,17 @@ export function StateTileMap({
           return <div key={cell} />;
         }
         const list = institutions.filter((i) => i.state === state);
-        const open = list.reduce((a, i) => a + i.openHigh, 0);
         const avg = list.length
-          ? Math.round(
-              list.reduce((a, i) => a + i.safetyIndex, 0) / list.length,
-            )
+          ? Math.round(list.reduce((a, i) => a + i.maturity, 0) / list.length)
           : 0;
         const level =
-          metric === 'openHigh'
-            ? open >= 8
-              ? 'bg-critical/80 text-white'
-              : open >= 4
-                ? 'bg-warning/70 text-white'
-                : open > 0
-                  ? 'bg-warning/25'
-                  : 'bg-success/20'
-            : avg >= 80
-              ? 'bg-success/30'
-              : avg >= 70
-                ? 'bg-warning/25'
-                : avg > 0
-                  ? 'bg-critical/25'
-                  : '';
+          avg >= 75
+            ? 'bg-success/30'
+            : avg >= 60
+              ? 'bg-warning/30'
+              : avg > 0
+                ? 'bg-critical/30'
+                : '';
         return (
           <button
             key={cell}
@@ -98,8 +85,7 @@ export function StateTileMap({
             <span className="tabular text-[9px] leading-tight opacity-90 sm:text-[10px]">
               {list.length ? `${list.length} inst.` : '—'}
               {list.length > 0 && <br />}
-              {list.length > 0 &&
-                (metric === 'openHigh' ? `${open} open` : `SI ${avg}`)}
+              {list.length > 0 && `Maturity ${avg}`}
             </span>
           </button>
         );

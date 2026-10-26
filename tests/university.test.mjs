@@ -16,32 +16,32 @@ test('camera ids are unique and positions are on the map', () => {
   }
 });
 
-test('every incident points at a real camera, officer and precinct', () => {
-  const callsigns = new Set(um.officers.map((o) => o.callsign));
-  for (const i of um.incidents) {
-    if (i.camera)
-      assert.ok(um.cameraById(i.camera), `${i.id} camera ${i.camera}`);
-    if (i.assigned)
-      assert.ok(callsigns.has(i.assigned), `${i.id} officer ${i.assigned}`);
-    assert.ok(um.precincts[i.precinct], `${i.id} precinct`);
+test('every detection comes from a camera that runs its analytic', () => {
+  for (const e of um.cameraEvents) {
+    const cam = um.cameraById(e.camera);
+    assert.ok(cam, `${e.id} camera ${e.camera}`);
+    assert.ok(um.analytics[e.analytic], `${e.id} analytic`);
+    assert.ok(
+      cam.analytics.includes(e.analytic),
+      `${e.id}: ${cam.id} does not run ${e.analytic}`,
+    );
+    assert.ok(e.confidence > 0 && e.confidence <= 1, `${e.id} confidence`);
   }
 });
 
-test('model confidence appears only on AI video candidates', () => {
-  for (const i of um.incidents) {
-    if (i.confidence !== undefined)
-      assert.equal(
-        i.source,
-        'AI video',
-        `${i.id} has confidence from ${i.source}`,
-      );
+test('the demo detections use cameras that run their analytic', () => {
+  for (const d of um.demoDetections) {
+    assert.ok(
+      um.cameraByScene(d.scene).analytics.includes(d.analytic),
+      d.title,
+    );
   }
 });
 
-test('confidential reports carry no camera', () => {
-  for (const i of um.incidents.filter((x) => x.restricted)) {
-    assert.equal(i.camera, undefined, `${i.id} restricted but linked to video`);
-    assert.equal(i.location, 'Withheld');
+test('shared detections name the team and keep the clip', () => {
+  for (const e of um.cameraEvents.filter((x) => x.status === 'Shared')) {
+    assert.ok(e.sharedWith, `${e.id} shared with nobody`);
+    assert.ok(e.bookmarked, `${e.id} clip not kept`);
   }
 });
 
@@ -68,22 +68,68 @@ test('the platform refuses facial recognition and protest monitoring in writing'
   }
 });
 
-test('residential colleges match the UM handbook numbering', () => {
-  const shorts = um.colleges.map((c) => c.short);
-  for (let n = 1; n <= 13; n++)
-    assert.ok(shorts.includes(`KK${n}`), `KK${n} missing`);
-  assert.ok(shorts.includes('IH'));
-  for (const c of um.colleges)
-    assert.ok(c.occupied <= c.beds, `${c.short} over capacity`);
+test('the scope is camera intelligence: no safety-desk workflows remain', () => {
+  const blob = JSON.stringify(um).toLowerCase();
+  for (const gone of [
+    'sos',
+    'friend walk',
+    'muster',
+    'student welfare',
+    'dispatch',
+    'guard tour',
+  ]) {
+    assert.ok(!blob.includes(gone), `data still mentions "${gone}"`);
+  }
 });
 
-test('roles without video never get the video wall', () => {
+test('counting zones and car parks sit on real cameras and within capacity', () => {
+  for (const z of um.zones) {
+    assert.ok(um.cameraByScene(z.scene), `${z.name} camera`);
+    assert.ok(
+      z.now <= z.capacity && z.peak <= z.capacity,
+      `${z.name} over capacity`,
+    );
+  }
+  for (const c of um.carParks) {
+    assert.ok(um.cameraByScene(c.scene), `${c.name} camera`);
+    assert.ok(c.occupied <= c.capacity, `${c.name} over capacity`);
+  }
+});
+
+test('footage search returns places and times only, never offline cameras', () => {
+  const results = um.searchFootage({
+    cls: 'Person',
+    precinct: 'all',
+    from: '07:00',
+    to: '20:00',
+    colour: 'Any colour',
+  });
+  assert.ok(results.length > 0);
+  for (const r of results) {
+    assert.notEqual(r.camera.status, 'offline');
+    assert.deepEqual(Object.keys(r).sort(), ['camera', 'id', 'label', 'time']);
+    assert.equal(r.label, 'Person');
+    assert.match(r.time, /^\d{2}:[0-5]\d$/);
+  }
+  const red = um.searchFootage({
+    cls: 'Vehicle',
+    precinct: 'all',
+    from: '07:00',
+    to: '20:00',
+    colour: 'Red',
+  });
+  assert.ok(red.every((r) => r.label === 'Red vehicle'));
+  assert.ok(!um.searchClasses.some((c) => /face|cloth|gender/i.test(c)));
+});
+
+test('roles without video never get the video wall or footage search', () => {
   for (const p of personas.personas.filter((x) => x.workspace === 'um')) {
     const views = umAccess[p.id];
     assert.ok(views?.length, `${p.id} has no views`);
-    if (!p.video)
+    if (!p.video) {
       assert.ok(!views.includes('wall'), `${p.id} can open the video wall`);
-    assert.ok(p.landing.startsWith('/um/'), `${p.id} lands outside UM`);
+      assert.ok(!views.includes('search'), `${p.id} can search footage`);
+    }
     assert.ok(
       views.includes(p.landing.split('/')[2]),
       `${p.id} lands on a view it cannot open`,
@@ -91,7 +137,7 @@ test('roles without video never get the video wall', () => {
   }
 });
 
-test('every college count and the edge appliances add up to the camera estate', () => {
+test('edge appliances add up to the camera estate', () => {
   const total = um.edgeAppliances.reduce((a, e) => a + e.cameras, 0);
   assert.equal(total, um.cameras.length);
 });

@@ -9,12 +9,12 @@ import { KptWorkspace } from './_views/kpt/workspace';
 import { AppsWorkspace } from './_views/apps/workspace';
 
 /**
- * EzVision Campus Safety: one client application with three workspaces.
+ * EzVision camera intelligence: one client application with three workspaces.
  *
  *   #/            demo sign-in
- *   #/um/<view>   Universiti Malaya security & student-affairs workspace
+ *   #/um/<view>   Universiti Malaya camera-intelligence workspace
  *   #/kpt/<view>  KPT national oversight (aggregates only)
- *   #/app/<app>   EzSafe student app and EzPatrol officer app
+ *   #/app/mobile  EzVision Mobile camera-alert app
  */
 export default function Home() {
   return (
@@ -44,5 +44,5 @@ function Router() {
     return <UmWorkspace persona={persona} view={parts[1]} sub={parts[2]} />;
   if (ws === 'kpt')
     return <KptWorkspace persona={persona} view={parts[1]} sub={parts[2]} />;
-  return <AppsWorkspace app={parts[1]} />;
+  return <AppsWorkspace />;
 }

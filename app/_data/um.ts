@@ -1,10 +1,12 @@
 /**
- * Universiti Malaya demonstration data.
+ * Universiti Malaya camera-intelligence demonstration data.
  *
- * Place names, residential colleges, the shuttle hub name and the security
- * organisation come from docs/research/university-campus-safety-audit.md
- * (§9). People, incidents, plates and every number are fictional
- * demonstration data. The demo clock is fixed so every render is identical.
+ * Everything here is something a camera and its analytics produce: camera
+ * status, AI detections, anonymous counts, crowd density, plate reads and
+ * searchable recorded footage. Place names come from
+ * docs/research/university-campus-safety-audit.md (§9). Detections, plates,
+ * people and numbers are fictional. The demo clock is fixed so every render
+ * is identical.
  */
 import type { SceneKey } from './media';
 
@@ -22,7 +24,6 @@ export const university = {
   academicStaff: 2000,
   supportStaff: 3500,
   securityUnit: 'Bahagian Keselamatan & Polis Bantuan UM',
-  hotline: '03-7967 7070',
 } as const;
 
 // ------------------------------------------------------------- precincts --
@@ -185,7 +186,7 @@ export const analytics: Record<
   traffic: {
     name: 'Wrong-way / speeding',
     detects: 'Vehicles against the one-way flow or above 30 km/h.',
-    cannot: 'Issue a summons. A patrol officer decides.',
+    cannot: 'Issue a summons. Enforcement is decided by a person.',
     threshold: 0.75,
     status: 'Live',
   },
@@ -282,7 +283,7 @@ export const exclusions = [
   {
     name: 'Attendance or location tracking of students',
     reason:
-      'Adult students are not tracked. Location is shared only when a student starts an SOS, Friend Walk or check-in, and only for that session.',
+      'Adult students are not tracked. Cameras count people anonymously per zone; no analytic follows, logs or locates a named person.',
   },
 ] as const;
 
@@ -811,6 +812,7 @@ const cameraSeeds: CamSeed[] = [
   ],
 ];
 
+// Tamper detection (covered, moved or defocused lens) runs on every camera.
 export const cameras: Camera[] = cameraSeeds.map(
   ([scene, name, precinct, building, a, pos, status, partner], i) => ({
     id: `UM-C${String(i + 1).padStart(3, '0')}`,
@@ -818,7 +820,7 @@ export const cameras: Camera[] = cameraSeeds.map(
     scene,
     precinct,
     building,
-    analytics: a,
+    analytics: a.includes('tamper') ? a : [...a, 'tamper'],
     status: status ?? 'online',
     partner,
     pos,
@@ -829,458 +831,38 @@ export const cameraById = (id: string) => cameras.find((c) => c.id === id);
 export const cameraByScene = (scene: SceneKey) =>
   cameras.find((c) => c.scene === scene)!;
 
-// -------------------------------------------------------- residential --
+const cam = (scene: SceneKey) => cameraByScene(scene).id;
 
-export type College = {
-  id: string;
-  name: string;
-  short: string;
-  beds: number;
-  occupied: number;
-  wardenOnDuty: string;
-  doorAlarms: number;
-  visitorsOnSite: number;
-  overstays: number;
-  maintenance: number;
-  incidents30d: number;
-  zone: 'Main campus' | 'Zone 5 · PJ';
-  note?: string;
-  pos: [number, number];
-};
-
-const collegeSeeds: [
-  string,
-  string,
-  number,
-  number,
-  string,
-  number,
-  number,
-  number,
-  number,
-  number,
-  [number, number],
-  string?,
-][] = [
-  [
-    'KK1',
-    'Kolej Tuanku Abdul Rahman',
-    820,
-    781,
-    'Felo Haziq',
-    1,
-    4,
-    0,
-    2,
-    3,
-    [60, 22],
-    'Oldest college, built 1959',
-  ],
-  [
-    'KK2',
-    'Kolej Tuanku Bahiyah',
-    760,
-    742,
-    'Felo Mei Ling',
-    0,
-    2,
-    0,
-    1,
-    1,
-    [64, 20],
-  ],
-  [
-    'KK3',
-    'Kolej Tuanku Kurshiah',
-    740,
-    701,
-    'Felo Aiman',
-    2,
-    3,
-    1,
-    3,
-    4,
-    [68, 18],
-  ],
-  ['KK4', 'Kolej Bestari', 900, 884, 'Felo Kavitha', 1, 5, 0, 0, 2, [72, 22]],
-  ['KK5', 'Kolej Dayasari', 880, 859, 'Felo Rahim', 0, 1, 0, 2, 1, [74, 26]],
-  [
-    'KK6',
-    'Kolej Ibnu Sina',
-    640,
-    612,
-    'Felo Dr. Lee',
-    0,
-    0,
-    0,
-    1,
-    0,
-    [80, 44],
-    'Clinical students: medicine, dentistry, pharmacy',
-  ],
-  ['KK7', "Kolej Za'ba", 860, 840, 'Felo Nadia', 3, 6, 2, 4, 6, [66, 34]],
-  ['KK8', 'Kolej Kinabalu', 820, 797, 'Felo Jeffrey', 1, 2, 0, 1, 2, [62, 38]],
-  [
-    'KK9',
-    'Kolej Tun Syed Zahiruddin',
-    1100,
-    1043,
-    'Felo Suresh',
-    2,
-    7,
-    1,
-    2,
-    5,
-    [14, 8],
-    'Off main campus, Zone 5 Petaling Jaya',
-  ],
-  [
-    'KK10',
-    'Kolej Tun Ahmad Zaidi',
-    980,
-    951,
-    'Felo Wan Aina',
-    0,
-    3,
-    0,
-    1,
-    2,
-    [76, 30],
-  ],
-  [
-    'KK11',
-    'Kolej Ungku Aziz',
-    1200,
-    1164,
-    'Felo Syafiq',
-    1,
-    4,
-    0,
-    2,
-    3,
-    [78, 24],
-    'Foundation (PASUM) students',
-  ],
-  [
-    'KK12',
-    'Kolej Raja Dr Nazrin Shah',
-    2100,
-    2032,
-    'Felo Amirul',
-    4,
-    9,
-    2,
-    3,
-    7,
-    [70, 30],
-    'Largest residential college',
-  ],
-  [
-    'KK13',
-    'Kolej Kediaman 13',
-    1600,
-    1488,
-    'Felo Farhana',
-    2,
-    4,
-    1,
-    5,
-    4,
-    [74, 36],
-    'Blocks include Blok Zainab',
-  ],
-  [
-    'IH',
-    'International House',
-    420,
-    377,
-    'Felo Grace',
-    0,
-    3,
-    0,
-    1,
-    1,
-    [8, 8],
-    'Zone 5 Petaling Jaya',
-  ],
-];
-
-export const colleges: College[] = collegeSeeds.map(
-  ([
-    short,
-    name,
-    beds,
-    occupied,
-    wardenOnDuty,
-    doorAlarms,
-    visitorsOnSite,
-    overstays,
-    maintenance,
-    incidents30d,
-    pos,
-    note,
-  ]) => ({
-    id: short.toLowerCase(),
-    short,
-    name,
-    beds,
-    occupied,
-    wardenOnDuty,
-    doorAlarms,
-    visitorsOnSite,
-    overstays,
-    maintenance,
-    incidents30d,
-    zone: short === 'KK9' || short === 'IH' ? 'Zone 5 · PJ' : 'Main campus',
-    note,
-    pos,
-  }),
-);
-
-export const collegeById = (id: string) => colleges.find((c) => c.id === id);
-
-// ---------------------------------------------------------------- officers --
-
-export type OfficerStatus = 'Responding' | 'On patrol' | 'At post' | 'On break';
-export type Officer = {
-  id: string;
-  callsign: string;
-  name: string;
-  rank: string;
-  status: OfficerStatus;
-  precinct: PrecinctId;
-  beat: string;
-  shiftEnds: string;
-  pos: [number, number];
-};
-
-export const officers: Officer[] = [
-  [
-    'PB-01',
-    'Hafiz Rahman',
-    'Kpl. Polis Bantuan',
-    'Responding',
-    'academic',
-    'Library – Law loop',
-    [37, 44],
-  ],
-  [
-    'PB-02',
-    'Nurul Izzati',
-    'Kons. Polis Bantuan',
-    'On patrol',
-    'residential',
-    'KK10 – KK13 loop',
-    [73, 32],
-  ],
-  [
-    'PB-03',
-    'Ravi Chandran',
-    'Sjn. Polis Bantuan',
-    'At post',
-    'gates',
-    'Main gate',
-    [10, 23],
-  ],
-  [
-    'PB-04',
-    'Lim Wei Jie',
-    'Kons. Polis Bantuan',
-    'On patrol',
-    'estates',
-    'Engineering & stores',
-    [60, 70],
-  ],
-  [
-    'PB-05',
-    'Siti Aminah',
-    'Kons. Polis Bantuan',
-    'On patrol',
-    'transit',
-    'UM Central & LRT link',
-    [24, 15],
-  ],
-  [
-    'PB-06',
-    'Daniel Jimbun',
-    'Kpl. Polis Bantuan',
-    'Responding',
-    'residential',
-    'KK1 – KK5 loop',
-    [66, 24],
-  ],
-  [
-    'PB-07',
-    'Farah Hanim',
-    'Kons. Polis Bantuan',
-    'At post',
-    'ummc',
-    'UMMC perimeter liaison',
-    [84, 54],
-  ],
-  [
-    'PB-08',
-    'Mohd Aiman',
-    'Kons. Polis Bantuan',
-    'On break',
-    'admin',
-    'Canselori',
-    [41, 35],
-  ],
-  [
-    'PB-09',
-    'Kamal Ariffin',
-    'Sjn. Polis Bantuan',
-    'On patrol',
-    'zone5',
-    'KK9 & International House',
-    [12, 7],
-  ],
-  [
-    'PB-10',
-    'Priya Devi',
-    'Kons. Polis Bantuan',
-    'At post',
-    'academic',
-    'DTC convocation',
-    [43, 23],
-  ],
-  [
-    'SG-11',
-    'Ahmad Zaki',
-    'Pengawal Keselamatan',
-    'On patrol',
-    'development',
-    'Contractor site gate',
-    [28, 79],
-  ],
-  [
-    'SG-12',
-    'Tan Mei Ling',
-    'Pengawal Keselamatan',
-    'At post',
-    'gates',
-    'Jalan Pantai Baru entrance',
-    [90, 70],
-  ],
-].map(([callsign, name, rank, status, precinct, beat, pos], i) => ({
-  id: `off-${i + 1}`,
-  callsign: callsign as string,
-  name: name as string,
-  rank: rank as string,
-  status: status as OfficerStatus,
-  precinct: precinct as PrecinctId,
-  beat: beat as string,
-  shiftEnds: '23:00',
-  pos: pos as [number, number],
-}));
-
-export const guardTours = [
-  {
-    route: 'Academic core night tour',
-    officer: 'PB-01',
-    checkpoints: 14,
-    done: 9,
-    missed: 1,
-    due: '19:30',
-  },
-  {
-    route: 'Residential loop A (KK1–KK5)',
-    officer: 'PB-06',
-    checkpoints: 12,
-    done: 7,
-    missed: 0,
-    due: '19:15',
-  },
-  {
-    route: 'Residential loop B (KK10–KK13)',
-    officer: 'PB-02',
-    checkpoints: 16,
-    done: 11,
-    missed: 2,
-    due: '19:45',
-  },
-  {
-    route: 'Estates & stores',
-    officer: 'PB-04',
-    checkpoints: 10,
-    done: 6,
-    missed: 0,
-    due: '20:00',
-  },
-  {
-    route: 'Zone 5 · KK9 & International House',
-    officer: 'PB-09',
-    checkpoints: 8,
-    done: 8,
-    missed: 0,
-    due: '19:00',
-  },
-  {
-    route: 'Rimba Ilmu boundary',
-    officer: '—',
-    checkpoints: 9,
-    done: 0,
-    missed: 3,
-    due: 'Overdue',
-  },
-];
-
-// --------------------------------------------------------------- incidents --
+// ------------------------------------------------------------ detections --
 
 export type Severity = 'Critical' | 'High' | 'Medium' | 'Low';
-export type IncidentStatus =
+export type EventStatus =
   | 'New'
-  | 'Acknowledged'
-  | 'Dispatched'
-  | 'On scene'
-  | 'Resolved'
-  | 'False alarm';
-export type IncidentSource =
-  | 'AI video'
-  | 'Student app SOS'
-  | 'Help point'
-  | 'Access control'
-  | 'Sensor'
-  | 'Patrol report'
-  | 'Confidential report'
-  | 'Staff report';
-export type IncidentCategory =
-  | 'Personal safety'
-  | 'Medical'
-  | 'Intrusion'
-  | 'Violence'
-  | 'Theft'
-  | 'Fire & smoke'
-  | 'Flood & weather'
-  | 'Traffic'
-  | 'Wildlife'
-  | 'Harassment'
-  | 'Facilities'
-  | 'Suspicious item';
+  | 'Verified'
+  | 'False alarm'
+  | 'Shared'
+  | 'Closed';
 
-export type Incident = {
+/**
+ * One AI detection from one camera. Every event has a camera and a model
+ * confidence, because every event is produced by an analytic; nothing here
+ * comes from a phone, a door sensor or a person's report.
+ */
+export type CameraEvent = {
   id: string;
   title: string;
-  category: IncidentCategory;
+  analytic: AnalyticId;
   severity: Severity;
-  status: IncidentStatus;
-  source: IncidentSource;
-  analytic?: AnalyticId;
-  /** Model confidence, only for AI video candidates. */
-  confidence?: number;
-  camera?: string;
-  location: string;
-  precinct: PrecinctId;
-  college?: string;
+  status: EventStatus;
+  confidence: number;
+  camera: string;
   time: string;
   date: string;
-  assigned?: string;
   summary: string;
-  /** Visible only to case officers; never to KPT and never in exports. */
-  restricted?: boolean;
+  bookmarked?: boolean;
+  /** Team the verified clip was handed to, if any. */
+  sharedWith?: string;
   timeline: { time: string; text: string; actor: string }[];
-  sop: { step: string; done: boolean }[];
 };
 
 const T = (time: string, text: string, actor: string) => ({
@@ -1288,663 +870,479 @@ const T = (time: string, text: string, actor: string) => ({
   text,
   actor,
 });
-const cam = (scene: SceneKey) => cameraByScene(scene).id;
 
-export const incidents: Incident[] = [
-  {
-    id: 'UM-26-1043',
-    title: 'SOS: student in student-centre car park',
-    category: 'Personal safety',
-    severity: 'Critical',
-    status: 'Dispatched',
-    source: 'Student app SOS',
-    location: 'Student centre car park, on the library to KK12 route',
-    precinct: 'academic',
-    time: '18:36',
-    date: '2026-10-26',
-    assigned: 'PB-01',
-    camera: cam('retail-carpark'),
-    summary:
-      'A Friend Walk from the library to KK12 escalated to SOS. Location sharing started with the SOS and ends when the incident closes. Nearest camera auto-opened.',
-    timeline: [
+type EventSeed = [
+  id: number,
+  scene: SceneKey,
+  analytic: AnalyticId,
+  title: string,
+  severity: Severity,
+  status: EventStatus,
+  confidence: number,
+  time: string,
+  summary: string,
+  after?: { time: string; text: string; actor: string }[],
+  sharedWith?: string,
+];
+
+const eventSeeds: EventSeed[] = [
+  [
+    1043,
+    'office-carpark',
+    'flood',
+    'Water above gauge line in basement car park',
+    'High',
+    'New',
+    0.88,
+    '18:29',
+    'Standing water passed the 10 cm painted gauge. The level sensor on the same wall agrees. This car park flooded in October 2024.',
+  ],
+  [
+    1042,
+    'machine-cell',
+    'intrusion',
+    'Person in machining workshop after hours',
+    'High',
+    'New',
+    0.81,
+    '18:27',
+    'One person at the machine cell; the workshop closes at 18:00. Could be a researcher working late.',
+  ],
+  [
+    1041,
+    'roof-access',
+    'intrusion',
+    'Person at rooftop access after hours',
+    'High',
+    'Shared',
+    0.79,
+    '18:24',
+    'One person passed the rooftop door outside permitted hours. Verified and handed to the security desk.',
+    [
+      T('18:25', 'Verified on live view', 'Operator Aina'),
+      T('18:25', 'Clip shared with security desk', 'Operator Aina'),
+    ],
+    'Security desk',
+  ],
+  [
+    1040,
+    'security-queue',
+    'crowd',
+    'Crowd density 3.7 p/m² at convocation bag check',
+    'Medium',
+    'Verified',
+    0.91,
+    '18:20',
+    'Queue for the evening convocation session exceeded 3.5 people per m² for two minutes.',
+    [T('18:21', 'Verified; event team notified', 'Operator Aina')],
+  ],
+  [
+    1039,
+    'hostel',
+    'wildlife',
+    'Macaques in KK12 lobby',
+    'Low',
+    'New',
+    0.79,
+    '18:14',
+    'Two macaques entered through the lobby door, likely from the Block C bin store.',
+  ],
+  [
+    1038,
+    'canteen',
+    'aggression',
+    'Possible altercation in cafeteria',
+    'Medium',
+    'New',
+    0.77,
+    '18:11',
+    'Rapid contact movement between three tracks. Pilot analytic: verify on video before anyone acts.',
+  ],
+  [
+    1037,
+    'ambulance-bay',
+    'keepclear',
+    'Vehicle stopped in ambulance lane',
+    'High',
+    'Shared',
+    0.93,
+    '17:58',
+    'Private car stopped in the keep-clear lane for 4 minutes. Clip shared with UMMC security.',
+    [
+      T('17:59', 'Verified', 'Operator Aina'),
+      T('17:59', 'Shared with UMMC security', 'Operator Aina'),
+      T('18:03', 'Lane clear on camera', 'EzVision'),
+    ],
+    'UMMC security',
+  ],
+  [
+    1036,
+    'transit-concourse',
+    'abandoned',
+    'Unattended bag at UM Central',
+    'High',
+    'False alarm',
+    0.82,
+    '17:42',
+    'Backpack stationary for 5 minutes. Owner visible returning at 17:45; marked false alarm.',
+    [T('17:45', 'Owner returned on camera; false alarm', 'Operator Aina')],
+  ],
+  [
+    1035,
+    'care-lounge',
+    'fall',
+    'Person on floor in rehabilitation lounge',
+    'Critical',
+    'Shared',
+    0.9,
+    '13:05',
+    'Person on the floor and not moving for 20 seconds. Clip shared with the ward station.',
+    [
+      T('13:05', 'Verified', 'Operator Hakim'),
+      T('13:05', 'Shared with ward station', 'Operator Hakim'),
+      T('13:06', 'Staff visible attending', 'EzVision'),
+    ],
+    'UMMC ward station',
+  ],
+  [
+    1034,
+    'charging-bay',
+    'smoke',
+    'Smoke cue at forklift charging bay',
+    'High',
+    'False alarm',
+    0.61,
+    '14:48',
+    'Dust from sweeping. Zone mask suggested for the floor area.',
+    [T('14:50', 'Checked against fire panel; false alarm', 'Operator Hakim')],
+  ],
+  [
+    1033,
+    'site-entrance',
+    'intrusion',
+    'Entry to contractor site after hours',
+    'Medium',
+    'Closed',
+    0.86,
+    '17:20',
+    'Two people entered after 17:00. The contractor confirmed its night watchman.',
+    [
+      T('17:24', 'Verified; contractor confirmed', 'Operator Aina'),
+      T('17:30', 'Closed', 'Operator Aina'),
+    ],
+  ],
+  [
+    1032,
+    'site-scaffold',
+    'ppe',
+    'Missing hard hat on scaffold',
+    'Low',
+    'Closed',
+    0.81,
+    '10:32',
+    'Worker without a hard hat on the level 2 scaffold.',
+    [
       T(
-        '18:31',
-        'Friend Walk started: Perpustakaan Utama to KK12',
-        'EzSafe app',
+        '10:40',
+        'Shared with contractor safety officer; closed',
+        'Operator Hakim',
       ),
-      T('18:36', 'SOS pressed. Live location shared with SOC', 'EzSafe app'),
-      T('18:36', 'Nearest car-park camera opened on video wall', 'EzVision'),
-      T('18:37', 'Acknowledged; callback attempted', 'Operator Aina'),
-      T('18:37', 'PB-01 dispatched, ETA 2 min', 'Operator Aina'),
     ],
-    sop: [
-      { step: 'Call the student back', done: true },
-      { step: 'Dispatch nearest officer', done: true },
-      { step: 'Keep camera on wall until officer on scene', done: true },
-      { step: 'Officer confirms student safe', done: false },
-      { step: 'Log lighting fault if relevant', done: false },
-    ],
-  },
-  {
-    id: 'UM-26-1042',
-    title: 'Work Alone check-in missed: machining workshop',
-    category: 'Personal safety',
-    severity: 'High',
-    status: 'Acknowledged',
-    source: 'Staff report',
-    location: 'Engineering machining workshop',
-    precinct: 'estates',
-    camera: cam('machine-cell'),
-    time: '18:30',
+  ],
+  [
+    1031,
+    'gate',
+    'traffic',
+    'Wrong-way vehicle at main gate',
+    'Low',
+    'Closed',
+    0.84,
+    '12:10',
+    'Car entered through the exit lane.',
+    [T('12:12', 'Verified; closed', 'Operator Hakim')],
+  ],
+  [
+    1030,
+    'pharmacy-door',
+    'tailgating',
+    'Pharmacy store door held open 90 s',
+    'Medium',
+    'Closed',
+    0.74,
+    '16:55',
+    'Door held during a stock delivery, visible on camera.',
+    [T('16:57', 'Verified as delivery; closed', 'Operator Hakim')],
+  ],
+  [
+    1029,
+    'retail-checkout',
+    'queue',
+    'Queue over 12 at campus mart checkout',
+    'Low',
+    'Closed',
+    0.88,
+    '12:35',
+    'Lunchtime queue passed the configured length of 12.',
+    [T('12:50', 'Queue cleared; closed', 'EzVision')],
+  ],
+  [
+    1028,
+    'care-laundry',
+    'tamper',
+    'Lens partly obscured: rehabilitation laundry',
+    'Medium',
+    'New',
+    0.83,
+    '16:05',
+    'Image sharpness fell by 60% and has not recovered. Likely condensation or a moved camera.',
+  ],
+  [
+    1027,
+    'taxi-rank',
+    'keepclear',
+    'Vehicle idling 14 min in e-hailing bay',
+    'Low',
+    'Closed',
+    0.7,
+    '15:10',
+    'Vehicle stopped in the pick-up bay beyond its 10-minute limit.',
+    [T('15:14', 'Verified; driver left; closed', 'Operator Hakim')],
+  ],
+  [
+    1026,
+    'turnstile-line',
+    'tailgating',
+    'Two entries on one pass at Canselori turnstiles',
+    'Medium',
+    'Verified',
+    0.76,
+    '08:42',
+    'Two people passed one turnstile cycle.',
+    [T('08:45', 'Verified', 'Operator Hakim')],
+  ],
+  [
+    1025,
+    'restricted-door',
+    'intrusion',
+    'Person at data centre door after hours',
+    'High',
+    'Closed',
+    0.88,
+    '01:20',
+    'One person at the server hall door at 01:20. IT on-call engineer, confirmed by IT.',
+    [T('01:24', 'Verified; IT confirmed on-call visit', 'Operator Hakim')],
+  ],
+  [
+    1024,
+    'site-road',
+    'traffic',
+    'Vehicle at 42 km/h on haul road',
+    'Low',
+    'Closed',
+    0.8,
+    '09:15',
+    'Above the 30 km/h site limit.',
+    [T('09:20', 'Shared with contractor; closed', 'Operator Hakim')],
+  ],
+];
+
+export const cameraEvents: CameraEvent[] = eventSeeds.map(
+  ([
+    id,
+    scene,
+    analytic,
+    title,
+    severity,
+    status,
+    confidence,
+    time,
+    summary,
+    after = [],
+    sharedWith,
+  ]) => ({
+    id: `EV-26-${id}`,
+    title,
+    analytic,
+    severity,
+    status,
+    confidence,
+    camera: cam(scene),
+    time,
     date: '2026-10-26',
-    assigned: 'PB-04',
-    summary:
-      'A registered researcher working alone did not answer the 18:30 check-in. Camera shows a person at the machine cell; officer asked to attend.',
+    summary,
+    sharedWith,
+    bookmarked: status === 'Shared',
     timeline: [
-      T(
-        '17:30',
-        'Work Alone session started (2 h, 30 min check-ins)',
-        'EzSafe app',
-      ),
-      T('18:30', 'Check-in missed; automatic reminder sent', 'EzSafe app'),
-      T('18:33', 'Escalated to SOC', 'EzVision'),
-      T('18:34', 'Acknowledged; PB-04 asked to attend', 'Operator Aina'),
+      T(time, `${analytics[analytic].name} detected`, 'EzVision'),
+      ...after,
     ],
-    sop: [
-      { step: 'Call the researcher', done: true },
-      { step: 'View workshop camera', done: true },
-      { step: 'Officer attends in person', done: false },
-    ],
-  },
+  }),
+);
+
+export const isOpenEvent = (e: { status: EventStatus }) =>
+  e.status === 'New' || e.status === 'Verified';
+
+/** Cameras an operator can raise a demo detection on, with its analytic. */
+export const demoDetections: {
+  scene: SceneKey;
+  analytic: AnalyticId;
+  title: string;
+  severity: Severity;
+}[] = [
   {
-    id: 'UM-26-1041',
-    title: 'Water level rising in basement car park',
-    category: 'Flood & weather',
-    severity: 'High',
-    status: 'New',
-    source: 'AI video',
-    analytic: 'flood',
-    confidence: 0.88,
-    camera: cam('office-carpark'),
-    location: 'Faculty of Law, basement car park',
-    precinct: 'transit',
-    time: '18:29',
-    date: '2026-10-26',
-    summary:
-      'Standing water passed the 10 cm gauge line. The level sensor agrees. This car park flooded in October 2024; consider closing the ramp and notifying vehicle owners.',
-    timeline: [
-      T('18:12', 'Heavy rain warning (MetMalaysia) received', 'Weather feed'),
-      T('18:29', 'Water above gauge line; sensor reads 11 cm', 'EzVision'),
-    ],
-    sop: [
-      { step: 'Confirm on camera', done: false },
-      { step: 'Close basement ramp barrier', done: false },
-      {
-        step: 'Send flood notice to Law faculty car-park permit holders',
-        done: false,
-      },
-      { step: 'Raise Estates work order for pumps', done: false },
-    ],
-  },
-  {
-    id: 'UM-26-1040',
-    title: 'Rooftop door opened after hours',
-    category: 'Intrusion',
-    severity: 'High',
-    status: 'Dispatched',
-    source: 'Access control',
+    scene: 'perimeter',
     analytic: 'intrusion',
-    camera: cam('roof-access'),
-    location: 'Engineering tower, rooftop access',
-    precinct: 'estates',
-    time: '18:24',
-    date: '2026-10-26',
-    assigned: 'PB-04',
-    summary:
-      'Rooftop door contact opened outside permitted hours. Rooftop access is treated as a welfare-priority alarm. Approach calmly, do not broadcast.',
-    timeline: [
-      T('18:24', 'Door contact opened (no valid card read)', 'Access control'),
-      T('18:24', 'Rooftop camera opened automatically', 'EzVision'),
-      T('18:25', 'PB-04 dispatched; welfare SOP selected', 'Operator Aina'),
-    ],
-    sop: [
-      { step: 'View rooftop camera', done: true },
-      { step: 'Dispatch officer with welfare SOP', done: true },
-      { step: 'Notify duty counsellor on standby', done: false },
-    ],
+    title: 'Person on Rimba Ilmu boundary path after dark',
+    severity: 'High',
   },
   {
-    id: 'UM-26-1039',
-    title: 'Crowd density high at convocation entry',
-    category: 'Personal safety',
-    severity: 'Medium',
-    status: 'On scene',
-    source: 'AI video',
-    analytic: 'crowd',
-    confidence: 0.91,
-    camera: cam('security-queue'),
-    location: 'Dewan Tunku Canselor, bag check',
-    precinct: 'academic',
-    time: '18:20',
-    date: '2026-10-26',
-    assigned: 'PB-10',
-    summary:
-      'Queue for the evening convocation session exceeded 3.5 people per m². Second bag-check lane requested.',
-    timeline: [
-      T('18:20', 'Density above 3.5 p/m² for 2 min', 'EzVision'),
-      T('18:21', 'Event commander notified', 'EzVision'),
-      T('18:23', 'PB-10 opened second lane', 'PB-10'),
-    ],
-    sop: [
-      { step: 'Open second lane', done: true },
-      { step: 'Announce staggered entry on PA', done: false },
-    ],
-  },
-  {
-    id: 'UM-26-1038',
-    title: 'Macaques in KK12 lobby',
-    category: 'Wildlife',
-    severity: 'Low',
-    status: 'Acknowledged',
-    source: 'AI video',
-    analytic: 'wildlife',
-    confidence: 0.79,
-    camera: cam('hostel'),
-    location: 'KK12 Raja Dr Nazrin Shah, lobby',
-    precinct: 'residential',
-    college: 'kk12',
-    time: '18:14',
-    date: '2026-10-26',
-    summary:
-      'Two macaques entered through the lobby door. Food-waste bins at Block C uncovered. Estates notified to secure bins.',
-    timeline: [
-      T('18:14', 'Wildlife detected in lobby', 'EzVision'),
-      T('18:15', 'College office notified', 'EzVision'),
-    ],
-    sop: [
-      { step: 'Notify college office', done: true },
-      { step: 'Secure bin store', done: false },
-    ],
-  },
-  {
-    id: 'UM-26-1037',
-    title: 'Possible altercation at cafeteria',
-    category: 'Violence',
-    severity: 'Medium',
-    status: 'New',
-    source: 'AI video',
+    scene: 'corridor',
     analytic: 'aggression',
-    confidence: 0.77,
-    camera: cam('canteen'),
-    location: 'Cafeteria, student centre',
-    precinct: 'student',
-    time: '18:11',
-    date: '2026-10-26',
-    summary:
-      'Rapid contact movement between three tracks. Pilot analytic: an operator must verify before any dispatch or notification.',
-    timeline: [T('18:11', 'Aggression candidate flagged (pilot)', 'EzVision')],
-    sop: [
-      { step: 'Verify on video before acting', done: false },
-      {
-        step: 'If confirmed, dispatch and note for HEP welfare referral',
-        done: false,
-      },
-    ],
+    title: 'Possible altercation in Engineering corridor',
+    severity: 'Medium',
   },
   {
-    id: 'UM-26-1036',
-    title: 'Ambulance bay blocked',
-    category: 'Traffic',
-    severity: 'High',
-    status: 'Resolved',
-    source: 'AI video',
-    analytic: 'keepclear',
-    confidence: 0.93,
-    camera: cam('ambulance-bay'),
-    location: 'UMMC ambulance bay',
-    precinct: 'ummc',
-    time: '17:58',
-    date: '2026-10-26',
-    assigned: 'PB-07',
-    summary:
-      'Private car stopped in the ambulance lane for 4 minutes. Driver moved on by PB-07.',
-    timeline: [
-      T('17:58', 'Keep-clear breach', 'EzVision'),
-      T('17:59', 'UMMC security liaison informed', 'Operator Aina'),
-      T('18:03', 'Vehicle moved; closed', 'PB-07'),
-    ],
-    sop: [
-      { step: 'Inform UMMC liaison', done: true },
-      { step: 'Clear lane', done: true },
-    ],
-  },
-  {
-    id: 'UM-26-1035',
-    title: 'Unattended bag at shuttle hub',
-    category: 'Suspicious item',
-    severity: 'High',
-    status: 'False alarm',
-    source: 'AI video',
+    scene: 'courtyard',
     analytic: 'abandoned',
-    confidence: 0.82,
-    camera: cam('transit-concourse'),
-    location: 'UM Central shuttle hub, concourse',
-    precinct: 'transit',
-    time: '17:42',
-    date: '2026-10-26',
-    assigned: 'PB-05',
-    summary:
-      'Backpack left beside bench. Owner returned within 3 minutes. Marked false alarm.',
-    timeline: [
-      T('17:42', 'Object stationary 5 min with no track nearby', 'EzVision'),
-      T('17:43', 'PB-05 attending', 'Operator Aina'),
-      T('17:45', 'Owner returned; false alarm', 'PB-05'),
-    ],
-    sop: [
-      { step: 'Do not use radio within 15 m', done: true },
-      { step: 'Officer checks area', done: true },
-    ],
-  },
-  {
-    id: 'UM-26-1034',
-    title: 'Fallen tree across Jalan Pantai Baru entrance',
-    category: 'Flood & weather',
-    severity: 'High',
-    status: 'On scene',
-    source: 'Patrol report',
-    location: 'Jalan Pantai Baru entrance',
-    precinct: 'gates',
-    time: '17:35',
-    date: '2026-10-26',
-    assigned: 'SG-12',
-    summary:
-      'Storm brought down a tree across the inbound lane. Shuttle route C diverted via main gate. Estates tree crew on site.',
-    timeline: [
-      T('17:35', 'Patrol photo report submitted', 'SG-12'),
-      T('17:38', 'Shuttle route C diversion notice sent', 'Operator Aina'),
-      T('17:50', 'Estates tree crew on scene', 'Estates'),
-    ],
-    sop: [
-      { step: 'Cone off lane', done: true },
-      { step: 'Divert shuttle route', done: true },
-      { step: 'Notify UMMC (ambulance approach)', done: true },
-      { step: 'Reopen and log', done: false },
-    ],
-  },
-  {
-    id: 'UM-26-1033',
-    title: 'Unauthorised entry to contractor site',
-    category: 'Intrusion',
+    title: 'Unattended object in FASS courtyard',
     severity: 'Medium',
-    status: 'Resolved',
-    source: 'AI video',
-    analytic: 'intrusion',
-    confidence: 0.86,
-    camera: cam('site-entrance'),
-    location: 'Research complex site, gate',
-    precinct: 'development',
-    time: '17:20',
-    date: '2026-10-26',
-    assigned: 'SG-11',
-    summary:
-      "Two people entered after the contractor left at 17:00. Turned out to be the contractor's night watchman arriving early.",
-    timeline: [
-      T('17:20', 'After-hours intrusion', 'EzVision'),
-      T('17:24', 'SG-11 verified identity at gate', 'SG-11'),
-    ],
-    sop: [{ step: 'Verify at site gate', done: true }],
-  },
-  {
-    id: 'UM-26-1032',
-    title: 'Pharmacy store door held open',
-    category: 'Intrusion',
-    severity: 'Medium',
-    status: 'Resolved',
-    source: 'Access control',
-    analytic: 'tailgating',
-    camera: cam('pharmacy-door'),
-    location: 'UMMC pharmacy store door',
-    precinct: 'ummc',
-    time: '16:55',
-    date: '2026-10-26',
-    summary:
-      'Door held for 90 seconds during a stock delivery. Delivery confirmed by pharmacy.',
-    timeline: [
-      T('16:55', 'Door held > 60 s', 'Access control'),
-      T('16:57', 'Pharmacy confirmed delivery', 'UMMC liaison'),
-    ],
-    sop: [{ step: 'Confirm with pharmacy', done: true }],
-  },
-  {
-    id: 'UM-26-1031',
-    title: 'Laptop reported stolen in library',
-    category: 'Theft',
-    severity: 'Medium',
-    status: 'Acknowledged',
-    source: 'Staff report',
-    location: 'Perpustakaan Utama, level 2 study area',
-    precinct: 'academic',
-    time: '16:40',
-    date: '2026-10-26',
-    assigned: 'PB-01',
-    summary:
-      'Reported at the library counter. No cameras cover study areas; the closed-stacks and entrance cameras are being reviewed by time window.',
-    timeline: [
-      T('16:40', 'Report taken at library counter', 'Library staff'),
-      T('16:52', 'Footage review requested (entrance, 15:30–16:30)', 'PB-01'),
-    ],
-    sop: [
-      { step: 'Take statement', done: true },
-      { step: 'Request footage review via DPO log', done: true },
-      { step: 'Advise police report if value > RM1,000', done: false },
-    ],
-  },
-  {
-    id: 'UM-26-1030',
-    title: 'Confidential report: harassment',
-    category: 'Harassment',
-    severity: 'High',
-    status: 'Acknowledged',
-    source: 'Confidential report',
-    location: 'Withheld',
-    precinct: 'academic',
-    time: '15:12',
-    date: '2026-10-26',
-    restricted: true,
-    summary:
-      'Submitted through the EzSafe confidential lane. Details visible to the case officer and HEP only. No video is attached to welfare cases.',
-    timeline: [
-      T('15:12', 'Confidential report received', 'EzSafe app'),
-      T('15:40', 'Assigned to HEP case officer', 'HEP'),
-    ],
-    sop: [
-      { step: 'Acknowledge to reporter within 24 h', done: true },
-      { step: 'Case officer contact', done: false },
-    ],
-  },
-  {
-    id: 'UM-26-1029',
-    title: 'Smoke cue at forklift charging bay',
-    category: 'Fire & smoke',
-    severity: 'High',
-    status: 'False alarm',
-    source: 'AI video',
-    analytic: 'smoke',
-    confidence: 0.61,
-    camera: cam('charging-bay'),
-    location: 'Central stores, forklift charging bay',
-    precinct: 'estates',
-    time: '14:48',
-    date: '2026-10-26',
-    assigned: 'PB-04',
-    summary:
-      'Dust from sweeping triggered the smoke cue. Fire panel clear. Marked false alarm; zone mask suggested.',
-    timeline: [
-      T('14:48', 'Smoke cue', 'EzVision'),
-      T('14:50', 'Fire panel checked: clear', 'Operator Hakim'),
-      T('14:55', 'False alarm', 'PB-04'),
-    ],
-    sop: [{ step: 'Check fire panel', done: true }],
-  },
-  {
-    id: 'UM-26-1028',
-    title: 'Person down in rehabilitation lounge',
-    category: 'Medical',
-    severity: 'Critical',
-    status: 'Resolved',
-    source: 'AI video',
-    analytic: 'fall',
-    confidence: 0.9,
-    camera: cam('care-lounge'),
-    location: 'Rehabilitation centre, day lounge',
-    precinct: 'ummc',
-    time: '13:05',
-    date: '2026-10-26',
-    summary:
-      'Patient fall detected; ward nurse attended within 40 seconds. Handed to UMMC clinical team.',
-    timeline: [
-      T('13:05', 'Person down > 20 s', 'EzVision'),
-      T('13:05', 'Ward nurse station alerted', 'EzVision'),
-      T('13:06', 'Nurse on scene; handed to UMMC', 'UMMC'),
-    ],
-    sop: [{ step: 'Alert ward station', done: true }],
-  },
-  {
-    id: 'UM-26-1027',
-    title: 'Wrong-way vehicle at main gate',
-    category: 'Traffic',
-    severity: 'Low',
-    status: 'Resolved',
-    source: 'AI video',
-    analytic: 'traffic',
-    confidence: 0.84,
-    camera: cam('gate'),
-    location: 'Main gate, Jalan Universiti',
-    precinct: 'gates',
-    time: '12:10',
-    date: '2026-10-26',
-    assigned: 'PB-03',
-    summary: 'Car entered via the exit lane. Advised by PB-03.',
-    timeline: [
-      T('12:10', 'Wrong-way entry', 'EzVision'),
-      T('12:12', 'Driver advised', 'PB-03'),
-    ],
-    sop: [{ step: 'Advise driver', done: true }],
-  },
-  {
-    id: 'UM-26-1026',
-    title: 'Missing PPE on scaffold',
-    category: 'Facilities',
-    severity: 'Low',
-    status: 'Resolved',
-    source: 'AI video',
-    analytic: 'ppe',
-    confidence: 0.81,
-    camera: cam('site-scaffold'),
-    location: 'Research complex site, scaffold face',
-    precinct: 'development',
-    time: '10:32',
-    date: '2026-10-26',
-    summary:
-      'Worker without hard hat on level 2 scaffold. Contractor safety officer notified.',
-    timeline: [
-      T('10:32', 'PPE non-compliance', 'EzVision'),
-      T('10:40', 'Contractor SHO acknowledged', 'Contractor'),
-    ],
-    sop: [{ step: 'Notify contractor safety officer', done: true }],
-  },
-  {
-    id: 'UM-26-1025',
-    title: 'Help point call: Rimba Ilmu path',
-    category: 'Personal safety',
-    severity: 'Medium',
-    status: 'Resolved',
-    source: 'Help point',
-    camera: cam('perimeter'),
-    location: 'Rimba Ilmu boundary path, help point HP-07',
-    precinct: 'gates',
-    time: '01:12',
-    date: '2026-10-26',
-    summary:
-      'Student asked for an escort to KK8 after a late lab. Escort completed by PB-04.',
-    timeline: [
-      T('01:12', 'Help point call answered', 'Operator Hakim'),
-      T('01:20', 'Escort completed', 'PB-04'),
-    ],
-    sop: [{ step: 'Offer escort', done: true }],
-  },
-  {
-    id: 'UM-26-1024',
-    title: 'Camera offline: southern boundary fence',
-    category: 'Facilities',
-    severity: 'Medium',
-    status: 'Acknowledged',
-    source: 'Sensor',
-    analytic: 'tamper',
-    camera: cam('transit-fence'),
-    location: 'Southern boundary fence, Pantai Dalam',
-    precinct: 'gates',
-    time: '23:48',
-    date: '2026-10-25',
-    summary:
-      'Camera stopped reporting after the storm. This stretch is not being watched; a patrol checkpoint has been added until repaired.',
-    timeline: [
-      T('23:48', 'Heartbeat lost', 'EzVision'),
-      T('07:30', 'Work order raised with Estates', 'Operator Hakim'),
-    ],
-    sop: [
-      { step: 'Add temporary patrol checkpoint', done: true },
-      { step: 'Estates repair', done: false },
-    ],
   },
 ];
 
-// ------------------------------------------------------ app sessions (SOS) --
+// -------------------------------------------------- occupancy & footfall --
 
-export const appSessions = [
+export type Zone = {
+  id: string;
+  name: string;
+  scene: SceneKey;
+  capacity: number;
+  now: number;
+  peak: number;
+  peakAt: string;
+  dwellMin: number;
+};
+
+const zoneSeeds: [string, SceneKey, number, number, number, string, number][] =
+  [
+    ['Dewan Tunku Canselor', 'hall', 3200, 1840, 2950, '10:40', 95],
+    ['Cafeteria, student centre', 'canteen', 400, 352, 388, '12:50', 34],
+    ['Convocation bag check', 'security-queue', 250, 186, 241, '18:20', 9],
+    ['UM Central concourse', 'transit-concourse', 600, 244, 520, '17:10', 6],
+    [
+      'Universiti LRT link bridge',
+      'escalator-landing',
+      200,
+      132,
+      196,
+      '17:25',
+      2,
+    ],
+    ['UMMC Emergency waiting area', 'ed-waiting', 90, 71, 84, '15:30', 52],
+    ['FASS courtyard', 'courtyard', 300, 64, 210, '13:05', 11],
+    ['Campus mart', 'shop-entrance', 120, 58, 109, '12:40', 8],
+    ['International House lounge', 'gate-hold', 80, 37, 61, '16:00', 22],
+    ['Canselori lobby', 'office-lobby', 150, 22, 96, '08:50', 4],
+    ['KK12 lobby', 'hostel', 60, 14, 41, '18:05', 7],
+    ['FBE lift lobby', 'lift-lobby', 80, 11, 66, '09:55', 2],
+  ];
+
+export const zones: Zone[] = zoneSeeds.map(
+  ([name, scene, capacity, now, peak, peakAt, dwellMin], i) => ({
+    id: `z${i + 1}`,
+    name,
+    scene,
+    capacity,
+    now,
+    peak,
+    peakAt,
+    dwellMin,
+  }),
+);
+
+/** Hourly people counts (entries per hour), anonymous line crossings. */
+export const footfall = [
+  { hour: '07:00', cafeteria: 120, central: 410, dtc: 60 },
+  { hour: '08:00', cafeteria: 340, central: 980, dtc: 420 },
+  { hour: '09:00', cafeteria: 280, central: 760, dtc: 1650 },
+  { hour: '10:00', cafeteria: 310, central: 620, dtc: 2100 },
+  { hour: '11:00', cafeteria: 520, central: 540, dtc: 900 },
+  { hour: '12:00', cafeteria: 910, central: 700, dtc: 380 },
+  { hour: '13:00', cafeteria: 860, central: 650, dtc: 240 },
+  { hour: '14:00', cafeteria: 430, central: 590, dtc: 1480 },
+  { hour: '15:00', cafeteria: 390, central: 610, dtc: 1720 },
+  { hour: '16:00', cafeteria: 360, central: 880, dtc: 640 },
+  { hour: '17:00', cafeteria: 470, central: 1240, dtc: 310 },
+  { hour: '18:00', cafeteria: 610, central: 890, dtc: 1950 },
+];
+
+/** Average weekday occupancy (% of capacity) by hour, for space planning. */
+export const utilisation = [
   {
-    id: 'S-881',
-    kind: 'SOS',
-    who: 'Student · Faculty of Science',
-    from: 'Perpustakaan Utama',
-    to: 'KK12',
-    started: '18:36',
-    status: 'Officer en route',
-    pos: [38, 44] as [number, number],
+    zone: 'Cafeteria',
+    values: [12, 38, 30, 34, 58, 96, 90, 46, 41, 38, 49, 64],
   },
   {
-    id: 'S-879',
-    kind: 'Friend Walk',
-    who: 'Student · FSKTM',
-    from: 'FSKTM',
-    to: 'KK8',
-    started: '18:33',
-    status: 'Walking · 4 min left',
-    pos: [58, 40] as [number, number],
+    zone: 'UM Central',
+    values: [28, 72, 55, 44, 39, 50, 47, 42, 44, 63, 88, 64],
   },
   {
-    id: 'S-878',
-    kind: 'Friend Walk',
-    who: 'Student · FBE',
-    from: 'UM Central',
-    to: 'KK4',
-    started: '18:30',
-    status: 'Walking · 6 min left',
-    pos: [40, 22] as [number, number],
+    zone: 'FASS courtyard',
+    values: [4, 18, 22, 25, 31, 61, 70, 34, 27, 22, 19, 12],
   },
   {
-    id: 'S-877',
-    kind: 'Escort request',
-    who: 'Staff · Faculty of Medicine',
-    from: 'UMMC staff car park',
-    to: 'Faculty of Medicine',
-    started: '18:28',
-    status: 'Waiting for officer',
-    pos: [82, 62] as [number, number],
+    zone: 'Campus mart',
+    values: [10, 35, 40, 44, 66, 91, 84, 52, 48, 50, 61, 47],
   },
   {
-    id: 'S-876',
-    kind: 'Safety timer',
-    who: 'Researcher · Engineering',
-    from: 'Machining workshop',
-    to: '—',
-    started: '17:30',
-    status: 'Check-in missed',
-    pos: [59, 60] as [number, number],
-  },
-  {
-    id: 'S-874',
-    kind: 'Safety timer',
-    who: 'Student · Creative Arts',
-    from: 'Dewan Budaya',
-    to: '—',
-    started: '18:00',
-    status: 'Due 19:00',
-    pos: [45, 30] as [number, number],
+    zone: 'Canselori lobby',
+    values: [8, 64, 52, 41, 33, 22, 25, 37, 35, 30, 14, 5],
   },
 ];
 
-export const helpPoints = Array.from({ length: 24 }, (_, i) => ({
-  id: `HP-${String(i + 1).padStart(2, '0')}`,
-  ok: ![6, 17].includes(i),
-}));
+// ---------------------------------------------------------------- vehicles --
 
-// --------------------------------------------------- visitors & vehicles --
+export const carParks = [
+  {
+    name: 'Student centre car park',
+    scene: 'retail-carpark' as SceneKey,
+    capacity: 420,
+    occupied: 388,
+  },
+  {
+    name: 'UMMC visitor car park',
+    scene: 'hosp-carpark' as SceneKey,
+    capacity: 600,
+    occupied: 571,
+  },
+  {
+    name: 'Faculty of Law basement',
+    scene: 'office-carpark' as SceneKey,
+    capacity: 180,
+    occupied: 96,
+    note: 'Ramp closed: water on gauge',
+  },
+  {
+    name: 'Rehabilitation drop-off',
+    scene: 'care-carpark' as SceneKey,
+    capacity: 40,
+    occupied: 18,
+  },
+];
 
-export const visitors = [
-  {
-    pass: 'V-2210',
-    name: 'Parent visit (pre-registered)',
-    host: 'KK12 resident',
-    place: 'KK12',
-    in: '17:05',
-    until: '19:00',
-    status: 'On site',
-  },
-  {
-    pass: 'V-2209',
-    name: 'Contractor · lift maintenance',
-    host: 'Estates',
-    place: 'Canselori',
-    in: '14:00',
-    until: '18:00',
-    status: 'Overstayed',
-  },
-  {
-    pass: 'V-2208',
-    name: 'Guest speaker',
-    host: 'Faculty of Law',
-    place: 'Faculty of Law',
-    in: '15:30',
-    until: '19:30',
-    status: 'On site',
-  },
-  {
-    pass: 'V-2207',
-    name: 'Convocation guests (family of 4)',
-    host: 'Graduate',
-    place: 'Dewan Tunku Canselor',
-    in: '17:40',
-    until: '22:00',
-    status: 'On site',
-  },
-  {
-    pass: 'V-2206',
-    name: 'Courier',
-    host: 'Mailroom',
-    place: 'Canselori',
-    in: '16:10',
-    until: '16:40',
-    status: 'Left',
-  },
-  {
-    pass: 'V-2205',
-    name: 'Parent visit',
-    host: 'KK7 resident',
-    place: 'KK7',
-    in: '16:00',
-    until: '18:00',
-    status: 'Overstayed',
-  },
-  {
-    pass: 'V-2204',
-    name: 'Industry partner',
-    host: 'FSKTM',
-    place: 'FSKTM',
-    in: '—',
-    until: '20:00',
-    status: 'Expected',
-  },
-  {
-    pass: 'V-2203',
-    name: 'Contractor · tree crew',
-    host: 'Estates',
-    place: 'Jalan Pantai Baru',
-    in: '17:50',
-    until: '21:00',
-    status: 'On site',
-  },
-] as const;
+export const gateFlow = [
+  { hour: '07:00', in: 820, out: 140 },
+  { hour: '08:00', in: 1460, out: 310 },
+  { hour: '09:00', in: 990, out: 420 },
+  { hour: '10:00', in: 610, out: 380 },
+  { hour: '11:00', in: 520, out: 470 },
+  { hour: '12:00', in: 640, out: 690 },
+  { hour: '13:00', in: 580, out: 610 },
+  { hour: '14:00', in: 540, out: 500 },
+  { hour: '15:00', in: 470, out: 620 },
+  { hour: '16:00', in: 520, out: 980 },
+  { hour: '17:00', in: 690, out: 1420 },
+  { hour: '18:00', in: 910, out: 860 },
+];
 
 export const plateReads = [
   {
@@ -2005,17 +1403,17 @@ export const plateReads = [
   },
 ] as const;
 
-// ------------------------------------------------------------------ events --
+// ------------------------------------------------------------ crowd events --
 
-export const events = [
+export const crowdEvents = [
   {
     name: 'UM Convocation 2026, Day 3 (evening session)',
     place: 'Dewan Tunku Canselor',
     when: 'Today, 19:30',
     status: 'Live',
-    attendance: 3200,
-    staff: 46,
-    readiness: 92,
+    expected: 3200,
+    counted: 1840,
+    limit: 3.5,
     cameras: [
       cam('hall'),
       cam('security-queue'),
@@ -2028,20 +1426,10 @@ export const events = [
     place: 'Playing fields',
     when: 'Sat 31 Oct, 20:00',
     status: 'Planned',
-    attendance: 800,
-    staff: 12,
-    readiness: 64,
+    expected: 800,
+    counted: 0,
+    limit: 3,
     cameras: [cam('inspection')],
-  },
-  {
-    name: 'Final examinations, semester 1',
-    place: 'All faculties',
-    when: 'From 18 Jan 2027',
-    status: 'Planned',
-    attendance: 21000,
-    staff: 60,
-    readiness: 30,
-    cameras: [],
   },
 ] as const;
 
@@ -2057,182 +1445,101 @@ export const densitySeries = [
   { t: '18:40', dtc: 2.4, gate: 2.0 },
 ];
 
-// ---------------------------------------------------------- emergencies --
+// --------------------------------------------------------- forensic search --
 
-export const broadcastTemplates = [
-  {
-    id: 'flood',
-    name: 'Flash flood warning',
-    channels: ['App push', 'SMS', 'Email', 'PA'],
-    audience: 'Geofence',
-  },
-  {
-    id: 'storm',
-    name: 'Severe storm / fallen trees',
-    channels: ['App push', 'Email'],
-    audience: 'Whole campus',
-  },
-  {
-    id: 'bomb',
-    name: 'Bomb threat: evacuate building',
-    channels: ['App push', 'SMS', 'PA'],
-    audience: 'Geofence',
-  },
-  {
-    id: 'fire',
-    name: 'Fire: evacuate building',
-    channels: ['App push', 'PA'],
-    audience: 'Building',
-  },
-  {
-    id: 'lockdown',
-    name: 'Shelter in place',
-    channels: ['App push', 'SMS', 'PA', 'Desktop'],
-    audience: 'Whole campus',
-  },
-  {
-    id: 'haze',
-    name: 'Haze: API above 200',
-    channels: ['App push', 'Email'],
-    audience: 'Whole campus',
-  },
+export const searchClasses = [
+  'Person',
+  'Vehicle',
+  'Bag or object',
+  'Bicycle or motorcycle',
+] as const;
+export type SearchClass = (typeof searchClasses)[number];
+export const vehicleColours = [
+  'Any colour',
+  'White',
+  'Silver',
+  'Black',
+  'Red',
+  'Blue',
 ] as const;
 
-export const broadcasts = [
-  {
-    time: '17:38',
-    template: 'Severe storm / fallen trees',
-    audience: 'Whole campus',
-    reach: 31840,
-    read: 0.71,
-  },
-  {
-    time: '12:00',
-    template: 'Convocation traffic advisory',
-    audience: 'Staff & students',
-    reach: 30210,
-    read: 0.64,
-  },
-  {
-    time: 'Fri 10:00',
-    template: 'Evacuation drill: Faculty of Science',
-    audience: 'Faculty of Science',
-    reach: 4620,
-    read: 0.93,
-  },
-];
-
-export const muster = {
-  drill: 'Evacuation drill · Faculty of Science (Fri 23 Oct)',
-  invited: 4620,
-  safe: 4198,
-  needHelp: 3,
-  noResponse: 419,
-  points: [
-    { name: 'Assembly point A · Padang', count: 1820 },
-    { name: 'Assembly point B · Tasik Varsiti', count: 1504 },
-    { name: 'Assembly point C · Car park 3', count: 874 },
-  ],
+const classFor: Partial<Record<AnalyticId, SearchClass[]>> = {
+  lpr: ['Vehicle', 'Bicycle or motorcycle'],
+  traffic: ['Vehicle'],
+  keepclear: ['Vehicle'],
+  abandoned: ['Bag or object', 'Person'],
 };
 
-// -------------------------------------------------------- welfare (HEP) --
+/**
+ * Recorded-footage search by time, place and object class. People can be
+ * found only as "a person, here, at this time": there is no search by face,
+ * clothing or appearance. Every search needs a purpose and is audited.
+ */
+export function searchFootage(q: {
+  cls: SearchClass;
+  precinct: PrecinctId | 'all';
+  from: string;
+  to: string;
+  colour: (typeof vehicleColours)[number];
+}) {
+  const hours = (t: string) => Number(t.slice(0, 2)) + Number(t.slice(3)) / 60;
+  const lo = hours(q.from);
+  const hi = hours(q.to);
+  const out: { id: string; camera: Camera; time: string; label: string }[] = [];
+  cameras
+    .filter((c) => c.status !== 'offline')
+    .filter((c) => q.precinct === 'all' || c.precinct === q.precinct)
+    .forEach((c, ci) => {
+      const classes = c.analytics.flatMap((a) => classFor[a] ?? ['Person']);
+      if (!classes.includes(q.cls)) return;
+      for (let k = 0; k < 3; k++) {
+        const h = 7 + ((ci * 7 + k * 5) % 12) + ((ci + k) % 4) * 0.25;
+        if (h < lo || h > hi) continue;
+        const colour =
+          q.cls === 'Vehicle' ? vehicleColours[1 + ((ci + k) % 5)] : null;
+        if (q.colour !== 'Any colour' && colour && colour !== q.colour)
+          continue;
+        const hh = String(Math.floor(h)).padStart(2, '0');
+        const mm = String(
+          Math.round((h % 1) * 60) + ((ci * 3 + k) % 14),
+        ).padStart(2, '0');
+        out.push({
+          id: `${c.id}-${k}`,
+          camera: c,
+          time: `${hh}:${mm}`,
+          label: colour ? `${colour} vehicle` : q.cls,
+        });
+      }
+    });
+  return out.sort((a, b) => a.time.localeCompare(b.time));
+}
 
-export const welfareCategories = [
-  'Medical',
-  'Personal safety',
-  'Harassment',
-  'Bullying',
-  'Theft',
-  'Mental-health referral',
-  'Accident',
-] as const;
+// ------------------------------------------------------------- reporting --
 
-/** Monthly student-involved cases, last 6 months, aggregated. */
-export const welfareMonthly = [
-  {
-    month: 'May',
-    Medical: 21,
-    'Personal safety': 9,
-    Harassment: 3,
-    Bullying: 2,
-    Theft: 14,
-    'Mental-health referral': 11,
-    Accident: 6,
-  },
-  {
-    month: 'Jun',
-    Medical: 18,
-    'Personal safety': 7,
-    Harassment: 2,
-    Bullying: 1,
-    Theft: 11,
-    'Mental-health referral': 9,
-    Accident: 5,
-  },
-  {
-    month: 'Jul',
-    Medical: 16,
-    'Personal safety': 6,
-    Harassment: 4,
-    Bullying: 2,
-    Theft: 10,
-    'Mental-health referral': 8,
-    Accident: 4,
-  },
-  {
-    month: 'Aug',
-    Medical: 24,
-    'Personal safety': 11,
-    Harassment: 5,
-    Bullying: 3,
-    Theft: 15,
-    'Mental-health referral': 14,
-    Accident: 7,
-  },
-  {
-    month: 'Sep',
-    Medical: 27,
-    'Personal safety': 13,
-    Harassment: 4,
-    Bullying: 4,
-    Theft: 17,
-    'Mental-health referral': 16,
-    Accident: 8,
-  },
-  {
-    month: 'Oct',
-    Medical: 25,
-    'Personal safety': 15,
-    Harassment: 6,
-    Bullying: 3,
-    Theft: 13,
-    'Mental-health referral': 18,
-    Accident: 6,
-  },
+/** Detection to operator verification, seconds. */
+export const verifyTimes = [
+  { week: 'W36', p50: 48, p90: 140 },
+  { week: 'W37', p50: 44, p90: 131 },
+  { week: 'W38', p50: 45, p90: 128 },
+  { week: 'W39', p50: 39, p90: 117 },
+  { week: 'W40', p50: 36, p90: 104 },
+  { week: 'W41', p50: 33, p90: 99 },
+  { week: 'W42', p50: 34, p90: 101 },
+  { week: 'W43', p50: 29, p90: 88 },
 ];
 
-export const appUsage = [
-  { month: 'May', sos: 9, walks: 412, escorts: 61, timers: 140 },
-  { month: 'Jun', sos: 6, walks: 288, escorts: 44, timers: 102 },
-  { month: 'Jul', sos: 7, walks: 301, escorts: 47, timers: 118 },
-  { month: 'Aug', sos: 12, walks: 690, escorts: 93, timers: 221 },
-  { month: 'Sep', sos: 14, walks: 802, escorts: 118, timers: 268 },
-  { month: 'Oct', sos: 13, walks: 851, escorts: 126, timers: 290 },
+export const uptimeWeekly = [
+  { week: 'W36', uptime: 97.9 },
+  { week: 'W37', uptime: 98.4 },
+  { week: 'W38', uptime: 98.1 },
+  { week: 'W39', uptime: 96.2 },
+  { week: 'W40', uptime: 97.6 },
+  { week: 'W41', uptime: 98.7 },
+  { week: 'W42', uptime: 98.2 },
+  { week: 'W43', uptime: 96.8 },
 ];
 
-// ------------------------------------------------- analytics & reporting --
-
-export const responseTimes = [
-  { week: 'W36', p50: 3.4, p90: 7.9 },
-  { week: 'W37', p50: 3.1, p90: 7.2 },
-  { week: 'W38', p50: 3.3, p90: 7.4 },
-  { week: 'W39', p50: 2.9, p90: 6.8 },
-  { week: 'W40', p50: 2.8, p90: 6.1 },
-  { week: 'W41', p50: 2.6, p90: 5.9 },
-  { week: 'W42', p50: 2.7, p90: 6.2 },
-  { week: 'W43', p50: 2.4, p90: 5.6 },
-];
-
+/** Operator-verified outcomes over 90 days. */
 export const verification = [
   { analytic: 'Crowd density', confirmed: 61, false: 7 },
   { analytic: 'After-hours intrusion', confirmed: 44, false: 12 },
@@ -2243,47 +1550,47 @@ export const verification = [
   { analytic: 'Smoke / fire', confirmed: 2, false: 6 },
 ];
 
-/** KPT 2025 safety-inspection directive: campus and residence checklist. */
-export const inspectionChecklist = [
+/** CCTV items from KPT's 2025 campus safety-inspection directive. */
+export const cctvChecklist = [
   {
-    item: 'Access control working at every residential college entrance',
+    item: 'CCTV covers residential college entrances and common corridors',
     status: 'Met',
-    evidence: '14/14 colleges, door audit 20 Oct',
+    evidence: '14/14 colleges on the coverage map',
   },
   {
-    item: 'CCTV covers college entrances and common corridors',
+    item: 'CCTV covers campus entrances and car parks',
     status: 'Met',
-    evidence: 'Coverage map export, 60 cameras',
+    evidence: 'Both gates, 5 car parks',
   },
   {
-    item: 'Safe, well-lit walking routes (lighting audit)',
+    item: 'Camera uptime at least 95% over 30 days',
+    status: 'Met',
+    evidence: '96.8% in week 43',
+  },
+  {
+    item: 'Offline cameras repaired within 72 hours',
     status: 'Partly met',
-    evidence: '6 dark-spot tickets open',
+    evidence: 'Southern fence camera offline 19 h, awaiting parts',
   },
   {
-    item: 'Hostel visitor entry/exit procedure in use',
+    item: 'Coverage map and camera register filed',
     status: 'Met',
-    evidence: 'Visitor log, 2 overstays today',
+    evidence: 'Register export, 60 cameras',
   },
   {
-    item: 'Rapid incident response (P90 under 8 min)',
+    item: '30-day retention applied and purged on schedule',
     status: 'Met',
-    evidence: 'P90 5.6 min, week 43',
+    evidence: 'Auto-purge log, daily',
   },
   {
-    item: 'Community policing liaison with PDRM',
+    item: 'CCTV signage at every covered zone',
     status: 'Met',
-    evidence: 'Monthly meeting minutes',
+    evidence: 'Signage register, 48 zones',
   },
   {
-    item: 'Flood and business-continuity plan tested',
-    status: 'Partly met',
-    evidence: 'Drill done; Law car park pumps pending',
-  },
-  {
-    item: 'Rooftop and ledge access secured',
+    item: 'Rooftop and ledge access covered',
     status: 'Not met',
-    evidence: '3 of 9 rooftop doors lack alarms',
+    evidence: '3 of 9 rooftop doors have no camera',
   },
 ] as const;
 
@@ -2292,8 +1599,8 @@ export const inspectionChecklist = [
 export const accessRequests = [
   {
     id: 'FR-311',
-    requester: 'Kpl. Hafiz Rahman (PB-01)',
-    purpose: 'Theft investigation UM-26-1031',
+    requester: 'Kpl. Hafiz Rahman (Polis Bantuan)',
+    purpose: 'Theft report, library entrance (police ref. BRK/1042/26)',
     cameras: `${cam('records-corridor')}, ${cam('lift-lobby')}`,
     window: '26 Oct 15:30–16:30',
     status: 'Approved',
@@ -2330,32 +1637,32 @@ export const accessRequests = [
 
 export const auditLog = [
   {
-    time: '18:37',
-    who: 'Operator Aina',
-    action: 'Viewed live',
-    target: cam('retail-carpark'),
-    reason: 'Incident UM-26-1043',
-  },
-  {
     time: '18:25',
     who: 'Operator Aina',
     action: 'Viewed live',
     target: cam('roof-access'),
-    reason: 'Incident UM-26-1040',
+    reason: 'Event EV-26-1041',
   },
   {
-    time: '16:52',
-    who: 'Kpl. Hafiz Rahman',
-    action: 'Requested playback',
-    target: cam('records-corridor'),
-    reason: 'FR-311',
+    time: '18:21',
+    who: 'Operator Aina',
+    action: 'Viewed live',
+    target: cam('security-queue'),
+    reason: 'Event EV-26-1040',
+  },
+  {
+    time: '17:12',
+    who: 'Operator Hakim',
+    action: 'Searched footage: Vehicle, Transit & parking, 16:00–17:00',
+    target: '5 cameras',
+    reason: 'Parking complaint ref. P-221',
   },
   {
     time: '16:58',
     who: 'DPO',
     action: 'Approved playback',
     target: 'FR-311',
-    reason: 'Theft investigation',
+    reason: 'Police-referenced theft report',
   },
   {
     time: '17:05',
@@ -2380,8 +1687,8 @@ export const retention = [
     basis: 'Security of premises',
   },
   {
-    data: 'Incident evidence clips',
-    period: '1 year, or until case closed',
+    data: 'Verified event clips',
+    period: '1 year, or until the matter closes',
     basis: 'Investigation',
   },
   {
@@ -2390,15 +1697,11 @@ export const retention = [
     basis: 'Parking and access control',
   },
   {
-    data: 'App SOS location trail',
-    period: '90 days',
-    basis: 'Incident review',
+    data: 'Anonymous counts (occupancy, footfall)',
+    period: '2 years, aggregated hourly',
+    basis: 'Space planning',
   },
-  {
-    data: 'Friend Walk location',
-    period: 'Deleted when the walk ends',
-    basis: 'Consent',
-  },
+  { data: 'Footage search queries', period: '1 year', basis: 'Accountability' },
   { data: 'Audit log', period: '7 years', basis: 'Accountability' },
 ] as const;
 
@@ -2409,14 +1712,14 @@ export const dpiaRegister = [
     reviewed: 'Aug 2026',
   },
   {
-    system: 'EzSafe student & staff app',
-    status: 'Approved',
-    reviewed: 'Sep 2026',
-  },
-  {
     system: 'Plate reading (LPR) at gates',
     status: 'Approved',
     reviewed: 'Jul 2026',
+  },
+  {
+    system: 'Anonymous occupancy counting',
+    status: 'Approved',
+    reviewed: 'Sep 2026',
   },
   {
     system: 'Aggression analytic pilot',
@@ -2424,9 +1727,9 @@ export const dpiaRegister = [
     reviewed: 'Oct 2026',
   },
   {
-    system: 'Vape / noise sensors in colleges',
-    status: 'In review',
-    reviewed: '—',
+    system: 'Forensic footage search',
+    status: 'Approved',
+    reviewed: 'Oct 2026',
   },
 ] as const;
 
@@ -2493,39 +1796,32 @@ export const edgeAppliances = [
 
 export const users = [
   {
+    name: 'Supt. (PB) Zulkifli Hassan',
+    role: 'Director, security technology',
+    scope: 'All cameras',
+    mfa: true,
+    last: '18:22',
+  },
+  {
     name: 'Aina Sofea',
-    role: 'SOC operator',
-    scope: 'All precincts',
+    role: 'Video analytics operator',
+    scope: 'All cameras',
     mfa: true,
     last: 'Now',
   },
   {
     name: 'Hakim Roslan',
-    role: 'SOC operator',
-    scope: 'All precincts',
+    role: 'Video analytics operator',
+    scope: 'All cameras',
     mfa: true,
     last: '07:00',
   },
   {
-    name: 'Supt. (PB) Zulkifli Hassan',
-    role: 'Chief security officer',
-    scope: 'All precincts',
+    name: 'Ir. Salmah Yusof',
+    role: 'Facilities & space planning',
+    scope: 'Counts only, no footage',
     mfa: true,
-    last: '18:22',
-  },
-  {
-    name: 'Prof. Dr. Norhayati Ismail',
-    role: 'Pengetua',
-    scope: 'KK12',
-    mfa: true,
-    last: '17:50',
-  },
-  {
-    name: 'Prof. Dr. Azlan Mohd Noor',
-    role: 'TNC HEPA',
-    scope: 'Aggregated, no video',
-    mfa: true,
-    last: 'Yesterday',
+    last: '17:40',
   },
   {
     name: 'Mr. Gerald Wong',
@@ -2535,16 +1831,9 @@ export const users = [
     last: '16:58',
   },
   {
-    name: 'Ir. Salmah Yusof',
-    role: 'Estates & IT admin',
-    scope: 'Devices, no footage',
-    mfa: true,
-    last: '09:12',
-  },
-  {
     name: 'Kpl. Hafiz Rahman',
-    role: 'Patrol officer',
-    scope: 'Officer app',
+    role: 'Mobile responder',
+    scope: 'EzVision Mobile alerts',
     mfa: true,
     last: 'Now',
   },

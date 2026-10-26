@@ -68,7 +68,7 @@ export function AnalyticsView({ persona }: { persona: Persona }) {
       ids.map((id) => [id, analytics[id].status !== 'Evaluation only']),
     ),
   );
-  const canEdit = persona.id === 'chief';
+  const canEdit = persona.id === 'director';
   return (
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
@@ -146,8 +146,9 @@ export function AnalyticsView({ persona }: { persona: Persona }) {
           </Table>
           <Note className="mt-3">
             The dangerous-object analytic runs on the drill camera for
-            evaluation only and cannot alert anyone. Confidence is shown only
-            for AI video; sensor, app and staff reports carry none.
+            evaluation only and cannot alert anyone. Every detection carries its
+            model confidence and waits for an operator to verify it before it is
+            shared with anyone.
           </Note>
         </CardContent>
       </Card>
@@ -181,7 +182,7 @@ export function PrivacyView({ persona }: { persona: Persona }) {
   const [requests, setRequests] = useState(
     accessRequests.map((r) => ({ ...r })),
   );
-  const isDpo = persona.id === 'dpo' || persona.id === 'chief';
+  const isDpo = persona.id === 'dpo' || persona.id === 'director';
   const decide = (id: string, ok: boolean) => {
     setRequests(
       (rs) =>
@@ -469,7 +470,7 @@ export function DevicesView({ persona }: { persona: Persona }) {
     <div className="grid grid-cols-1 gap-5">
       <PageHeader
         title="Devices & health"
-        description="Cameras, edge analytics appliances and help points. A camera that stops reporting is shown as a gap in coverage, never as a quiet area."
+        description="Cameras and the edge appliances that run their analytics. A camera that stops reporting is shown as a gap in coverage, never as a quiet area."
       />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
@@ -638,27 +639,31 @@ export function DevicesView({ persona }: { persona: Persona }) {
 
 const capabilities = [
   'Live video',
+  'Verify detections',
+  'Footage search',
   'Recorded playback',
-  'Dispatch',
-  'Broadcast',
-  'Welfare cases',
+  'Anonymous counts',
   'Approve footage',
   'Configure analytics',
 ] as const;
 const matrix: Record<string, (typeof capabilities)[number][]> = {
-  'SOC operator': ['Live video', 'Dispatch', 'Broadcast'],
-  'Chief security officer': [
+  'Director, security technology': [
     'Live video',
+    'Verify detections',
+    'Footage search',
     'Recorded playback',
-    'Dispatch',
-    'Broadcast',
+    'Anonymous counts',
     'Configure analytics',
   ],
-  Pengetua: ['Live video', 'Broadcast'],
-  'TNC HEPA': ['Welfare cases'],
+  'Video analytics operator': [
+    'Live video',
+    'Verify detections',
+    'Footage search',
+    'Anonymous counts',
+  ],
+  'Facilities & space planning': ['Anonymous counts'],
   'Data protection officer': ['Approve footage'],
-  'Estates & IT admin': [],
-  'Patrol officer': ['Live video', 'Dispatch'],
+  'Mobile responder': ['Live video', 'Verify detections'],
 };
 
 export function UsersView() {

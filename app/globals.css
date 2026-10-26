@@ -3,7 +3,7 @@
 @import 'shadcn/tailwind.css';
 
 /* ============================================================================
-   EzVision Campus Safety: design tokens.
+   EzVision Camera Intelligence: design tokens.
 
    One shadcn token layer (base-nova). Components in components/ui read only
    these variables, so nothing here should name a colour that a screen also

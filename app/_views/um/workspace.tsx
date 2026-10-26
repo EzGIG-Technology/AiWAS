@@ -1,105 +1,86 @@
 'use client';
 import {
   LayoutDashboard,
-  Siren,
+  ScanEye,
   MonitorPlay,
   Map,
-  LifeBuoy,
-  Footprints,
-  BedDouble,
+  Search,
+  Users,
   CarFront,
-  CalendarDays,
-  Megaphone,
-  HeartHandshake,
+  UsersRound,
   FileBarChart,
-  ScanEye,
+  SlidersHorizontal,
   ShieldCheck,
   Server,
-  Users,
+  UserCog,
   Smartphone,
 } from 'lucide-react';
 import { WorkspaceShell, type NavGroup } from '../../_components/shell';
 import type { Persona, PersonaId } from '../../_data/personas';
+import { isOpenEvent } from '../../_data/um';
 import { useDemo } from '../../_lib/store';
+import { Overview, EventsView, VideoWall, MapView } from './operations';
 import {
-  Overview,
-  IncidentsView,
-  VideoWall,
-  MapView,
-  SosView,
-  PatrolView,
-} from './operations';
-import {
-  CollegesView,
-  VisitorsView,
-  EventsView,
-  EmergencyView,
-} from './campus';
-import { WelfareView, ReportsView } from './insight';
+  OccupancyView,
+  VehiclesView,
+  CrowdView,
+  SearchView,
+  ReportsView,
+} from './insight';
 import { AnalyticsView, PrivacyView, DevicesView, UsersView } from './govern';
-import { AppsShowcase } from '../apps/workspace';
+import { MobileShowcase } from '../apps/workspace';
 
 export type UmView =
   | 'overview'
-  | 'incidents'
+  | 'events'
   | 'wall'
   | 'map'
-  | 'sos'
-  | 'patrol'
-  | 'colleges'
-  | 'visitors'
-  | 'events'
-  | 'emergency'
-  | 'welfare'
+  | 'search'
+  | 'occupancy'
+  | 'vehicles'
+  | 'crowd'
   | 'reports'
   | 'analytics'
-  | 'privacy'
   | 'devices'
+  | 'privacy'
   | 'users'
-  | 'apps';
+  | 'mobile';
 
 export const umTitles: Record<UmView, string> = {
-  overview: 'Command overview',
-  incidents: 'Alarm queue & incidents',
+  overview: 'Overview',
+  events: 'AI detections',
   wall: 'Video wall',
-  map: 'Campus map',
-  sos: 'SOS & safe walks',
-  patrol: 'Patrol & dispatch',
-  colleges: 'Residential colleges',
-  visitors: 'Visitors & vehicles',
-  events: 'Events',
-  emergency: 'Emergency & mass notification',
-  welfare: 'Student welfare',
-  reports: 'Reports & KPT inspection',
+  map: 'Camera map',
+  search: 'Footage search',
+  occupancy: 'Occupancy & footfall',
+  vehicles: 'Vehicles & parking',
+  crowd: 'Crowd analytics',
+  reports: 'Reports',
   analytics: 'AI analytics & exclusions',
+  devices: 'Cameras & edge health',
   privacy: 'Privacy centre',
-  devices: 'Devices & health',
   users: 'Users & roles',
-  apps: 'Mobile apps',
+  mobile: 'EzVision Mobile',
 };
 
 /** Which views each role may open. Roles without video never get the wall. */
 export const umAccess: Record<
-  Exclude<PersonaId, 'kpt' | 'student' | 'officer'>,
+  Exclude<PersonaId, 'kpt' | 'mobile'>,
   UmView[]
 > = {
-  chief: Object.keys(umTitles) as UmView[],
-  soc: [
+  director: Object.keys(umTitles) as UmView[],
+  operator: [
     'overview',
-    'incidents',
+    'events',
     'wall',
     'map',
-    'sos',
-    'patrol',
-    'colleges',
-    'visitors',
-    'events',
-    'emergency',
+    'search',
+    'crowd',
+    'vehicles',
     'devices',
-    'apps',
+    'mobile',
   ],
-  pengetua: ['colleges', 'incidents', 'visitors', 'emergency', 'apps'],
-  hepa: ['welfare', 'reports', 'colleges', 'events', 'emergency'],
+  facilities: ['occupancy', 'vehicles', 'crowd', 'reports', 'devices'],
   dpo: ['privacy', 'analytics', 'reports', 'users', 'devices'],
 };
 
@@ -114,71 +95,50 @@ export function UmWorkspace({
 }) {
   const { state } = useDemo();
   const allowed =
-    umAccess[persona.id as keyof typeof umAccess] ?? umAccess.chief;
+    umAccess[persona.id as keyof typeof umAccess] ?? umAccess.director;
   const active = (
     allowed.includes(view as UmView) ? view : allowed[0]
   ) as UmView;
-  const openAlarms = state.incidents.filter((i) =>
-    ['New', 'Acknowledged'].includes(i.status),
-  ).length;
-  const sos = state.sessions.filter((s) => s.kind === 'SOS').length;
+  const awaiting = state.events.filter((e) => e.status === 'New').length;
+  const open = state.events.filter(isOpenEvent).length;
 
   const groups: NavGroup[] = [
     {
-      label: 'Operate',
+      label: 'Monitor',
       items: [
-        { id: 'overview', label: 'Command overview', icon: LayoutDashboard },
+        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
         {
-          id: 'incidents',
-          label: 'Alarm queue',
-          icon: Siren,
-          badge: openAlarms,
+          id: 'events',
+          label: 'AI detections',
+          icon: ScanEye,
+          badge: awaiting || open,
         },
         { id: 'wall', label: 'Video wall', icon: MonitorPlay },
-        { id: 'map', label: 'Campus map', icon: Map },
-        { id: 'sos', label: 'SOS & safe walks', icon: LifeBuoy, badge: sos },
-        { id: 'patrol', label: 'Patrol & dispatch', icon: Footprints },
-      ],
-    },
-    {
-      label: 'Campus',
-      items: [
-        {
-          id: 'colleges',
-          label:
-            persona.id === 'pengetua'
-              ? 'My college · KK12'
-              : 'Residential colleges',
-          icon: BedDouble,
-        },
-        { id: 'visitors', label: 'Visitors & vehicles', icon: CarFront },
-        { id: 'events', label: 'Events', icon: CalendarDays },
-        { id: 'emergency', label: 'Emergency & alerts', icon: Megaphone },
+        { id: 'map', label: 'Camera map', icon: Map },
+        { id: 'search', label: 'Footage search', icon: Search },
       ],
     },
     {
       label: 'Insight',
       items: [
-        { id: 'welfare', label: 'Student welfare', icon: HeartHandshake },
-        {
-          id: 'reports',
-          label: 'Reports & KPT inspection',
-          icon: FileBarChart,
-        },
+        { id: 'occupancy', label: 'Occupancy & footfall', icon: Users },
+        { id: 'vehicles', label: 'Vehicles & parking', icon: CarFront },
+        { id: 'crowd', label: 'Crowd analytics', icon: UsersRound },
+        { id: 'reports', label: 'Reports', icon: FileBarChart },
       ],
     },
     {
-      label: 'Govern',
+      label: 'Configure',
       items: [
-        { id: 'analytics', label: 'AI analytics', icon: ScanEye },
+        { id: 'analytics', label: 'AI analytics', icon: SlidersHorizontal },
+        { id: 'devices', label: 'Cameras & edge health', icon: Server },
         { id: 'privacy', label: 'Privacy centre', icon: ShieldCheck },
-        { id: 'devices', label: 'Devices & health', icon: Server },
-        { id: 'users', label: 'Users & roles', icon: Users },
+        { id: 'users', label: 'Users & roles', icon: UserCog },
       ],
     },
     {
       label: 'Apps',
-      items: [{ id: 'apps', label: 'EzSafe & EzPatrol', icon: Smartphone }],
+      items: [{ id: 'mobile', label: 'EzVision Mobile', icon: Smartphone }],
     },
   ]
     .map((g) => ({
@@ -189,22 +149,19 @@ export function UmWorkspace({
 
   const views: Record<UmView, React.ReactNode> = {
     overview: <Overview persona={persona} />,
-    incidents: <IncidentsView persona={persona} focus={sub} />,
+    events: <EventsView persona={persona} focus={sub} />,
     wall: <VideoWall />,
     map: <MapView persona={persona} />,
-    sos: <SosView persona={persona} />,
-    patrol: <PatrolView persona={persona} />,
-    colleges: <CollegesView persona={persona} />,
-    visitors: <VisitorsView persona={persona} />,
-    events: <EventsView persona={persona} />,
-    emergency: <EmergencyView persona={persona} />,
-    welfare: <WelfareView />,
+    search: <SearchView persona={persona} />,
+    occupancy: <OccupancyView persona={persona} />,
+    vehicles: <VehiclesView persona={persona} />,
+    crowd: <CrowdView persona={persona} />,
     reports: <ReportsView persona={persona} />,
     analytics: <AnalyticsView persona={persona} />,
-    privacy: <PrivacyView persona={persona} />,
     devices: <DevicesView persona={persona} />,
+    privacy: <PrivacyView persona={persona} />,
     users: <UsersView />,
-    apps: <AppsShowcase />,
+    mobile: <MobileShowcase />,
   };
 
   return (
@@ -213,7 +170,7 @@ export function UmWorkspace({
         id: 'um',
         acronym: 'UM',
         name: 'Universiti Malaya',
-        sub: 'Campus Safety Operations',
+        sub: 'Camera Intelligence',
       }}
       base="/um"
       groups={groups}

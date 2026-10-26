@@ -1,49 +1,29 @@
 /**
- * Kementerian Pendidikan Tinggi (KPT) oversight data.
+ * Kementerian Pendidikan Tinggi (KPT) oversight of campus camera
+ * intelligence.
  *
- * Design rule from docs/research/university-campus-safety-audit.md §10.3:
- * the ministry sees aggregates and compliance status only. No footage, no
- * names, no student IDs. Counts from 1 to 4 at institution level are
- * suppressed. This module therefore holds numbers and statuses only, and a
- * test asserts it carries no media file or person name.
+ * The ministry sees aggregates and compliance status only: camera estate,
+ * uptime, analytics in use, detection volumes by category, verification
+ * precision, the CCTV items of the 2025 inspection directive and privacy and
+ * AI governance. No footage, images, plate numbers or names. Counts from 1
+ * to 4 at institution level are suppressed.
  *
- * Institution names and states come from public/logos/manifest.json. All
- * metrics are generated demonstration figures, not real statistics.
+ * Institution names and states come from public/logos/manifest.json. Every
+ * figure except Universiti Malaya's row is generated demonstration data.
  */
 import {
-  incidents as umIncidents,
   cameras as umCameras,
-  responseTimes as umResponse,
+  cameraEvents as umEvents,
+  analytics as umAnalytics,
+  uptimeWeekly,
+  verifyTimes,
+  verification,
+  cctvChecklist,
 } from './um';
 
 export type InstitutionType = 'Public (UA)' | 'Private (IPTS)';
 export type Connection = 'EzVision live' | 'EzVision pilot' | 'Manual return';
 export type Compliance = 'Met' | 'Partly met' | 'Not met';
-
-export type Institution = {
-  id: string;
-  acronym: string;
-  name: string;
-  type: InstitutionType;
-  state: StateId;
-  city: string;
-  enrolment: number;
-  connection: Connection;
-  cameras: number;
-  uptime: number;
-  p50: number;
-  p90: number;
-  openHigh: number;
-  incidents12m: number;
-  safetyIndex: number;
-  inspection: Compliance[];
-  policies: boolean[];
-  privacy: boolean[];
-  housedPct: number;
-  counsellingPer1000: number;
-  floodRisk: 'Low' | 'Medium' | 'High';
-  lastDrill: string;
-};
 
 export type StateId =
   | 'Perlis'
@@ -62,6 +42,33 @@ export type StateId =
   | 'Sabah'
   | 'Sarawak'
   | 'WP Labuan';
+
+export type Institution = {
+  id: string;
+  acronym: string;
+  name: string;
+  type: InstitutionType;
+  state: StateId;
+  city: string;
+  enrolment: number;
+  connection: Connection;
+  /** Cameras registered (reported manually when not on EzVision). */
+  cameras: number;
+  /** Cameras with analytics running; 0 for manual returns. */
+  analysed: number;
+  /** % of residence and campus entrances covered by a camera. */
+  coverage: number;
+  /** % uptime over 30 days; null when not measured by EzVision. */
+  uptime: number | null;
+  analyticsLive: number;
+  detections30d: number | null;
+  /** % of detections an operator confirmed as true. */
+  precision: number | null;
+  verifyP50: number | null;
+  maturity: number;
+  cctv: Compliance[];
+  privacy: boolean[];
+};
 
 /** Tile-grid map of Malaysia: [column, row]. Schematic, not geographic. */
 export const stateTiles: Record<StateId, [number, number]> = {
@@ -83,33 +90,15 @@ export const stateTiles: Record<StateId, [number, number]> = {
   Sarawak: [4, 1],
 };
 
-export const inspectionItems = [
-  'Access control at residence entrances',
-  'CCTV at entrances and common corridors',
-  'Lighting audit of walking routes',
-  'Hostel visitor entry/exit procedure',
-  'Rapid response (P90 under 8 min)',
-  'PDRM community policing liaison',
-  'Flood / business-continuity plan tested',
-  'Rooftop and ledge access secured',
-] as const;
-
-export const policyItems = [
-  'Anti-bullying reporting mechanism',
-  'Sexual harassment guideline',
-  'Student Disciplinary Rules (2024)',
-  'Off-campus student guideline (2021)',
-  'Mental-health referral pathway',
-  'Residential college policy (Circular 3/2024)',
-  'Flood / BCP plan',
-] as const;
+export const cctvItems = cctvChecklist.map((c) => c.item);
 
 export const privacyItems = [
   'Data protection officer appointed',
-  'DPIA for CCTV and AI analytics',
+  'DPIA for CCTV and video analytics',
   'Retention policy published',
   'CCTV signage in place',
   'Facial recognition disabled',
+  'Footage access and search audited',
   'AIGE self-assessment filed',
 ] as const;
 
@@ -122,7 +111,6 @@ type Seed = [
   string,
   number,
   Connection,
-  'Low' | 'Medium' | 'High',
 ];
 
 const seeds: Seed[] = [
@@ -135,7 +123,6 @@ const seeds: Seed[] = [
     'Kuala Lumpur',
     27000,
     'EzVision live',
-    'Medium',
   ],
   [
     'usm',
@@ -146,7 +133,6 @@ const seeds: Seed[] = [
     'Gelugor',
     30000,
     'EzVision pilot',
-    'Low',
   ],
   [
     'ukm',
@@ -157,7 +143,6 @@ const seeds: Seed[] = [
     'Bangi',
     27500,
     'EzVision pilot',
-    'Low',
   ],
   [
     'upm',
@@ -168,7 +153,6 @@ const seeds: Seed[] = [
     'Serdang',
     30500,
     'EzVision live',
-    'Low',
   ],
   [
     'utm',
@@ -179,7 +163,6 @@ const seeds: Seed[] = [
     'Skudai',
     33000,
     'EzVision live',
-    'Medium',
   ],
   [
     'uitm',
@@ -190,7 +173,6 @@ const seeds: Seed[] = [
     'Shah Alam',
     170000,
     'Manual return',
-    'Medium',
   ],
   [
     'iium',
@@ -201,7 +183,6 @@ const seeds: Seed[] = [
     'Gombak',
     30000,
     'Manual return',
-    'Medium',
   ],
   [
     'uum',
@@ -212,7 +193,6 @@ const seeds: Seed[] = [
     'Sintok',
     30000,
     'EzVision pilot',
-    'Medium',
   ],
   [
     'unimas',
@@ -223,7 +203,6 @@ const seeds: Seed[] = [
     'Kota Samarahan',
     19000,
     'Manual return',
-    'Medium',
   ],
   [
     'ums',
@@ -234,7 +213,6 @@ const seeds: Seed[] = [
     'Kota Kinabalu',
     20000,
     'EzVision pilot',
-    'Low',
   ],
   [
     'upsi',
@@ -245,7 +223,6 @@ const seeds: Seed[] = [
     'Tanjong Malim',
     20000,
     'Manual return',
-    'Medium',
   ],
   [
     'usim',
@@ -256,7 +233,6 @@ const seeds: Seed[] = [
     'Nilai',
     12000,
     'Manual return',
-    'Low',
   ],
   [
     'umt',
@@ -267,7 +243,6 @@ const seeds: Seed[] = [
     'Kuala Nerus',
     10000,
     'EzVision pilot',
-    'High',
   ],
   [
     'uthm',
@@ -278,7 +253,6 @@ const seeds: Seed[] = [
     'Batu Pahat',
     18000,
     'Manual return',
-    'High',
   ],
   [
     'utem',
@@ -289,7 +263,6 @@ const seeds: Seed[] = [
     'Durian Tunggal',
     13000,
     'Manual return',
-    'Low',
   ],
   [
     'umpsa',
@@ -300,7 +273,6 @@ const seeds: Seed[] = [
     'Pekan',
     12000,
     'Manual return',
-    'High',
   ],
   [
     'unimap',
@@ -311,7 +283,6 @@ const seeds: Seed[] = [
     'Arau',
     11000,
     'Manual return',
-    'Medium',
   ],
   [
     'unisza',
@@ -322,7 +293,6 @@ const seeds: Seed[] = [
     'Kuala Nerus',
     12000,
     'Manual return',
-    'High',
   ],
   [
     'umk',
@@ -333,7 +303,6 @@ const seeds: Seed[] = [
     'Kota Bharu',
     12000,
     'EzVision pilot',
-    'High',
   ],
   [
     'upnm',
@@ -344,7 +313,6 @@ const seeds: Seed[] = [
     'Sungai Besi',
     4000,
     'Manual return',
-    'Low',
   ],
   [
     'taylors',
@@ -355,7 +323,6 @@ const seeds: Seed[] = [
     'Subang Jaya',
     15000,
     'EzVision live',
-    'Low',
   ],
   [
     'monash-my',
@@ -366,7 +333,6 @@ const seeds: Seed[] = [
     'Bandar Sunway',
     8000,
     'Manual return',
-    'Low',
   ],
   [
     'sunway',
@@ -377,7 +343,6 @@ const seeds: Seed[] = [
     'Bandar Sunway',
     16000,
     'EzVision pilot',
-    'Low',
   ],
   [
     'ucsi',
@@ -388,7 +353,6 @@ const seeds: Seed[] = [
     'Cheras',
     12000,
     'Manual return',
-    'Medium',
   ],
   [
     'mmu',
@@ -399,7 +363,6 @@ const seeds: Seed[] = [
     'Cyberjaya',
     18000,
     'Manual return',
-    'Low',
   ],
   [
     'uniten',
@@ -410,7 +373,6 @@ const seeds: Seed[] = [
     'Kajang',
     10000,
     'Manual return',
-    'Low',
   ],
   [
     'utp',
@@ -421,7 +383,6 @@ const seeds: Seed[] = [
     'Seri Iskandar',
     7000,
     'EzVision pilot',
-    'Medium',
   ],
   [
     'apu',
@@ -432,7 +393,6 @@ const seeds: Seed[] = [
     'Bukit Jalil',
     13000,
     'Manual return',
-    'Low',
   ],
 ];
 
@@ -447,63 +407,56 @@ function rand(key: string) {
 }
 const pick = (key: string, lo: number, hi: number) =>
   lo + rand(key) * (hi - lo);
+const round1 = (n: number) => Math.round(n * 10) / 10;
 
-const umOpenHigh = umIncidents.filter(
-  (i) =>
-    (i.severity === 'Critical' || i.severity === 'High') &&
-    !['Resolved', 'False alarm'].includes(i.status),
-).length;
+// UM's row comes from its own workspace so the two points of view agree.
+const umConfirmed = verification.reduce((a, v) => a + v.confirmed, 0);
+const umAll = verification.reduce((a, v) => a + v.confirmed + v.false, 0);
+export const umFigures = {
+  cameras: umCameras.length,
+  analysed: umCameras.filter((c) => c.status !== 'offline').length,
+  uptime: uptimeWeekly.at(-1)!.uptime,
+  analyticsLive: Object.values(umAnalytics).filter((a) => a.status === 'Live')
+    .length,
+  detections30d: umEvents.length * 30,
+  precision: Math.round((umConfirmed / umAll) * 100),
+  verifyP50: verifyTimes.at(-1)!.p50,
+  cctv: cctvChecklist.map((c) => c.status) as Compliance[],
+};
+
+function maturityOf(i: Omit<Institution, 'maturity'>) {
+  const cctvMet = i.cctv.filter((c) => c === 'Met').length / i.cctv.length;
+  const priv = i.privacy.filter(Boolean).length / i.privacy.length;
+  const analytics = i.connection === 'Manual return' ? 0 : 1;
+  return Math.round(
+    i.coverage * 0.25 +
+      cctvMet * 25 +
+      priv * 25 +
+      analytics * 15 +
+      (i.uptime ? i.uptime - 90 : 0),
+  );
+}
 
 export const institutions: Institution[] = seeds.map(
-  ([
-    id,
-    acronym,
-    name,
-    type,
-    state,
-    city,
-    enrolment,
-    connection,
-    floodRisk,
-  ]) => {
+  ([id, acronym, name, type, state, city, enrolment, connection]) => {
     const live = connection !== 'Manual return';
-    const inspection = inspectionItems.map((item): Compliance => {
-      const r = rand(id + item);
-      return r > 0.28 ? 'Met' : r > 0.1 ? 'Partly met' : 'Not met';
-    });
-    if (id === 'um') {
-      inspection.splice(
-        0,
-        inspection.length,
-        'Met',
-        'Met',
-        'Partly met',
-        'Met',
-        'Met',
-        'Met',
-        'Partly met',
-        'Not met',
-      );
-    }
-    // UM runs EzVision with FR off and a published DPIA; its rows match its own workspace.
-    const policies = policyItems.map((p) => id === 'um' || rand(id + p) > 0.18);
+    const cameras =
+      id === 'um'
+        ? umFigures.cameras
+        : Math.round((enrolment / 1000) * pick(id + 'cam', 1.6, 4.2));
+    const cctv: Compliance[] =
+      id === 'um'
+        ? umFigures.cctv
+        : cctvItems.map((item) => {
+            const r = rand(id + item);
+            return r > 0.3 ? 'Met' : r > 0.1 ? 'Partly met' : 'Not met';
+          });
     const privacy = privacyItems.map((p) =>
       id === 'um'
         ? true
-        : p === 'Facial recognition disabled'
-          ? rand(id + p) > 0.08
-          : rand(id + p) > 0.22,
+        : rand(id + p) > (p === 'Facial recognition disabled' ? 0.08 : 0.24),
     );
-    const met = inspection.filter((x) => x === 'Met').length;
-    const safetyIndex = Math.round(
-      50 +
-        met * 4 +
-        policies.filter(Boolean).length * 1.6 +
-        privacy.filter(Boolean).length * 1.2 -
-        (floodRisk === 'High' ? 4 : 0) +
-        pick(id + 'si', -3, 3),
-    );
-    return {
+    const base = {
       id,
       acronym,
       name,
@@ -512,35 +465,51 @@ export const institutions: Institution[] = seeds.map(
       city,
       enrolment,
       connection,
-      cameras:
+      cameras,
+      analysed:
         id === 'um'
-          ? umCameras.length
+          ? umFigures.analysed
           : live
-            ? Math.round(pick(id + 'cam', 40, 220))
+            ? Math.round(cameras * pick(id + 'an', 0.35, 0.9))
             : 0,
-      uptime: live ? Math.round(pick(id + 'up', 94, 99.6) * 10) / 10 : 0,
-      // UM's row is derived from its own EzVision workspace so the two views agree.
-      p50:
+      coverage:
         id === 'um'
-          ? umResponse.at(-1)!.p50
-          : Math.round(pick(id + 'p50', 2.2, 5.5) * 10) / 10,
-      p90:
+          ? 94
+          : Math.round(pick(id + 'cov', live ? 72 : 48, live ? 98 : 88)),
+      uptime:
         id === 'um'
-          ? umResponse.at(-1)!.p90
-          : Math.round(pick(id + 'p90', 5.2, 12.5) * 10) / 10,
-      openHigh: id === 'um' ? umOpenHigh : Math.floor(pick(id + 'oh', 0, 4)),
-      incidents12m: Math.round((enrolment / 1000) * pick(id + 'inc', 9, 16)),
-      safetyIndex: Math.min(safetyIndex, 96),
-      inspection,
-      policies,
+          ? umFigures.uptime
+          : live
+            ? round1(pick(id + 'up', 93.5, 99.4))
+            : null,
+      analyticsLive:
+        id === 'um'
+          ? umFigures.analyticsLive
+          : live
+            ? Math.round(pick(id + 'al', 4, 13))
+            : 0,
+      detections30d:
+        id === 'um'
+          ? umFigures.detections30d
+          : live
+            ? Math.round(cameras * pick(id + 'det', 4, 14))
+            : null,
+      precision:
+        id === 'um'
+          ? umFigures.precision
+          : live
+            ? Math.round(pick(id + 'pr', 62, 91))
+            : null,
+      verifyP50:
+        id === 'um'
+          ? umFigures.verifyP50
+          : live
+            ? Math.round(pick(id + 'vt', 25, 95))
+            : null,
+      cctv,
       privacy,
-      housedPct: Math.round(pick(id + 'h', 38, 92)),
-      counsellingPer1000: Math.round(pick(id + 'c', 0.4, 1.4) * 100) / 100,
-      floodRisk,
-      lastDrill: ['Oct 2026', 'Sep 2026', 'Aug 2026', 'Jun 2026', 'Mar 2026'][
-        Math.floor(rand(id + 'drill') * 5)
-      ],
     };
+    return { ...base, maturity: Math.min(98, maturityOf(base)) };
   },
 );
 
@@ -552,17 +521,17 @@ export function suppress(n: number): string {
   return n > 0 && n < 5 ? '<5' : n.toLocaleString('en-MY');
 }
 
-export const nationalCategories = [
-  'Accident',
-  'Medical',
-  'Violent crime',
-  'Theft',
-  'Bullying',
-  'Harassment',
-  'Fire',
-  'Flood & weather',
-  'Bomb threat',
+export const detectionCategories = [
+  'Intrusion',
+  'Crowd density',
+  'Vehicle & traffic',
+  'Unattended object',
+  'Person down',
+  'Smoke / fire',
+  'Water level',
   'Wildlife',
+  'Camera tamper',
+  'PPE',
 ] as const;
 
 const months = [
@@ -580,184 +549,56 @@ const months = [
   'Oct',
 ];
 
-/** National monthly incidents by category, all reporting institutions. */
+/** National monthly detections by category, institutions on EzVision. */
 export const nationalMonthly = months.map((month, m) => {
   const monsoon = [0, 1, 2, 3].includes(m) ? 1 : 0;
   const term = [3, 4, 5, 9, 10, 11].includes(m) ? 1 : 0;
+  // Adoption grows through the year as pilots go live.
+  const growth = 0.7 + m * 0.03;
   const row: Record<string, string | number> = { month };
-  for (const c of nationalCategories) {
+  for (const c of detectionCategories) {
     const base = {
-      Accident: 46,
-      Medical: 61,
-      'Violent crime': 6,
-      Theft: 58,
-      Bullying: 3,
-      Harassment: 7,
-      Fire: 4,
-      'Flood & weather': 9,
-      'Bomb threat': 1,
-      Wildlife: 12,
+      Intrusion: 410,
+      'Crowd density': 290,
+      'Vehicle & traffic': 760,
+      'Unattended object': 180,
+      'Person down': 40,
+      'Smoke / fire': 35,
+      'Water level': 22,
+      Wildlife: 95,
+      'Camera tamper': 60,
+      PPE: 70,
     }[c];
     const swing =
-      c === 'Flood & weather' ? monsoon * 22 : term * Math.round(base * 0.25);
-    row[c] = Math.max(
-      0,
-      Math.round(base + swing + pick(c + month, -base * 0.18, base * 0.18)),
+      c === 'Water level'
+        ? monsoon * 60
+        : c === 'Crowd density'
+          ? term * 120
+          : 0;
+    row[c] = Math.round(
+      (base + swing + pick(c + month, -base * 0.12, base * 0.12)) * growth,
     );
   }
   return row;
 });
 
+const connected = institutions.filter((i) => i.connection !== 'Manual return');
+const median = (xs: number[]) =>
+  [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+
 export const nationalTotals = {
   institutions: institutions.length,
   publicCount: institutions.filter((i) => i.type === 'Public (UA)').length,
   privateCount: institutions.filter((i) => i.type === 'Private (IPTS)').length,
-  connected: institutions.filter((i) => i.connection !== 'Manual return')
-    .length,
-  enrolment: institutions.reduce((a, i) => a + i.enrolment, 0),
+  connected: connected.length,
   cameras: institutions.reduce((a, i) => a + i.cameras, 0),
-  openHigh: institutions.reduce((a, i) => a + i.openHigh, 0),
-  medianP90: [...institutions].map((i) => i.p90).sort((a, b) => a - b)[
-    Math.floor(institutions.length / 2)
-  ],
+  analysed: institutions.reduce((a, i) => a + i.analysed, 0),
+  medianUptime: median(connected.map((i) => i.uptime!)),
+  medianPrecision: median(connected.map((i) => i.precision!)),
+  detections30d: connected.reduce((a, i) => a + i.detections30d!, 0),
+  frDisabled: institutions.filter((i) => i.privacy[4]).length,
 };
 
-export type Escalation = {
-  id: string;
-  institution: string;
-  type: string;
-  severity: 'Critical' | 'High';
-  opened: string;
-  status: 'Open' | 'Monitoring' | 'Closed';
-  nextUpdate: string;
-  owner: string;
-  summary: string;
-};
-
-/**
- * Escalations requiring ministry attention. Summaries are written the way a
- * university would file them: category, scale and actions, never names.
- */
-export const escalations: Escalation[] = [
-  {
-    id: 'ESC-2610-07',
-    institution: 'um',
-    type: 'Flash flood: campus car park and access road',
-    severity: 'High',
-    opened: '26 Oct, 18:31',
-    status: 'Open',
-    nextUpdate: '26 Oct, 20:00',
-    owner: 'UM Bahagian Keselamatan',
-    summary:
-      'Water rising in one basement car park; one entrance blocked by a fallen tree. No injuries. Shuttle diverted.',
-  },
-  {
-    id: 'ESC-2610-06',
-    institution: 'umt',
-    type: 'Monsoon readiness: relief centre activated',
-    severity: 'High',
-    opened: '25 Oct, 09:10',
-    status: 'Monitoring',
-    nextUpdate: '27 Oct, 09:00',
-    owner: 'UMT disaster operations room',
-    summary:
-      'Pre-emptive activation ahead of east-coast monsoon. Residential college used as relief centre for students.',
-  },
-  {
-    id: 'ESC-2610-05',
-    institution: 'sunway',
-    type: 'Bomb threat by email',
-    severity: 'Critical',
-    opened: '24 Oct, 11:42',
-    status: 'Closed',
-    nextUpdate: '—',
-    owner: 'University security with PDRM',
-    summary:
-      'Two buildings evacuated; muster complete in 14 minutes; PDRM sweep found nothing. After-action report filed.',
-  },
-  {
-    id: 'ESC-2610-04',
-    institution: 'uum',
-    type: 'Serious road accident on campus',
-    severity: 'High',
-    opened: '22 Oct, 21:15',
-    status: 'Monitoring',
-    nextUpdate: '29 Oct, 12:00',
-    owner: 'UUM security & HEP',
-    summary:
-      'Motorcycle collision on internal road; casualties hospitalised. Speed-calming review under way.',
-  },
-  {
-    id: 'ESC-2610-03',
-    institution: 'utem',
-    type: 'Personal data breach notification (PDPA)',
-    severity: 'High',
-    opened: '19 Oct, 16:00',
-    status: 'Monitoring',
-    nextUpdate: '2 Nov, 12:00',
-    owner: 'University DPO',
-    summary:
-      'Misdirected email exposed a residential allocation list. Commissioner notified within the statutory window.',
-  },
-  {
-    id: 'ESC-2610-02',
-    institution: 'umk',
-    type: 'Fire in residential college kitchen',
-    severity: 'High',
-    opened: '15 Oct, 02:20',
-    status: 'Closed',
-    nextUpdate: '—',
-    owner: 'UMK security & Bomba',
-    summary:
-      'Contained by Bomba within 20 minutes. Block evacuated, no injuries. Kitchen appliance policy reissued.',
-  },
-];
-
-export const nationalEvents = [
-  {
-    name: 'UM Convocation 2026',
-    institution: 'um',
-    when: '24 Oct – 1 Nov',
-    readiness: 92,
-    risk: 'Crowd & traffic',
-  },
-  {
-    name: 'UKM Convocation',
-    institution: 'ukm',
-    when: '7 – 12 Nov',
-    readiness: 74,
-    risk: 'Crowd & traffic',
-  },
-  {
-    name: 'USM Convocation',
-    institution: 'usm',
-    when: '14 – 19 Nov',
-    readiness: 70,
-    risk: 'Crowd & traffic',
-  },
-  {
-    name: 'East-coast monsoon season',
-    institution: 'umt',
-    when: 'Nov – Mar',
-    readiness: 61,
-    risk: 'Flood',
-  },
-  {
-    name: 'Inter-varsity games (SUKIPT)',
-    institution: 'upm',
-    when: '5 – 12 Dec',
-    readiness: 48,
-    risk: 'Crowd & travel',
-  },
-  {
-    name: 'Semester 1 final examinations',
-    institution: 'um',
-    when: 'Jan 2027',
-    readiness: 30,
-    risk: 'Welfare',
-  },
-];
-
-/** Exclusions shown as a banner on every KPT screen. */
+/** Shown on every KPT screen. */
 export const kptExclusionLine =
-  'This dashboard holds aggregate counts and compliance status only. It has no footage, no names and no student IDs, and it does not track individuals, protests, assemblies or speech.';
+  'This dashboard holds aggregate camera-analytics figures and compliance status only. It has no footage, images, plate numbers or names, and nothing in it identifies or tracks individuals, protests, assemblies or speech.';

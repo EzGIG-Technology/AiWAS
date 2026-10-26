@@ -26,13 +26,15 @@ const clean = (html, where) => {
   assert.ok(!html.includes('undefined'), `undefined rendered in ${where}`);
 };
 
-test('sign-in renders both points of view', () => {
+test('sign-in renders both points of view and the UM logo', () => {
   const html = renderToString(h(Home));
   for (const s of [
     'Universiti Malaya',
     'KPT',
-    'Mobile apps',
-    'Chief Security Officer',
+    'Mobile app',
+    'Director, Security Technology',
+    'Camera intelligence for universities',
+    'logos/um-lockup.png',
     'No credentials are collected',
   ]) {
     assert.ok(html.includes(s), `sign-in missing ${s}`);
@@ -52,6 +54,11 @@ for (const p of personas.personas.filter((x) => x.workspace === 'um')) {
           !html.includes('/media/'),
           `${p.id}/${view} shows camera media`,
         );
+        for (const r of um.plateReads)
+          assert.ok(
+            !html.includes(r.plate),
+            `${p.id}/${view} shows plate ${r.plate}`,
+          );
       }
     }
   });
@@ -59,10 +66,6 @@ for (const p of personas.personas.filter((x) => x.workspace === 'um')) {
 
 test('KPT workspace renders every view with aggregates only', () => {
   const p = personas.personaById('kpt');
-  const names = [
-    ...um.officers.map((o) => o.name),
-    ...um.users.map((u) => u.name),
-  ];
   for (const view of Object.keys(kptTitles)) {
     const html = render(h(KptWorkspace, { persona: p, view }));
     assert.ok(
@@ -73,24 +76,21 @@ test('KPT workspace renders every view with aggregates only', () => {
       !html.includes('/media/') && !html.includes('<video'),
       `${view} shows media`,
     );
+    assert.ok(!/UM-C\d{3}/.test(html), `${view} shows a camera id`);
     const body = html.replace(/Pn\. Rozita Abdullah/g, '');
-    for (const n of names) assert.ok(!body.includes(n), `${view} shows ${n}`);
+    for (const n of um.users.map((u) => u.name))
+      assert.ok(!body.includes(n), `${view} shows ${n}`);
     clean(html, `kpt/${view}`);
   }
 });
 
-test('both apps render', () => {
-  for (const app of ['student', 'patrol']) {
-    const html = render(h(AppsWorkspace, { app }));
-    assert.ok(html.includes(app === 'student' ? 'EzSafe' : 'EzPatrol'));
-    clean(html, app);
-  }
-});
-
-test('the alarm queue lists a confidential report without its location or summary', () => {
-  const soc = personas.personaById('soc');
-  const html = render(h(UmWorkspace, { persona: soc, view: 'incidents' }));
-  assert.ok(html.includes('Confidential report: harassment'));
-  assert.ok(html.includes('Location withheld'));
-  assert.ok(!html.includes('Submitted through the EzSafe confidential lane'));
+test('EzVision Mobile renders its alerts', () => {
+  const html = render(h(AppsWorkspace));
+  assert.ok(html.includes('EzVision Mobile'));
+  const open = um.cameraEvents.find((e) => e.status === 'New');
+  assert.ok(
+    html.includes(esc(open.title)),
+    'open detection missing from alerts',
+  );
+  clean(html, 'mobile');
 });

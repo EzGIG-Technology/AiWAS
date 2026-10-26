@@ -22,9 +22,16 @@ test('all 20 public universities and the 8 private ones are present', () => {
   assert.deepEqual(kpt.institutions.map((i) => i.id).sort(), manifestIds);
 });
 
-test('every institution and the ministry has a logo slot', () => {
+test('every institution and the ministry has a logo slot; UM’s files exist', () => {
   for (const m of manifest.filter((x) => x.id !== 'jata-negara')) {
     assert.ok(m.id in logoFiles, `no logo slot for ${m.id}`);
+  }
+  for (const f of [logoFiles.um, 'um-lockup.png']) {
+    assert.ok(
+      readFileSync(new URL(`../public/logos/${f}`, import.meta.url)).length >
+        1000,
+      `${f} missing`,
+    );
   }
 });
 
@@ -35,64 +42,58 @@ test('small counts are suppressed', () => {
   assert.equal(kpt.suppress(1234), '1,234');
 });
 
-test('the ministry data holds no media and no names', () => {
+test('the ministry data holds no media, plates, cameras or names', () => {
   const blob = JSON.stringify({
     institutions: kpt.institutions,
-    escalations: kpt.escalations,
-    events: kpt.nationalEvents,
     monthly: kpt.nationalMonthly,
+    totals: kpt.nationalTotals,
   });
   assert.ok(!/\.(mp4|jpg|png)/.test(blob), 'ministry data references media');
-  const names = [
-    ...um.officers.map((o) => o.name),
-    ...um.users.map((u) => u.name),
-  ];
-  for (const n of names)
-    assert.ok(!blob.includes(n), `ministry data names ${n}`);
   assert.ok(!/UM-C\d{3}/.test(blob), 'ministry data references a camera');
+  for (const p of um.plateReads)
+    assert.ok(!blob.includes(p.plate), `ministry data holds plate ${p.plate}`);
+  for (const n of um.users.map((u) => u.name))
+    assert.ok(!blob.includes(n), `ministry data names ${n}`);
 });
 
 test('UM’s row is derived from its own workspace', () => {
   const row = kpt.institutionById('um');
   assert.equal(row.cameras, um.cameras.length);
-  assert.equal(row.p90, um.responseTimes.at(-1).p90);
-  const openHigh = um.incidents.filter(
-    (i) =>
-      ['Critical', 'High'].includes(i.severity) &&
-      !['Resolved', 'False alarm'].includes(i.status),
-  ).length;
-  assert.equal(row.openHigh, openHigh);
-  assert.ok(
-    row.privacy.every(Boolean),
-    'UM runs with every privacy control in place',
+  assert.equal(row.uptime, um.uptimeWeekly.at(-1).uptime);
+  assert.equal(row.verifyP50, um.verifyTimes.at(-1).p50);
+  assert.deepEqual(
+    row.cctv,
+    um.cctvChecklist.map((c) => c.status),
   );
+  const confirmed = um.verification.reduce((a, v) => a + v.confirmed, 0);
+  const all = um.verification.reduce((a, v) => a + v.confirmed + v.false, 0);
+  assert.equal(row.precision, Math.round((confirmed / all) * 100));
+  assert.ok(row.privacy.every(Boolean), 'UM runs every privacy control');
 });
 
-test('every escalation belongs to a known institution and is written without names', () => {
-  for (const e of kpt.escalations) {
-    assert.ok(kpt.institutionById(e.institution), e.id);
-    assert.ok(
-      !/\b(Encik|Puan|Cik|Dr\.|Prof\.)/.test(e.summary),
-      `${e.id} names a person`,
-    );
+test('manual returns carry no measured analytics figures', () => {
+  for (const i of kpt.institutions.filter(
+    (x) => x.connection === 'Manual return',
+  )) {
+    assert.equal(i.analysed, 0, `${i.id} analysed`);
+    assert.equal(i.uptime, null, `${i.id} uptime`);
+    assert.equal(i.detections30d, null, `${i.id} detections`);
+    assert.equal(i.precision, null, `${i.id} precision`);
   }
 });
 
-test('the exclusion line names protests and individuals', () => {
-  for (const w of ['footage', 'names', 'protests', 'individuals'])
-    assert.ok(kpt.kptExclusionLine.includes(w));
-});
-
-test('institution figures are plausible and within range', () => {
+test('institution figures are within range', () => {
   for (const i of kpt.institutions) {
-    assert.ok(
-      i.safetyIndex > 0 && i.safetyIndex <= 100,
-      `${i.id} safety index`,
-    );
-    assert.ok(i.p50 < i.p90, `${i.id} P50 should be below P90`);
-    assert.ok(i.housedPct >= 0 && i.housedPct <= 100, `${i.id} housed %`);
-    assert.equal(i.inspection.length, kpt.inspectionItems.length);
-    if (i.connection === 'Manual return')
-      assert.equal(i.cameras, 0, `${i.id} has cameras without EzVision`);
+    assert.ok(i.maturity > 0 && i.maturity <= 100, `${i.id} maturity`);
+    assert.ok(i.coverage >= 0 && i.coverage <= 100, `${i.id} coverage`);
+    assert.ok(i.analysed <= i.cameras, `${i.id} analysed > cameras`);
+    assert.equal(i.cctv.length, kpt.cctvItems.length);
+    assert.equal(i.privacy.length, kpt.privacyItems.length);
+    if (i.uptime !== null) assert.ok(i.uptime > 90 && i.uptime <= 100);
   }
+});
+
+test('the exclusion line names footage, plates, protests and individuals', () => {
+  for (const w of ['footage', 'plate', 'protests', 'individuals'])
+    assert.ok(kpt.kptExclusionLine.includes(w), w);
 });

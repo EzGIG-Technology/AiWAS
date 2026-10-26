@@ -1,13 +1,15 @@
-# EzVision Campus Safety · powered by AiWAS
+# EzVision Camera Intelligence · powered by AiWAS
 
-A campus safety demonstration for **universities**, shown from two points of view:
+A **camera-intelligence** demonstration for universities: AI analytics on a campus's existing CCTV, turned into information people can use. It is not a safety-desk system. There is no SOS, dispatch, mass notification or welfare casework; verified clips are handed to the teams and systems a university already has.
 
-- **Universiti Malaya**: the university's own security operations centre, residential colleges, student affairs and privacy office.
-- **KPT (Kementerian Pendidikan Tinggi)**: national oversight across 20 public and 8 private universities, with aggregates only.
+It is shown from two points of view:
 
-The demo also includes two phone apps that share live state with the UM console: **EzSafe** for students and staff, and **EzPatrol** for Polis Bantuan officers.
+- **Universiti Malaya**: the university's own camera estate, analytics and privacy office.
+- **KPT (Kementerian Pendidikan Tinggi)**: national oversight of camera intelligence across 20 public and 8 private universities, with aggregates only.
 
-> Demonstration only. Every person, incident and figure is fictional. Camera footage is synthetic. No credentials are collected, and no notification, call or camera connection is made.
+A phone app, **EzVision Mobile**, shares live state with the UM console.
+
+> Demonstration only. Every person, detection, plate and figure is fictional. Camera footage is synthetic. No credentials are collected, and no notification or camera connection is made.
 
 ## Run locally
 
@@ -25,31 +27,33 @@ npm run lint           # oxlint (type-aware)
 
 **Sign-in** (`#/`)
 
-Choose a point of view (Universiti Malaya, KPT or Mobile apps), then a role. Each role opens its own workspace. You can switch roles at any time from the account menu in the sidebar.
+Choose a point of view (Universiti Malaya, KPT or Mobile app), then a role. You can switch roles at any time from the account menu in the sidebar.
 
-**Universiti Malaya** (`#/um/...`): 17 screens
+**Universiti Malaya** (`#/um/...`): 14 screens
 
 | Area | Screens |
 |---|---|
-| Operate | Command overview · Alarm queue & incident sheet (SOP, dispatch, HEP referral, KPT escalation) · Video wall (all 60 cameras, 2×2/3×3/4×4) · Campus map · SOS & safe walks · Patrol & dispatch |
-| Campus | Residential colleges (KK1–KK13 and International House), plus a Pengetua portal for KK12 · Visitors & vehicles (passes, plate reads) · Events (convocation event mode) · Emergency & mass notification with muster board |
-| Insight | Student welfare (HEPA, aggregated, no video) · Reports & KPT safety-inspection checklist |
-| Govern | AI analytics, with what each one cannot establish, plus written exclusions · Privacy centre (footage requests, audit log, retention, DPIA) · Devices & health · Users & roles |
+| Monitor | Overview · AI detections, with an event sheet (clip, confidence, what the analytic cannot establish, verify / false alarm / share / keep clip) · Video wall (all 60 cameras) · Camera map · Footage search (by object class, place and time; never by face or appearance; purpose required and audited) |
+| Insight | Occupancy & footfall (live counts, hourly footfall, weekday utilisation) · Vehicles & parking (car-park occupancy, gate traffic, plate reads) · Crowd analytics (convocation density) · Reports (uptime, time to verify, precision, KPT CCTV checklist) |
+| Configure | AI analytics & written exclusions · Cameras & edge health · Privacy centre · Users & roles |
+| Apps | EzVision Mobile |
 
-The five UM roles are Chief Security Officer, SOC operator, Pengetua, Deputy VC (HEPA) and DPO. Each sees only its own screens, and HEPA and the DPO never see video.
+The four UM roles each see only their own screens:
 
-**KPT** (`#/kpt/...`): 8 screens
+- **Director, Security Technology:** every screen.
+- **Video analytics operator:** monitoring screens, crowd, vehicles, devices and the app.
+- **Facilities & space planning:** counts only, with no footage and no plates.
+- **Data protection officer:** privacy and governance screens, with no footage.
 
-National overview with a state tile map · Universities directory and profiles · Incident trends · Inspection & compliance matrix · Escalations · Residential & welfare (the 70%-by-2035 housing target) · Disaster & event readiness · Reports.
+**KPT** (`#/kpt/...`): 6 screens
 
-Every KPT screen carries the aggregates-only banner. Counts from 1 to 4 are suppressed.
+National overview (with a state map by camera-intelligence maturity) · Universities and profiles · Detection trends · CCTV coverage & uptime (the CCTV items of the 2025 inspection directive) · Privacy & AI governance · Reports.
 
-**Apps** (`#/app/student`, `#/app/patrol`)
+Every KPT screen carries the aggregates-only banner. It shows no footage, images, plates, camera IDs or names, and counts from 1 to 4 are suppressed.
 
-- **EzSafe**: SOS, Friend Walk, safety timer, escort, shuttle, confidential report, alerts and "I'm safe" check-in.
-- **EzPatrol**: dispatch jobs, NFC guard tour, photo report and shift log.
+**EzVision Mobile** (`#/app/mobile`)
 
-An SOS raised in EzSafe appears in the UM alarm queue. When the SOC dispatches PB-01, the job arrives in EzPatrol.
+The app has three tabs: camera alerts, favourite cameras and camera health. Use "Run a demo detection" in the console and the detection arrives on the phone. Verify it there and the console updates.
 
 ## Design system
 
@@ -71,7 +75,7 @@ The 7 scenes without a clip show their own still with a slow pan, rather than bo
 
 ## University logos
 
-`public/logos/manifest.json` lists KPT and the 28 universities. **Universiti Malaya's logo is in place**: `um.png` is the crest, used in the sidebar, tables and the EzSafe app, and `um-lockup.png` is the full lockup, used on the sign-in page. Both were supplied by EzGIG. The other logos could not be downloaded, because Wikimedia, the KPT site and the university sites were blocked by the network policy. Until they are added, `UniversityLogo` shows a neutral acronym crest.
+`public/logos/manifest.json` lists KPT and the 28 universities. **Universiti Malaya's logo is in place**: `um.png` is the crest, used in the sidebar, tables and EzVision Mobile, and `um-lockup.png` is the full lockup, used on the sign-in page. Both were supplied by EzGIG. The other logos could not be downloaded, because Wikimedia, the KPT site and the university sites were blocked by the network policy. Until they are added, `UniversityLogo` shows a neutral acronym crest.
 
 To add a logo:
 
@@ -94,8 +98,8 @@ tests/                       node:test suites run against an SSR bundle
 ## Documents
 
 - [Code audit of the previous school demo](docs/audit/2026-10-code-audit.md)
-- [University campus-safety research](docs/research/university-campus-safety-audit.md): 30 vendors, deployments by region, roles, features, privacy exclusions and the Malaysian context, with 179 cited sources. A [vendor matrix](docs/research/university-vendor-matrix.csv) accompanies it.
-- [Two points of view](docs/points-of-view.md): what UM and KPT need, mapped to screens
+- [University campus-safety research](docs/research/university-campus-safety-audit.md): 30 vendors, deployments by region, roles, features, privacy exclusions and the Malaysian context, with 179 cited sources. A [vendor matrix](docs/research/university-vendor-matrix.csv) accompanies it. The research covers campus safety broadly; the product now takes only its camera-intelligence parts (§5.2 video analytics, §6 exclusions, the KPT CCTV directive).
+- [Two points of view](docs/points-of-view.md): what UM and KPT need from camera intelligence, mapped to screens
 - [Stakeholder information needs](docs/research/stakeholder-information-needs.csv)
 - The earlier K-12 school edition is archived in `docs/archive/school-edition/`.
 

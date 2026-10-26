@@ -86,3 +86,34 @@ No credentials are collected or checked.
 
 - `ui.shadcn.com` (the shadcn registry) is blocked by this environment's network policy, so `shadcn add` could not fetch new components. The rework uses the shadcn components already vendored in the repository.
 - Wikimedia, the KPT website and the university websites are blocked, so official university logos could not be downloaded. `public/logos/manifest.json` lists all 30 institutions. `UniversityLogo` renders an official file automatically once one is placed in `public/logos/`, and an acronym crest until then.
+
+## Scope change: camera intelligence only (26 October 2026)
+
+After the first rebuild, the product was narrowed from a campus safety system to **camera intelligence**: everything the cameras and their analytics produce, and nothing that belongs to a safety desk.
+
+**Removed**
+
+- SOS and safe walks.
+- Patrol dispatch and guard tours.
+- Mass notification and muster.
+- Student welfare.
+- Visitor passes.
+- The residential-college portal.
+- Safety escalations, residential capacity and disaster readiness in the KPT view.
+- The EzSafe student app and the EzPatrol officer app.
+
+**Added or reframed**
+
+- **AI detections:** one record per analytic hit, always with a camera and a confidence. Each is verified or rejected by an operator, then shared or closed.
+- **Footage search:** by object class, place and time. There is no face or appearance search; a purpose is required and every search is audited.
+- **New views:**
+  - Occupancy & footfall.
+  - Vehicles & parking.
+  - Crowd analytics.
+  - Camera-health reporting.
+- **EzVision Mobile:** a single camera-alert app.
+- **KPT view:** reframed around:
+  - The camera estate and analytics adoption.
+  - Detection trends.
+  - The CCTV items of the inspection directive.
+  - Privacy and AI governance.

@@ -68,10 +68,10 @@ const tabs: {
   },
   {
     id: 'app',
-    label: 'Mobile apps',
+    label: 'Mobile app',
     icon: Smartphone,
-    org: { id: 'um', acronym: 'UM', name: 'EzSafe & EzPatrol' },
-    sso: 'Open app preview',
+    org: { id: 'um', acronym: 'UM', name: 'EzVision Mobile' },
+    sso: 'Open the app preview',
   },
 ];
 
@@ -79,9 +79,9 @@ export function SignIn() {
   const { dispatch } = useDemo();
   const [tab, setTab] = useState<Workspace>('um');
   const [choice, setChoice] = useState<Record<Workspace, Persona['id']>>({
-    um: 'chief',
+    um: 'director',
     kpt: 'kpt',
-    app: 'student',
+    app: 'mobile',
   });
 
   const go = (ws: Workspace) => {
@@ -103,14 +103,14 @@ export function SignIn() {
         </div>
         <div className="relative mt-10 max-w-lg">
           <h1 className="text-4xl leading-tight font-semibold tracking-tight">
-            Campus safety for universities, from the operations room to the
+            Camera intelligence for universities, from every camera to the
             ministry.
           </h1>
           <p className="mt-4 text-white/75">
-            One platform for a university’s security operations centre, its
-            residential colleges and student affairs, its students’ and
-            officers’ phones, and the Ministry of Higher Education’s national
-            oversight.
+            AI analytics on a university’s existing CCTV: detections an operator
+            verifies, anonymous occupancy and footfall, vehicle and crowd
+            counts, and searchable footage. The Ministry of Higher Education
+            sees the aggregates.
           </p>
         </div>
         <div className="relative mt-8 grid grid-cols-3 gap-2">
@@ -134,8 +134,8 @@ export function SignIn() {
           </li>
           <li className="flex gap-3">
             <MapPinOff className="mt-0.5 size-4 shrink-0 text-sidebar-primary" />
-            Students share location only when they start an SOS, walk or
-            check-in.
+            People are counted, never tracked. Every footage search needs a
+            purpose and is audited.
           </li>
         </ul>
       </section>
@@ -178,8 +178,8 @@ export function SignIn() {
                       <div className="grid gap-2">
                         <UniversityLockup id="um" name="Universiti Malaya" />
                         <CardDescription>
-                          Security operations, residential colleges, student
-                          affairs and privacy
+                          Detections, video wall, occupancy, vehicles, footage
+                          search and privacy
                         </CardDescription>
                       </div>
                     ) : (
@@ -193,8 +193,8 @@ export function SignIn() {
                           <CardTitle>{t.org.name}</CardTitle>
                           <CardDescription>
                             {t.id === 'kpt'
-                              ? 'National oversight: aggregate trends, compliance and escalations'
-                              : 'Phone apps for students, staff and patrol officers'}
+                              ? 'National oversight: camera estate, analytics, CCTV coverage and governance'
+                              : 'Camera alerts on a responder’s phone'}
                           </CardDescription>
                         </div>
                       </>
@@ -285,7 +285,7 @@ export function SignIn() {
           </p>
         </div>
         <footer className="text-center text-xs text-muted-foreground">
-          EzVision Campus Safety · powered by AiWAS · EzGIG Technology
+          EzVision Camera Intelligence · powered by AiWAS · EzGIG Technology
         </footer>
       </section>
     </div>
