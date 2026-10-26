@@ -4,5 +4,5 @@ import '../app/globals.css';
 import './fonts.css';
 
 const root = document.getElementById('root');
-if (!root) throw new Error('AiWAS application root is missing.');
+if (!root) throw new Error('EzVision application root is missing.');
 createRoot(root).render(<Home />);

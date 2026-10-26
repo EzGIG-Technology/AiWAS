@@ -12,8 +12,8 @@
     "lint": "oxlint",
     "format": "oxfmt",
     "build:vercel": "vite build --config vite.vercel.config.ts",
-    "test": "node --test tests/*.test.mjs",
-    "test:render": "vite build --config vite.vercel.config.ts --ssr tests/render-entry.tsx --outDir dist/audit-ssr && node tests/render-smoke.mjs"
+    "test": "vite build --config vite.vercel.config.ts --ssr tests/entry.tsx --outDir dist/test-ssr --emptyOutDir --logLevel warn && node --test tests/*.test.mjs",
+    "test:render": "npm test"
   },
   "dependencies": {
     "react": "19.2.6",
